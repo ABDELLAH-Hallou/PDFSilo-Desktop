@@ -19,41 +19,73 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import atomic_output_path, validate_pdf
+from safepdf.core import OperationResult, PdfPasswordError, PdfProcessingError, SafePdfError
+from safepdf.core.output import save_document
+from safepdf.core.validation import require_pdf
+from safepdf.presentation import present_operation
 
 log = logging.getLogger(__name__)
 
 
-def run(input_path: str, password: str, output_path: str | None = None) -> bool:
-    path = Path(input_path)
-    if not validate_pdf(path):
-        return False
-
-    out_path = Path(output_path) if output_path else path.parent / f"{path.stem}_decrypted.pdf"
+def execute(
+    input_path: Path,
+    password: str,
+    output_path: Path | None = None,
+) -> OperationResult:
+    """Decrypt a PDF and return structured output information."""
+    path = require_pdf(input_path)
+    out_path = output_path or path.parent / f"{path.stem}_decrypted.pdf"
 
     try:
         doc = fitz.open(str(path))
-        try:
-            if doc.is_encrypted:
-                result = doc.authenticate(password)
-                if result == 0:
-                    log.error("Incorrect password for '%s'.", path.name)
-                    return False
-                log.info("Authentication successful.")
-            else:
-                log.info("'%s' is not encrypted — saving a clean copy.", path.name)
+    except Exception as exc:
+        raise PdfProcessingError(
+            f"Could not open encrypted PDF '{path}': {exc}"
+        ) from exc
 
-            with atomic_output_path(out_path) as temporary:
-                doc.save(str(temporary), encryption=fitz.PDF_ENCRYPT_NONE)
-        finally:
-            doc.close()
-        log.info("Decrypted PDF saved to '%s'.", out_path)
-        return True
+    try:
+        was_encrypted = doc.is_encrypted
+        if was_encrypted and doc.authenticate(password) == 0:
+            raise PdfPasswordError(f"Incorrect password for '{path.name}'.")
 
-    except Exception as e:
-        log.error("Error decrypting '%s': %s", path, e)
-        return False
+        page_count = doc.page_count
+        save_document(doc, out_path, encryption=fitz.PDF_ENCRYPT_NONE)
+    except SafePdfError:
+        raise
+    except Exception as exc:
+        raise PdfProcessingError(
+            f"Could not decrypt PDF '{path}': {exc}"
+        ) from exc
+    finally:
+        doc.close()
+
+    return OperationResult(
+        output_paths=[out_path],
+        source_paths=[path],
+        processed_pages=page_count,
+        processed_files=1,
+        metadata={"was_encrypted": was_encrypted},
+        message=f"Decrypted PDF saved to '{out_path}'.",
+    )
+
+
+def run(input_path: str, password: str, output_path: str | None = None) -> bool:
+    return present_operation(
+        lambda: execute(
+            Path(input_path),
+            password,
+            Path(output_path) if output_path else None,
+        ),
+        log,
+    )
 
 
 def cli_run(args) -> bool:
-    return run(args.input, args.password, args.output)
+    return present_operation(
+        lambda: execute(
+            Path(args.input),
+            args.password,
+            Path(args.output) if args.output else None,
+        ),
+        log,
+    )

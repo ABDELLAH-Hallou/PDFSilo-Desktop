@@ -34,23 +34,26 @@ from pathlib import Path
 
 import fitz
 
+from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core.output import save_document
+from safepdf.core.validation import require_directory
+from safepdf.presentation import present_operation
 from safepdf.utils import (
     IMAGE_EXTENSIONS,
     PAGE_SIZES,
-    atomic_output_path,
     get_sorted_image_files,
 )
 
 log = logging.getLogger(__name__)
 
 
-def run(
-    folder: str,
-    output_path: str | None = None,
+def execute(
+    folder: Path,
+    output_path: Path | None = None,
     target_size: str = "A4",
     fit: bool = True,
     margin: float = 36.0,
-) -> bool:
+) -> OperationResult:
     """Merge every image in *folder* into a single PDF.
 
     Parameters
@@ -75,51 +78,43 @@ def run(
         *True* on success, *False* on any error.
     """
     if target_size not in PAGE_SIZES:
-        raise ValueError(
+        raise InvalidInputError(
             f"Unsupported page size '{target_size}'. Choose from: {list(PAGE_SIZES)}"
         )
     if not math.isfinite(margin) or margin < 0:
-        log.error("Margin must be a non-negative finite number.")
-        return False
+        raise InvalidInputError("Margin must be a non-negative finite number.")
 
-    folder_path = Path(folder)
-    if not folder_path.is_dir():
-        log.error("'%s' is not a directory.", folder_path)
-        return False
+    folder_path = require_directory(folder)
 
-    image_files = get_sorted_image_files(folder_path)
+    image_files = [Path(path) for path in get_sorted_image_files(folder_path)]
     if not image_files:
-        log.error(
-            "No supported images found in '%s'. Supported formats: %s",
-            folder_path,
-            ", ".join(sorted(IMAGE_EXTENSIONS)),
+        raise InvalidInputError(
+            f"No supported images found in '{folder_path}'. Supported formats: "
+            f"{', '.join(sorted(IMAGE_EXTENSIONS))}"
         )
-        return False
 
-    out = Path(output_path) if output_path else folder_path.parent / f"{folder_path.name}.pdf"
+    out = output_path or folder_path.parent / f"{folder_path.name}.pdf"
 
     target_w, target_h = PAGE_SIZES[target_size]
     if fit and margin * 2 >= min(target_w, target_h):
-        log.error(
-            "Margin %.1f is too large for %s pages; it must be less than %.1f.",
-            margin,
-            target_size,
-            min(target_w, target_h) / 2,
+        raise InvalidInputError(
+            f"Margin {margin:.1f} is too large for {target_size} pages; "
+            f"it must be less than {min(target_w, target_h) / 2:.1f}."
         )
-        return False
 
     output_doc = fitz.open()
+    warnings = []
+    processed_files = 0
 
     try:
-        for img_path_str in image_files:
-            img_path = Path(img_path_str)
+        for img_path in image_files:
             try:
                 # Open the image via fitz to get natural dimensions
                 with fitz.open(str(img_path)) as img_doc:
                     pix = img_doc[0].get_pixmap()
                     nat_w, nat_h = pix.width, pix.height
             except Exception as exc:
-                log.warning("Skipping '%s': %s", img_path.name, exc)
+                warnings.append(f"Skipping '{img_path.name}': {exc}")
                 continue
 
             # Choose portrait/landscape canvas to match the image orientation
@@ -146,34 +141,77 @@ def run(
             y0 = (ph - draw_h) / 2
             rect = fitz.Rect(x0, y0, x0 + draw_w, y0 + draw_h)
             page.insert_image(rect, filename=str(img_path))
-
-            log.debug("Added '%s' → page %d", img_path.name, output_doc.page_count)
+            processed_files += 1
 
         if output_doc.page_count == 0:
-            log.warning("No images could be processed. No output file created.")
-            return False
+            raise InvalidInputError(
+                "No images could be processed. No output file was created."
+            )
 
-        with atomic_output_path(out) as temporary:
-            output_doc.save(str(temporary))
-        log.info(
-            "Created '%s' with %d page(s) from %d image(s).",
-            out, output_doc.page_count, len(image_files),
-        )
-        return True
+        page_count = output_doc.page_count
+        save_document(output_doc, out)
 
+    except SafePdfError:
+        raise
     except Exception as exc:
-        log.error("Unexpected error: %s", exc)
-        return False
+        raise PdfProcessingError(
+            f"Could not create PDF from images in '{folder_path}': {exc}"
+        ) from exc
 
     finally:
         output_doc.close()
 
+    return OperationResult(
+        output_paths=[out],
+        source_paths=image_files,
+        processed_pages=page_count,
+        processed_files=processed_files,
+        skipped_files=len(image_files) - processed_files,
+        warnings=warnings,
+        metadata={
+            "target_size": target_size,
+            "fit": fit,
+            "margin": margin,
+        },
+        message=(
+            f"Created '{out}' with {page_count} page(s) "
+            f"from {processed_files} image(s)."
+        ),
+    )
+
+
+def run(
+    folder: str,
+    output_path: str | None = None,
+    target_size: str = "A4",
+    fit: bool = True,
+    margin: float = 36.0,
+) -> bool:
+    # Preserve the historical direct-Python API for unsupported page sizes.
+    if target_size not in PAGE_SIZES:
+        raise ValueError(
+            f"Unsupported page size '{target_size}'. Choose from: {list(PAGE_SIZES)}"
+        )
+    return present_operation(
+        lambda: execute(
+            Path(folder),
+            Path(output_path) if output_path else None,
+            target_size,
+            fit,
+            margin,
+        ),
+        log,
+    )
+
 
 def cli_run(args) -> bool:
-    return run(
-        folder=args.folder,
-        output_path=args.output,
-        target_size=args.size,
-        fit=args.fit,
-        margin=args.margin,
+    return present_operation(
+        lambda: execute(
+            Path(args.folder),
+            Path(args.output) if args.output else None,
+            args.size,
+            args.fit,
+            args.margin,
+        ),
+        log,
     )

@@ -60,7 +60,7 @@ important backend issues identified in
 - [x] Use temporary files and atomic replacement where practical.
 - [x] Resolve the license label and license-text mismatch.
 - [x] Add regression tests for each corrected behavior.
-- [x] Keep all existing tests passing (199 tests as of 24 July 2026).
+- [x] Keep all existing tests passing (226 tests as of 24 July 2026).
 
 ## Phase 2: Add project packaging
 
@@ -163,12 +163,25 @@ handle them differently:
 
 ### Implementation tasks
 
-- [ ] Introduce `OperationResult`.
-- [ ] Introduce typed SafePDF exceptions.
-- [ ] Move CLI-specific logging decisions out of core operations.
-- [ ] Preserve useful diagnostic context when wrapping PyMuPDF errors.
-- [ ] Update the CLI adapters to consume structured results.
-- [ ] Verify that CLI behavior remains backward compatible.
+- [x] Introduce `OperationResult`.
+- [x] Introduce typed SafePDF exceptions.
+- [x] Move CLI-specific logging decisions out of core operations.
+- [x] Preserve useful diagnostic context when wrapping PyMuPDF errors.
+- [x] Update the CLI adapters to consume structured results.
+- [x] Verify that CLI behavior remains backward compatible.
+
+Phase 3 validation completed on 24 July 2026:
+
+- All 13 operations expose a framework-independent `execute(...)` function
+  that accepts `Path` values and returns `OperationResult`.
+- Expected failures use typed `SafePdfError` subclasses. Wrapped PyMuPDF and
+  filesystem errors retain their original exception through `__cause__`.
+- The shared presentation adapter converts results and errors into the
+  existing CLI logging and boolean contract.
+- Legacy `run(...) -> bool` functions remain available for compatibility.
+- CLI help exits with status 0 and expected operation failures exit with
+  status 1.
+- The complete suite passed with 226 tests.
 
 ## Phase 4: Add progress and cancellation
 

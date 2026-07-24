@@ -21,27 +21,40 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import (
-    PAGE_SIZES,
-    atomic_output_path,
-    get_sorted_pdf_files,
-    validate_pdf,
-)
+from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core.output import save_document
+from safepdf.core.validation import require_pdf
+from safepdf.presentation import present_operation
+from safepdf.utils import PAGE_SIZES, get_sorted_pdf_files
 
 log = logging.getLogger(__name__)
 
 
-def run(input_files: list[str], output_file: str, target_size: str = "A4") -> bool:
+def execute(
+    input_files: list[Path],
+    output_file: Path,
+    target_size: str = "A4",
+) -> OperationResult:
+    """Merge PDFs into normalized pages and return structured details."""
     if target_size not in PAGE_SIZES:
-        raise ValueError(f"Unsupported page size '{target_size}'. Choose from: {list(PAGE_SIZES)}")
+        raise InvalidInputError(
+            f"Unsupported page size '{target_size}'. "
+            f"Choose from: {list(PAGE_SIZES)}."
+        )
+    if not input_files:
+        raise InvalidInputError("No PDF files were provided.")
 
     target_w, target_h = PAGE_SIZES[target_size]
     output_doc = fitz.open()
+    warnings = []
+    processed_files = 0
 
     try:
         for pdf_path in input_files:
-            path = Path(pdf_path)
-            if not validate_pdf(path):
+            try:
+                path = require_pdf(pdf_path)
+            except InvalidInputError as exc:
+                warnings.append(str(exc))
                 continue
 
             try:
@@ -67,29 +80,64 @@ def run(input_files: list[str], output_file: str, target_size: str = "A4") -> bo
                             page.number,
                         )
 
-                    log.info("Added %d pages from '%s'", len(src_doc), path.name)
+                    processed_files += 1
 
-            except Exception as e:
-                log.error("Error processing '%s': %s", path, e)
+            except Exception as exc:
+                warnings.append(f"Could not process '{path}': {exc}")
 
         if output_doc.page_count > 0:
-            with atomic_output_path(Path(output_file)) as temporary:
-                output_doc.save(str(temporary))
-            log.info("Created '%s' with %d pages.", output_file, output_doc.page_count)
-            return True
+            page_count = output_doc.page_count
+            save_document(output_doc, output_file)
+        else:
+            raise InvalidInputError("No pages to write. No output file was created.")
 
-        log.warning("No pages to write. No output file created.")
-        return False
+    except SafePdfError:
+        raise
+    except Exception as exc:
+        raise PdfProcessingError(
+            f"Could not concatenate PDFs into '{output_file}': {exc}"
+        ) from exc
 
     finally:
         output_doc.close()
+
+    return OperationResult(
+        output_paths=[output_file],
+        source_paths=input_files,
+        processed_pages=page_count,
+        processed_files=processed_files,
+        skipped_files=len(input_files) - processed_files,
+        warnings=warnings,
+        metadata={"target_size": target_size},
+        message=f"Created '{output_file}' with {page_count} pages.",
+    )
+
+
+def run(input_files: list[str], output_file: str, target_size: str = "A4") -> bool:
+    # Preserve the historical direct-Python API for unsupported page sizes.
+    if target_size not in PAGE_SIZES:
+        raise ValueError(
+            f"Unsupported page size '{target_size}'. Choose from: {list(PAGE_SIZES)}"
+        )
+    return present_operation(
+        lambda: execute(
+            [Path(path) for path in input_files],
+            Path(output_file),
+            target_size,
+        ),
+        log,
+    )
 
 
 def cli_run(args) -> bool:
     folder = Path(args.folder)
     output = args.output or f"{folder.name}.pdf"
     input_files = get_sorted_pdf_files(folder)
-    if not input_files:
-        log.error("No PDF files found in '%s'.", folder)
-        return False
-    return run(input_files, output, args.size)
+    return present_operation(
+        lambda: execute(
+            [Path(path) for path in input_files],
+            Path(output),
+            args.size,
+        ),
+        log,
+    )

@@ -23,46 +23,80 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import atomic_output_path, validate_pdf
+from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core.output import save_document
+from safepdf.core.validation import require_pdf
+from safepdf.presentation import present_operation
 
 log = logging.getLogger(__name__)
 
 
-def run(input_path: str, start: int, end: int, output_path: str | None = None) -> bool:
-    path = Path(input_path)
-    if not validate_pdf(path):
-        return False
-
-    out_path = Path(output_path) if output_path else \
-        path.parent / f"{path.stem}_p{start}-p{end}.pdf"
+def execute(
+    input_path: Path,
+    start: int,
+    end: int,
+    output_path: Path | None = None,
+) -> OperationResult:
+    """Extract an inclusive page range and return structured output details."""
+    path = require_pdf(input_path)
+    out_path = output_path or path.parent / f"{path.stem}_p{start}-p{end}.pdf"
 
     try:
         with fitz.open(str(path)) as src_doc:
             total = len(src_doc)
 
             if start < 1 or end > total or start > end:
-                log.error(
-                    "Invalid range %d–%d for a %d-page document.", start, end, total
+                raise InvalidInputError(
+                    f"Invalid range {start}–{end} for a {total}-page document."
                 )
-                return False
 
             out_doc = fitz.open()
             try:
                 out_doc.insert_pdf(src_doc, from_page=start - 1, to_page=end - 1)
-                with atomic_output_path(out_path) as temporary:
-                    out_doc.save(str(temporary))
-                log.info(
-                    "Extracted pages %d–%d → '%s' (%d pages).",
-                    start, end, out_path, out_doc.page_count,
-                )
-                return True
+                save_document(out_doc, out_path)
+                extracted_pages = out_doc.page_count
             finally:
                 out_doc.close()
 
-    except Exception as e:
-        log.error("Error extracting range from '%s': %s", path, e)
-        return False
+    except SafePdfError:
+        raise
+    except Exception as exc:
+        raise PdfProcessingError(
+            f"Could not extract pages from '{path}': {exc}"
+        ) from exc
+
+    return OperationResult(
+        output_paths=[out_path],
+        source_paths=[path],
+        processed_pages=extracted_pages,
+        processed_files=1,
+        metadata={"start_page": start, "end_page": end},
+        message=(
+            f"Extracted pages {start}–{end} to '{out_path}' "
+            f"({extracted_pages} pages)."
+        ),
+    )
+
+
+def run(input_path: str, start: int, end: int, output_path: str | None = None) -> bool:
+    return present_operation(
+        lambda: execute(
+            Path(input_path),
+            start,
+            end,
+            Path(output_path) if output_path else None,
+        ),
+        log,
+    )
 
 
 def cli_run(args) -> bool:
-    return run(args.input, args.start, args.end, args.output)
+    return present_operation(
+        lambda: execute(
+            Path(args.input),
+            args.start,
+            args.end,
+            Path(args.output) if args.output else None,
+        ),
+        log,
+    )

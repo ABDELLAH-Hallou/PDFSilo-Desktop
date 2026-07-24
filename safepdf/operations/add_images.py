@@ -33,7 +33,10 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import atomic_output_path, validate_pdf
+from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core.output import save_document
+from safepdf.core.validation import require_pdf
+from safepdf.presentation import present_operation
 
 log = logging.getLogger(__name__)
 
@@ -96,16 +99,16 @@ def _image_rect(
     return rect
 
 
-def run(
-    input_path: str,
-    image_paths: list[str],
-    output_path: str | None = None,
+def execute(
+    input_path: Path,
+    image_paths: list[Path],
+    output_path: Path | None = None,
     page: int | None = None,
     position: str = "72,72",
     width: float | None = None,
     height: float | None = None,
     append: bool = False,
-) -> bool:
+) -> OperationResult:
     """Insert *image_paths* into the PDF at *input_path*.
 
     Parameters
@@ -134,113 +137,150 @@ def run(
     bool
         *True* on success, *False* on any error.
     """
-    path = Path(input_path)
-    if not validate_pdf(path):
-        return False
+    path = require_pdf(input_path)
 
     # Validate image paths
     image_paths_checked: list[Path] = []
-    for img in image_paths:
-        p = Path(img)
+    for p in image_paths:
         if not p.is_file():
-            log.error("Image file not found: '%s'", p)
-            return False
+            raise InvalidInputError(f"Image file not found: '{p}'")
         if p.suffix.lower() not in SUPPORTED_EXTENSIONS:
-            log.error(
-                "Unsupported image format '%s'. Supported: %s",
-                p.suffix,
-                ", ".join(sorted(SUPPORTED_EXTENSIONS)),
+            raise InvalidInputError(
+                f"Unsupported image format '{p.suffix}'. Supported: "
+                f"{', '.join(sorted(SUPPORTED_EXTENSIONS))}"
             )
-            return False
         image_paths_checked.append(p)
 
     if not image_paths_checked:
-        log.error("No image files provided.")
-        return False
+        raise InvalidInputError("No image files provided.")
 
     for label, value in (("Width", width), ("Height", height)):
         if value is not None and (not math.isfinite(value) or value <= 0):
-            log.error("%s must be a positive finite number.", label)
-            return False
+            raise InvalidInputError(
+                f"{label} must be a positive finite number."
+            )
 
     try:
         x, y = _parse_position(position)
     except ValueError as exc:
-        log.error("Invalid position: %s", exc)
-        return False
+        raise InvalidInputError(f"Invalid position: {exc}") from exc
 
-    out_path = (
-        Path(output_path)
-        if output_path
-        else path.parent / f"{path.stem}_with_images.pdf"
-    )
+    out_path = output_path or path.parent / f"{path.stem}_with_images.pdf"
 
     try:
-        with atomic_output_path(out_path) as temporary:
-            with fitz.open(str(path)) as doc:
-                for idx, img_path in enumerate(image_paths_checked):
-                    # --- Open the image to read its natural dimensions ---
-                    try:
-                        with fitz.open(str(img_path)) as img_doc:
-                            pix = img_doc[0].get_pixmap()
-                            natural_w, natural_h = pix.width, pix.height
-                    except Exception as img_err:
-                        log.error("Cannot read image '%s': %s", img_path, img_err)
-                        return False
+        with fitz.open(str(path)) as doc:
+            original_pages = doc.page_count
+            for idx, img_path in enumerate(image_paths_checked):
+                # --- Open the image to read its natural dimensions ---
+                try:
+                    with fitz.open(str(img_path)) as img_doc:
+                        pix = img_doc[0].get_pixmap()
+                        natural_w, natural_h = pix.width, pix.height
+                except Exception as exc:
+                    raise InvalidInputError(
+                        f"Cannot read image '{img_path}': {exc}"
+                    ) from exc
 
-                    if append:
-                        # Add a new blank A4 page for each image
-                        target_page = doc.new_page(width=595, height=842)
+                if append:
+                    # Add a new blank A4 page for each image
+                    target_page = doc.new_page(width=595, height=842)
+                else:
+                    if page is not None:
+                        # Fixed page (1-indexed)
+                        pg_idx = page - 1
+                        if pg_idx < 0 or pg_idx >= doc.page_count:
+                            raise InvalidInputError(
+                                f"Page {page} out of range "
+                                f"(document has {doc.page_count} page(s))."
+                            )
+                        target_page = doc[pg_idx]
                     else:
-                        if page is not None:
-                            # Fixed page (1-indexed)
-                            pg_idx = page - 1
-                            if pg_idx < 0 or pg_idx >= doc.page_count:
-                                log.error(
-                                    "Page %d out of range (document has %d page(s)).",
-                                    page,
-                                    doc.page_count,
-                                )
-                                return False
-                            target_page = doc[pg_idx]
-                        else:
-                            # Sequential placement; cycle if more images than pages
-                            pg_idx = idx % doc.page_count
-                            target_page = doc[pg_idx]
+                        # Sequential placement; cycle if more images than pages
+                        pg_idx = idx % doc.page_count
+                        target_page = doc[pg_idx]
 
-                    try:
-                        rect = _image_rect(
-                            target_page,
-                            x,
-                            y,
-                            natural_w,
-                            natural_h,
-                            width,
-                            height,
-                        )
-                    except ValueError as geometry_error:
-                        log.error("Invalid image geometry: %s", geometry_error)
-                        return False
-                    target_page.insert_image(rect, filename=str(img_path))
+                try:
+                    rect = _image_rect(
+                        target_page,
+                        x,
+                        y,
+                        natural_w,
+                        natural_h,
+                        width,
+                        height,
+                    )
+                except ValueError as exc:
+                    raise InvalidInputError(
+                        f"Invalid image geometry: {exc}"
+                    ) from exc
+                target_page.insert_image(rect, filename=str(img_path))
 
-                doc.save(str(temporary))
+            resulting_pages = doc.page_count
+            save_document(doc, out_path)
 
-        log.info("PDF with images saved to '%s'.", out_path)
-        return True
-
+    except SafePdfError:
+        raise
     except Exception as exc:
-        log.error("Error adding images to '%s': %s", path, exc)
-        return False
+        raise PdfProcessingError(
+            f"Could not add images to PDF '{path}': {exc}"
+        ) from exc
+
+    return OperationResult(
+        output_paths=[out_path],
+        source_paths=[path, *image_paths_checked],
+        processed_pages=resulting_pages,
+        processed_files=len(image_paths_checked),
+        metadata={
+            "append": append,
+            "original_pages": original_pages,
+            "resulting_pages": resulting_pages,
+            "target_page": page,
+            "position": (x, y),
+            "width": width,
+            "height": height,
+        },
+        message=(
+            f"Added {len(image_paths_checked)} image(s) and saved '{out_path}'."
+        ),
+    )
+
+
+def run(
+    input_path: str,
+    image_paths: list[str],
+    output_path: str | None = None,
+    page: int | None = None,
+    position: str = "72,72",
+    width: float | None = None,
+    height: float | None = None,
+    append: bool = False,
+) -> bool:
+    return present_operation(
+        lambda: execute(
+            Path(input_path),
+            [Path(path) for path in image_paths],
+            Path(output_path) if output_path else None,
+            page,
+            position,
+            width,
+            height,
+            append,
+        ),
+        log,
+    )
 
 
 def cli_run(args) -> bool:
-    return run(
-        input_path=args.input,
-        image_paths=args.images,
-        output_path=args.output,
-        page=args.page,
-        position=args.position,
-        width=args.width,
-        height=args.height,
-        append=args.append,
+    return present_operation(
+        lambda: execute(
+            Path(args.input),
+            [Path(path) for path in args.images],
+            Path(args.output) if args.output else None,
+            args.page,
+            args.position,
+            args.width,
+            args.height,
+            args.append,
+        ),
+        log,
     )

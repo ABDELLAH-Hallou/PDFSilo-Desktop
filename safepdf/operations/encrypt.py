@@ -28,36 +28,44 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import atomic_output_path, validate_pdf
+from safepdf.core import (
+    InvalidInputError,
+    OperationResult,
+    PdfPasswordError,
+    PdfProcessingError,
+    SafePdfError,
+)
+from safepdf.core.output import save_document
+from safepdf.core.validation import require_pdf
+from safepdf.presentation import present_operation
 
 log = logging.getLogger(__name__)
 
 
-def run(
-    input_path: str,
+def execute(
+    input_path: Path,
     user_password: str,
     owner_password: str | None = None,
-    output_path: str | None = None,
+    output_path: Path | None = None,
     allow_print: bool = True,
     allow_copy: bool = True,
     allow_edit: bool = True,
-) -> bool:
-    path = Path(input_path)
-    if not validate_pdf(path):
-        return False
+) -> OperationResult:
+    """Encrypt a PDF and return structured permission information."""
+    path = require_pdf(input_path)
+    if not user_password:
+        raise InvalidInputError("User password cannot be empty.")
 
-    out_path = Path(output_path) if output_path else path.parent / f"{path.stem}_encrypted.pdf"
+    out_path = output_path or path.parent / f"{path.stem}_encrypted.pdf"
     restrictions_requested = not (allow_print and allow_copy and allow_edit)
     if restrictions_requested and not owner_password:
-        log.error(
+        raise PdfPasswordError(
             "A distinct owner password is required when permission restrictions are enabled."
         )
-        return False
     if owner_password and owner_password == user_password and restrictions_requested:
-        log.error(
+        raise PdfPasswordError(
             "Owner and user passwords must differ when permission restrictions are enabled."
         )
-        return False
 
     owner_pw = owner_password or user_password
 
@@ -70,30 +78,72 @@ def run(
     )
 
     try:
-        with atomic_output_path(out_path) as temporary:
-            with fitz.open(str(path)) as doc:
-                doc.save(
-                    str(temporary),
-                    encryption=fitz.PDF_ENCRYPT_AES_256,
-                    user_pw=user_password,
-                    owner_pw=owner_pw,
-                    permissions=permissions,
-                )
-        log.info("Encrypted PDF saved to '%s'.", out_path)
-        return True
+        with fitz.open(str(path)) as doc:
+            page_count = doc.page_count
+            save_document(
+                doc,
+                out_path,
+                encryption=fitz.PDF_ENCRYPT_AES_256,
+                user_pw=user_password,
+                owner_pw=owner_pw,
+                permissions=permissions,
+            )
 
-    except Exception as e:
-        log.error("Error encrypting '%s': %s", path, e)
-        return False
+    except SafePdfError:
+        raise
+    except Exception as exc:
+        raise PdfProcessingError(
+            f"Could not encrypt PDF '{path}': {exc}"
+        ) from exc
+
+    return OperationResult(
+        output_paths=[out_path],
+        source_paths=[path],
+        processed_pages=page_count,
+        processed_files=1,
+        metadata={
+            "allow_print": allow_print,
+            "allow_copy": allow_copy,
+            "allow_edit": allow_edit,
+            "encryption": "AES-256",
+        },
+        message=f"Encrypted PDF saved to '{out_path}'.",
+    )
+
+
+def run(
+    input_path: str,
+    user_password: str,
+    owner_password: str | None = None,
+    output_path: str | None = None,
+    allow_print: bool = True,
+    allow_copy: bool = True,
+    allow_edit: bool = True,
+) -> bool:
+    return present_operation(
+        lambda: execute(
+            Path(input_path),
+            user_password,
+            owner_password,
+            Path(output_path) if output_path else None,
+            allow_print,
+            allow_copy,
+            allow_edit,
+        ),
+        log,
+    )
 
 
 def cli_run(args) -> bool:
-    return run(
-        args.input,
-        args.password,
-        args.owner_password,
-        args.output,
-        allow_print=not args.no_print,
-        allow_copy=not args.no_copy,
-        allow_edit=not args.no_edit,
+    return present_operation(
+        lambda: execute(
+            Path(args.input),
+            args.password,
+            args.owner_password,
+            Path(args.output) if args.output else None,
+            allow_print=not args.no_print,
+            allow_copy=not args.no_copy,
+            allow_edit=not args.no_edit,
+        ),
+        log,
     )

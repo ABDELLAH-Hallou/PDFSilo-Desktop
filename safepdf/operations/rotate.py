@@ -24,7 +24,10 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import atomic_output_path, validate_pdf
+from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core.output import save_document
+from safepdf.core.validation import require_pdf
+from safepdf.presentation import present_operation
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +36,16 @@ VALID_ANGLES = {90, 180, 270}
 
 def parse_pages(pages_str: str, total: int) -> list[int]:
     """Parse a comma-separated page string into 0-indexed page numbers."""
+    result, warnings = _parse_pages(pages_str, total)
+    for warning in warnings:
+        log.warning("%s", warning)
+    return result
+
+
+def _parse_pages(pages_str: str, total: int) -> tuple[list[int], list[str]]:
+    """Parse pages without logging and return targets plus warnings."""
     result = []
+    warnings = []
     for part in pages_str.split(","):
         part = part.strip()
         try:
@@ -41,42 +53,85 @@ def parse_pages(pages_str: str, total: int) -> list[int]:
             if 1 <= n <= total:
                 result.append(n - 1)
             else:
-                log.warning("Page %d out of range (1–%d). Skipping.", n, total)
+                warnings.append(
+                    f"Page {n} out of range (1–{total}). Skipping."
+                )
         except ValueError:
-            log.warning("Invalid page number '%s'. Skipping.", part)
-    return result
+            warnings.append(f"Invalid page number '{part}'. Skipping.")
+    return result, warnings
 
 
-def run(input_path: str, angle: int, pages: str | None = None, output_path: str | None = None) -> bool:
+def execute(
+    input_path: Path,
+    angle: int,
+    pages: str | None = None,
+    output_path: Path | None = None,
+) -> OperationResult:
+    """Rotate selected PDF pages and return structured output information."""
     if angle not in VALID_ANGLES:
-        log.error("Invalid angle %d. Choose from: %s", angle, VALID_ANGLES)
-        return False
+        raise InvalidInputError(
+            f"Invalid angle {angle}. Choose from: {sorted(VALID_ANGLES)}."
+        )
 
-    path = Path(input_path)
-    if not validate_pdf(path):
-        return False
-
-    out_path = Path(output_path) if output_path else path.parent / f"{path.stem}_rotated.pdf"
+    path = require_pdf(input_path)
+    out_path = output_path or path.parent / f"{path.stem}_rotated.pdf"
 
     try:
-        with atomic_output_path(out_path) as temporary:
-            with fitz.open(str(path)) as doc:
-                total = len(doc)
-                targets = parse_pages(pages, total) if pages else list(range(total))
+        with fitz.open(str(path)) as doc:
+            total = len(doc)
+            if pages:
+                targets, warnings = _parse_pages(pages, total)
+            else:
+                targets, warnings = list(range(total)), []
 
-                for i in targets:
-                    page = doc[i]
-                    page.set_rotation((page.rotation + angle) % 360)
-                    log.info("Rotated page %d by %d°", i + 1, angle)
+            for i in targets:
+                page = doc[i]
+                page.set_rotation((page.rotation + angle) % 360)
 
-                doc.save(str(temporary))
-            log.info("Saved rotated PDF to '%s'.", out_path)
-            return True
+            save_document(doc, out_path)
 
-    except Exception as e:
-        log.error("Error rotating '%s': %s", path, e)
-        return False
+    except SafePdfError:
+        raise
+    except Exception as exc:
+        raise PdfProcessingError(
+            f"Could not rotate PDF '{path}': {exc}"
+        ) from exc
+
+    return OperationResult(
+        output_paths=[out_path],
+        source_paths=[path],
+        processed_pages=len(targets),
+        processed_files=1,
+        warnings=warnings,
+        metadata={"angle": angle, "page_indexes": targets},
+        message=f"Rotated {len(targets)} pages by {angle}° and saved '{out_path}'.",
+    )
+
+
+def run(
+    input_path: str,
+    angle: int,
+    pages: str | None = None,
+    output_path: str | None = None,
+) -> bool:
+    return present_operation(
+        lambda: execute(
+            Path(input_path),
+            angle,
+            pages,
+            Path(output_path) if output_path else None,
+        ),
+        log,
+    )
 
 
 def cli_run(args) -> bool:
-    return run(args.input, args.angle, args.pages, args.output)
+    return present_operation(
+        lambda: execute(
+            Path(args.input),
+            args.angle,
+            args.pages,
+            Path(args.output) if args.output else None,
+        ),
+        log,
+    )

@@ -47,6 +47,33 @@ The CLI can also be run directly from a source checkout with
 
 ---
 
+## Python API
+
+Every operation exposes an `execute(...)` function for application and GUI
+code. It accepts `pathlib.Path` values, returns an `OperationResult`, and raises
+typed `SafePdfError` exceptions for expected failures:
+
+```python
+from pathlib import Path
+
+from safepdf.core import SafePdfError
+from safepdf.operations.split import execute
+
+try:
+    result = execute(Path("document.pdf"))
+except SafePdfError as exc:
+    print(f"Could not split the PDF: {exc}")
+else:
+    print(result.message)
+    print(result.output_paths)
+```
+
+The existing operation-level `run(...) -> bool` functions remain available for
+backward compatibility. New Python integrations should prefer `execute(...)`
+so they can consume structured results and handle specific error subclasses.
+
+---
+
 ## Commands
 
 ### `concat` — Merge PDFs

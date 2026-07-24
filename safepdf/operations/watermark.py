@@ -26,7 +26,10 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import atomic_output_path, validate_pdf
+from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core.output import save_document
+from safepdf.core.validation import require_pdf
+from safepdf.presentation import present_operation
 
 log = logging.getLogger(__name__)
 
@@ -40,6 +43,78 @@ def parse_color(color_str: str) -> tuple[float, float, float]:
     return tuple(parts)
 
 
+def execute(
+    input_path: Path,
+    text: str,
+    output_path: Path | None = None,
+    opacity: float = 0.15,
+    angle: float = 45,
+    font_size: float = 60,
+    color: str = "0.5,0.5,0.5",
+) -> OperationResult:
+    """Apply a text watermark and return structured output information."""
+    path = require_pdf(input_path)
+    if not text:
+        raise InvalidInputError("Watermark text cannot be empty.")
+    if not math.isfinite(opacity) or not 0.0 <= opacity <= 1.0:
+        raise InvalidInputError(
+            "Opacity must be a finite value between 0.0 and 1.0."
+        )
+    if not math.isfinite(angle):
+        raise InvalidInputError("Angle must be a finite number.")
+    if not math.isfinite(font_size) or font_size <= 0:
+        raise InvalidInputError("Font size must be a positive finite number.")
+
+    out_path = output_path or path.parent / f"{path.stem}_watermarked.pdf"
+
+    try:
+        rgb = parse_color(color)
+    except ValueError as exc:
+        raise InvalidInputError(f"Invalid color: {exc}") from exc
+
+    try:
+        with fitz.open(str(path)) as doc:
+            page_count = doc.page_count
+            for page in doc:
+                # TextWriter supports arbitrary rotation angles unlike insert_text
+                tw = fitz.TextWriter(page.rect, opacity=opacity, color=rgb)
+                font = fitz.Font("helv")
+                pivot = fitz.Point(page.rect.width / 2, page.rect.height / 2)
+                tw.append(
+                    pos=pivot,
+                    text=text,
+                    font=font,
+                    fontsize=font_size,
+                )
+                # Build rotation matrix around the page centre
+                rad = math.radians(angle)
+                cos_a, sin_a = math.cos(rad), math.sin(rad)
+                rot = fitz.Matrix(cos_a, sin_a, -sin_a, cos_a, 0, 0)
+                tw.write_text(page, morph=(pivot, rot), overlay=True)
+            save_document(doc, out_path)
+    except SafePdfError:
+        raise
+    except Exception as exc:
+        raise PdfProcessingError(
+            f"Could not watermark PDF '{path}': {exc}"
+        ) from exc
+
+    return OperationResult(
+        output_paths=[out_path],
+        source_paths=[path],
+        processed_pages=page_count,
+        processed_files=1,
+        metadata={
+            "text": text,
+            "opacity": opacity,
+            "angle": angle,
+            "font_size": font_size,
+            "color": rgb,
+        },
+        message=f"Watermarked PDF saved to '{out_path}'.",
+    )
+
+
 def run(
     input_path: str,
     text: str,
@@ -49,55 +124,30 @@ def run(
     font_size: float = 60,
     color: str = "0.5,0.5,0.5",
 ) -> bool:
-    path = Path(input_path)
-    if not validate_pdf(path):
-        return False
-
-    if not math.isfinite(opacity) or not 0.0 <= opacity <= 1.0:
-        log.error("Opacity must be a finite value between 0.0 and 1.0.")
-        return False
-    if not math.isfinite(angle):
-        log.error("Angle must be a finite number.")
-        return False
-    if not math.isfinite(font_size) or font_size <= 0:
-        log.error("Font size must be a positive finite number.")
-        return False
-
-    out_path = Path(output_path) if output_path else path.parent / f"{path.stem}_watermarked.pdf"
-
-    try:
-        rgb = parse_color(color)
-    except ValueError as e:
-        log.error("Invalid color: %s", e)
-        return False
-
-    try:
-        with atomic_output_path(out_path) as temporary:
-            with fitz.open(str(path)) as doc:
-                for page in doc:
-                    # TextWriter supports arbitrary rotation angles unlike insert_text
-                    tw = fitz.TextWriter(page.rect, opacity=opacity, color=rgb)
-                    font = fitz.Font("helv")
-                    pivot = fitz.Point(page.rect.width / 2, page.rect.height / 2)
-                    tw.append(
-                        pos=pivot,
-                        text=text,
-                        font=font,
-                        fontsize=font_size,
-                    )
-                    # Build rotation matrix around the page centre
-                    rad = math.radians(angle)
-                    cos_a, sin_a = math.cos(rad), math.sin(rad)
-                    rot = fitz.Matrix(cos_a, sin_a, -sin_a, cos_a, 0, 0)
-                    tw.write_text(page, morph=(pivot, rot), overlay=True)
-                doc.save(str(temporary))
-        log.info("Watermarked PDF saved to '%s'.", out_path)
-        return True
-
-    except Exception as e:
-        log.error("Error watermarking '%s': %s", path, e)
-        return False
+    return present_operation(
+        lambda: execute(
+            Path(input_path),
+            text,
+            Path(output_path) if output_path else None,
+            opacity,
+            angle,
+            font_size,
+            color,
+        ),
+        log,
+    )
 
 
 def cli_run(args) -> bool:
-    return run(args.input, args.text, args.output, args.opacity, args.angle, args.size, args.color)
+    return present_operation(
+        lambda: execute(
+            Path(args.input),
+            args.text,
+            Path(args.output) if args.output else None,
+            args.opacity,
+            args.angle,
+            args.size,
+            args.color,
+        ),
+        log,
+    )
