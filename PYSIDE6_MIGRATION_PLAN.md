@@ -60,7 +60,7 @@ important backend issues identified in
 - [x] Use temporary files and atomic replacement where practical.
 - [x] Resolve the license label and license-text mismatch.
 - [x] Add regression tests for each corrected behavior.
-- [x] Keep all existing tests passing (258 tests as of 24 July 2026).
+- [x] Keep all existing tests passing (276 tests as of 24 July 2026).
 
 ## Phase 2: Add project packaging
 
@@ -398,18 +398,18 @@ Phase 6 validation completed on 24 July 2026:
 
 Most operations share the same interaction patterns. Implement these once:
 
-- [ ] Single PDF picker
-- [ ] Multiple PDF picker
-- [ ] Image-file picker
-- [ ] Folder picker
-- [ ] Output file picker
-- [ ] Output directory picker
-- [ ] Drag-and-drop zone
-- [ ] Run and cancel buttons
-- [ ] Progress display
-- [ ] Result summary
-- [ ] Open output button
-- [ ] Open containing-folder button
+- [x] Single PDF picker
+- [x] Multiple PDF picker
+- [x] Image-file picker
+- [x] Folder picker
+- [x] Output file picker
+- [x] Output directory picker
+- [x] Drag-and-drop zone
+- [x] Run and cancel buttons
+- [x] Progress display
+- [x] Result summary
+- [x] Open output button
+- [x] Open containing-folder button
 
 Each picker should provide:
 
@@ -420,6 +420,30 @@ Each picker should provide:
 - A stable signal-based API
 
 Avoid duplicating path handling and validation across 13 operation pages.
+
+Phase 7 validation completed on 24 July 2026:
+
+- All specialized path pickers derive from one configurable `PathPicker`
+  implementation.
+- Pickers expose stable `pathChanged`, `pathsChanged`, `validityChanged`, and
+  `validationChanged` signals plus typed path accessors.
+- Input pickers validate existence, file or directory type, supported
+  extensions, required values, and single-versus-multiple selection.
+- Output pickers validate the target type, extension, and existence of the
+  destination parent.
+- Validation state is visible through accessible messages and consistent
+  neutral, valid, and invalid styling.
+- Picker labels have keyboard buddies, browse controls have accessible names,
+  and the drop zone can be activated with Enter, Return, or Space.
+- Pickers and the standalone drop zone accept compatible local drag-and-drop
+  paths and reject incompatible or missing paths.
+- `OperationPanel` composes run/cancel controls, determinate or indeterminate
+  progress, structured results, warnings, metrics, and output actions.
+- Output actions verify the current path before asking the desktop to open the
+  output or its containing folder.
+- An offscreen visual render verified validation styling, drop-zone bounds,
+  result-card density, and output controls.
+- The complete suite passed with 276 tests.
 
 ## Phase 8: Run operations outside the UI thread
 

@@ -141,6 +141,81 @@ QProgressBar::chunk {{
     background-color: {COLOR_PRIMARY};
 }}
 
+QLineEdit {{
+    min-height: {CONTROL_HEIGHT}px;
+    padding: 0 {SPACE_SM}px;
+    border: 1px solid {COLOR_BORDER};
+    border-radius: {BORDER_RADIUS}px;
+    background-color: {COLOR_SURFACE};
+}}
+
+QLineEdit:focus {{
+    border: 2px solid {COLOR_PRIMARY};
+}}
+
+QLineEdit[validationState="invalid"] {{
+    border: 2px solid {COLOR_DANGER};
+}}
+
+QLineEdit[validationState="valid"] {{
+    border-color: {COLOR_SUCCESS};
+}}
+
+QLabel#pathErrorLabel {{
+    color: {COLOR_DANGER};
+    font-size: {FONT_SIZE_CAPTION}pt;
+}}
+
+QWidget#dropZone {{
+    min-height: 96px;
+    border: 2px dashed {COLOR_BORDER};
+    border-radius: {BORDER_RADIUS}px;
+    background-color: {COLOR_SURFACE};
+}}
+
+QWidget#dropZone:focus {{
+    border-color: {COLOR_PRIMARY};
+}}
+
+QWidget#dropZone[validationState="valid"] {{
+    border-color: {COLOR_SUCCESS};
+    background-color: #EDF8F2;
+}}
+
+QWidget#dropZone[validationState="invalid"] {{
+    border-color: {COLOR_DANGER};
+    background-color: #FFF1F0;
+}}
+
+QWidget#resultSummary {{
+    padding: {SPACE_MD}px;
+    border: 1px solid {COLOR_BORDER};
+    border-radius: {BORDER_RADIUS}px;
+    background-color: {COLOR_SURFACE};
+}}
+
+QWidget#resultSummary[resultState="success"] {{
+    border-color: {COLOR_SUCCESS};
+}}
+
+QWidget#resultSummary[resultState="error"] {{
+    border-color: {COLOR_DANGER};
+}}
+
+QWidget#resultSummary[resultState="success"] QLabel#resultStatusLabel {{
+    color: {COLOR_SUCCESS};
+    font-weight: {FONT_WEIGHT_BOLD};
+}}
+
+QWidget#resultSummary[resultState="error"] QLabel#resultStatusLabel {{
+    color: {COLOR_DANGER};
+    font-weight: {FONT_WEIGHT_BOLD};
+}}
+
+QLabel#resultMetricsLabel, QLabel#progressMessageLabel {{
+    color: {COLOR_TEXT_MUTED};
+}}
+
 QPushButton {{
     min-height: {CONTROL_HEIGHT}px;
     padding: 0 {SPACE_MD}px;

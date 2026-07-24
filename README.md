@@ -48,7 +48,9 @@ The CLI can also be run directly from a source checkout with
 The desktop entry point opens the Phase 6 application shell with navigation for
 every PDF operation, placeholder content pages, application menus, keyboard
 shortcuts, and global status/progress controls. Operation forms are introduced
-by later migration phases.
+by later migration phases. A Phase 7 widget library now provides shared PDF,
+image, folder, and output pickers, drag-and-drop validation, operation controls,
+progress, result summaries, and output-opening actions for those forms.
 
 ---
 
