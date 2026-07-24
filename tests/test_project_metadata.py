@@ -58,3 +58,10 @@ def test_pyproject_defines_setuptools_build_backend():
 
     assert build_system["build-backend"] == "setuptools.build_meta"
     assert "setuptools>=77" in build_system["requires"]
+
+
+def test_pyproject_packages_desktop_resources():
+    with (PROJECT_ROOT / "pyproject.toml").open("rb") as file:
+        setuptools = tomllib.load(file)["tool"]["setuptools"]
+
+    assert "*.svg" in setuptools["package-data"]["safepdf.ui.resources"]

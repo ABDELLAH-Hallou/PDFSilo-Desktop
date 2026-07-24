@@ -1,62 +1,56 @@
-"""SafePDF desktop application entry point.
-
-This initial bootstrap makes the packaged ``safepdf-gui`` command usable.
-Feature pages and the final main-window implementation are introduced in later
-PySide6 migration phases.
-"""
+"""SafePDF desktop application entry point."""
 
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
+
+from PySide6.QtWidgets import QApplication
+
+from safepdf.ui.main_window import MainWindow
+from safepdf.ui.metadata import (
+    APPLICATION_DISPLAY_NAME,
+    APPLICATION_ID,
+    APPLICATION_NAME,
+    APPLICATION_VERSION,
+    ORGANIZATION_DOMAIN,
+    ORGANIZATION_NAME,
+)
+from safepdf.ui.resources import application_icon
+from safepdf.ui.theme import apply_theme
 
 
-def _load_qt():
-    """Import and return the Qt classes used by the bootstrap window."""
-    # Keep Qt imports local so package metadata and the CLI remain importable in
-    # minimal environments that have not installed the UI dependency yet.
-    try:
-        from PySide6.QtCore import Qt
-        from PySide6.QtWidgets import QApplication, QLabel, QMainWindow
-    except ImportError as exc:
-        raise SystemExit(
-            "PySide6 is required for the SafePDF desktop interface. "
-            "Install the project with: pip install ."
-        ) from exc
-    return Qt, QApplication, QLabel, QMainWindow
+def create_application(arguments: Sequence[str] | None = None) -> QApplication:
+    """Create or configure the process-wide Qt application."""
+    existing = QApplication.instance()
+    if existing is None:
+        application = QApplication(
+            list(arguments) if arguments is not None else sys.argv
+        )
+    else:
+        application = existing
+
+    application.setApplicationName(APPLICATION_NAME)
+    application.setApplicationDisplayName(APPLICATION_DISPLAY_NAME)
+    application.setApplicationVersion(APPLICATION_VERSION)
+    application.setOrganizationName(ORGANIZATION_NAME)
+    application.setOrganizationDomain(ORGANIZATION_DOMAIN)
+    application.setDesktopFileName(APPLICATION_ID)
+    application.setWindowIcon(application_icon())
+    apply_theme(application)
+    return application
 
 
-def create_main_window():
-    """Create the temporary Phase 2 application window."""
-    Qt, _, QLabel, QMainWindow = _load_qt()
-
-    window = QMainWindow()
-    window.setWindowTitle("SafePDF")
-    window.resize(900, 600)
-
-    message = QLabel(
-        "SafePDF desktop foundation is ready.\n"
-        "Operation screens will be added in the next migration phases."
-    )
-    message.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    window.setCentralWidget(message)
-    return window
+def create_main_window() -> MainWindow:
+    """Create the SafePDF application window."""
+    return MainWindow()
 
 
 def main() -> int:
     """Start the SafePDF PySide6 desktop application."""
-    _, QApplication, _, _ = _load_qt()
-
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv)
-
-    app.setApplicationName("SafePDF")
-    app.setApplicationVersion("0.1.0")
-    app.setOrganizationName("SafePDF")
-
+    app = create_application()
     window = create_main_window()
     window.show()
-
     return app.exec()
 
 

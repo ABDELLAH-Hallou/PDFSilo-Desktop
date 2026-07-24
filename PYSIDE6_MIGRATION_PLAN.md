@@ -60,7 +60,7 @@ important backend issues identified in
 - [x] Use temporary files and atomic replacement where practical.
 - [x] Resolve the license label and license-text mismatch.
 - [x] Add regression tests for each corrected behavior.
-- [x] Keep all existing tests passing (246 tests as of 24 July 2026).
+- [x] Keep all existing tests passing (252 tests as of 24 July 2026).
 
 ## Phase 2: Add project packaging
 
@@ -305,11 +305,31 @@ if __name__ == "__main__":
 
 ### Implementation tasks
 
-- [ ] Create the `safepdf.ui` package.
-- [ ] Add the GUI entry point.
-- [ ] Add application metadata and an icon.
-- [ ] Establish theme, spacing, and typography constants.
-- [ ] Confirm that an empty main window starts on each target platform.
+- [x] Create the `safepdf.ui` package.
+- [x] Add the GUI entry point.
+- [x] Add application metadata and an icon.
+- [x] Establish theme, spacing, and typography constants.
+- [ ] Confirm that an empty main window starts on each target platform
+      (Windows verified; native Linux and macOS runs remain pending).
+
+Phase 5 implementation and Windows validation completed on 24 July 2026:
+
+- `safepdf.ui` now contains the application entry point, `MainWindow`,
+  metadata, theme tokens, packaged resources, and scaffold packages for
+  dialogs, pages, widgets, and workers.
+- `create_application()` configures application name, display name, version,
+  organization, domain, desktop identifier, icon, system font, and stylesheet.
+- A scalable SVG application icon is applied to both the application and main
+  window.
+- Color, spacing, typography, control-height, and border-radius constants are
+  centralized in `safepdf.ui.theme`.
+- The window was constructed and passed through a real Qt start/stop event loop
+  using the offscreen Windows platform.
+- The wheel was rebuilt and inspected; the UI modules and SVG icon are present.
+- The complete suite passed with 252 tests.
+
+The startup smoke test is platform-neutral and ready for Linux and macOS CI,
+but those native Qt platforms cannot be executed from this Windows workspace.
 
 ## Phase 6: Build the main application shell
 
