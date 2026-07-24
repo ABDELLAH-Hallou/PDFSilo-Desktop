@@ -29,13 +29,16 @@ from pathlib import Path
 import fitz
 
 from safepdf.core import (
+    CancellationCheck,
     InvalidInputError,
     OperationResult,
     PdfPasswordError,
     PdfProcessingError,
+    ProgressCallback,
     SafePdfError,
 )
 from safepdf.core.output import save_document
+from safepdf.core.progress import check_cancelled, report_progress
 from safepdf.core.validation import require_pdf
 from safepdf.presentation import present_operation
 
@@ -50,6 +53,9 @@ def execute(
     allow_print: bool = True,
     allow_copy: bool = True,
     allow_edit: bool = True,
+    *,
+    progress: ProgressCallback | None = None,
+    is_cancelled: CancellationCheck | None = None,
 ) -> OperationResult:
     """Encrypt a PDF and return structured permission information."""
     path = require_pdf(input_path)
@@ -78,6 +84,7 @@ def execute(
     )
 
     try:
+        check_cancelled(is_cancelled)
         with fitz.open(str(path)) as doc:
             page_count = doc.page_count
             save_document(
@@ -87,6 +94,12 @@ def execute(
                 user_pw=user_password,
                 owner_pw=owner_pw,
                 permissions=permissions,
+            )
+            report_progress(
+                progress,
+                1,
+                1,
+                f"Encrypted '{path.name}'.",
             )
 
     except SafePdfError:

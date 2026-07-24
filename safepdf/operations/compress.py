@@ -23,8 +23,16 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core import (
+    CancellationCheck,
+    InvalidInputError,
+    OperationResult,
+    PdfProcessingError,
+    ProgressCallback,
+    SafePdfError,
+)
 from safepdf.core.output import save_document
+from safepdf.core.progress import check_cancelled, report_progress
 from safepdf.core.validation import require_pdf
 from safepdf.presentation import present_operation
 
@@ -35,6 +43,9 @@ def execute(
     input_path: Path,
     output_path: Path | None = None,
     quality: int = 60,
+    *,
+    progress: ProgressCallback | None = None,
+    is_cancelled: CancellationCheck | None = None,
 ) -> OperationResult:
     """Compress a PDF and return size metrics."""
     path = require_pdf(input_path)
@@ -47,9 +58,17 @@ def execute(
     original_size = path.stat().st_size
 
     try:
+        check_cancelled(is_cancelled)
         with fitz.open(str(path)) as doc:
             page_count = doc.page_count
             doc.rewrite_images(quality=quality)
+            report_progress(
+                progress,
+                1,
+                1,
+                f"Compressed images in '{path.name}'.",
+            )
+            check_cancelled(is_cancelled)
             save_document(
                 doc,
                 out_path,

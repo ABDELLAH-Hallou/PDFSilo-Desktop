@@ -34,8 +34,16 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core import (
+    CancellationCheck,
+    InvalidInputError,
+    OperationResult,
+    PdfProcessingError,
+    ProgressCallback,
+    SafePdfError,
+)
 from safepdf.core.output import save_document
+from safepdf.core.progress import check_cancelled, report_progress
 from safepdf.core.validation import require_directory
 from safepdf.presentation import present_operation
 from safepdf.utils import (
@@ -53,6 +61,9 @@ def execute(
     target_size: str = "A4",
     fit: bool = True,
     margin: float = 36.0,
+    *,
+    progress: ProgressCallback | None = None,
+    is_cancelled: CancellationCheck | None = None,
 ) -> OperationResult:
     """Merge every image in *folder* into a single PDF.
 
@@ -107,7 +118,9 @@ def execute(
     processed_files = 0
 
     try:
-        for img_path in image_files:
+        total_files = len(image_files)
+        for file_number, img_path in enumerate(image_files, start=1):
+            check_cancelled(is_cancelled)
             try:
                 # Open the image via fitz to get natural dimensions
                 with fitz.open(str(img_path)) as img_doc:
@@ -115,6 +128,12 @@ def execute(
                     nat_w, nat_h = pix.width, pix.height
             except Exception as exc:
                 warnings.append(f"Skipping '{img_path.name}': {exc}")
+                report_progress(
+                    progress,
+                    file_number,
+                    total_files,
+                    f"Skipped image {file_number} of {total_files}: {img_path.name}.",
+                )
                 continue
 
             # Choose portrait/landscape canvas to match the image orientation
@@ -142,7 +161,14 @@ def execute(
             rect = fitz.Rect(x0, y0, x0 + draw_w, y0 + draw_h)
             page.insert_image(rect, filename=str(img_path))
             processed_files += 1
+            report_progress(
+                progress,
+                file_number,
+                total_files,
+                f"Added image {file_number} of {total_files}: {img_path.name}.",
+            )
 
+        check_cancelled(is_cancelled)
         if output_doc.page_count == 0:
             raise InvalidInputError(
                 "No images could be processed. No output file was created."

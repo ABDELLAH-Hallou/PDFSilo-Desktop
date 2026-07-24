@@ -9,14 +9,16 @@ from safepdf.core.errors import (
     SafePdfError,
 )
 from safepdf.core.models import OperationResult
+from safepdf.core.progress import CancellationCheck, ProgressCallback
 
 __all__ = [
+    "CancellationCheck",
     "InvalidInputError",
     "OperationCancelledError",
     "OperationResult",
     "OutputWriteError",
     "PdfPasswordError",
     "PdfProcessingError",
+    "ProgressCallback",
     "SafePdfError",
 ]
-

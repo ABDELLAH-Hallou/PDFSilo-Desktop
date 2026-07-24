@@ -27,8 +27,16 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core import (
+    CancellationCheck,
+    InvalidInputError,
+    OperationResult,
+    PdfProcessingError,
+    ProgressCallback,
+    SafePdfError,
+)
 from safepdf.core.output import save_document
+from safepdf.core.progress import check_cancelled, report_progress
 from safepdf.core.validation import require_pdf
 from safepdf.presentation import present_operation
 
@@ -68,6 +76,9 @@ def execute(
     input_path: Path,
     order: str,
     output_path: Path | None = None,
+    *,
+    progress: ProgressCallback | None = None,
+    is_cancelled: CancellationCheck | None = None,
 ) -> OperationResult:
     """Reorder PDF pages and return structured output information."""
     path = require_pdf(input_path)
@@ -80,9 +91,18 @@ def execute(
 
             out_doc = fitz.open()
             try:
-                for idx in page_order:
+                output_page_count = len(page_order)
+                for current, idx in enumerate(page_order, start=1):
+                    check_cancelled(is_cancelled)
                     out_doc.insert_pdf(src_doc, from_page=idx, to_page=idx)
+                    report_progress(
+                        progress,
+                        current,
+                        output_page_count,
+                        f"Reordered page {current} of {output_page_count}.",
+                    )
 
+                check_cancelled(is_cancelled)
                 save_document(out_doc, out_path)
             finally:
                 out_doc.close()

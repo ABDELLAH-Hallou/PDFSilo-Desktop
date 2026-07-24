@@ -24,8 +24,16 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core import (
+    CancellationCheck,
+    InvalidInputError,
+    OperationResult,
+    PdfProcessingError,
+    ProgressCallback,
+    SafePdfError,
+)
 from safepdf.core.output import save_document
+from safepdf.core.progress import check_cancelled, report_progress
 from safepdf.core.validation import require_pdf
 from safepdf.presentation import present_operation
 
@@ -66,6 +74,9 @@ def execute(
     angle: int,
     pages: str | None = None,
     output_path: Path | None = None,
+    *,
+    progress: ProgressCallback | None = None,
+    is_cancelled: CancellationCheck | None = None,
 ) -> OperationResult:
     """Rotate selected PDF pages and return structured output information."""
     if angle not in VALID_ANGLES:
@@ -84,10 +95,19 @@ def execute(
             else:
                 targets, warnings = list(range(total)), []
 
-            for i in targets:
+            target_count = len(targets)
+            for current, i in enumerate(targets, start=1):
+                check_cancelled(is_cancelled)
                 page = doc[i]
                 page.set_rotation((page.rotation + angle) % 360)
+                report_progress(
+                    progress,
+                    current,
+                    target_count,
+                    f"Rotated page {current} of {target_count}.",
+                )
 
+            check_cancelled(is_cancelled)
             save_document(doc, out_path)
 
     except SafePdfError:

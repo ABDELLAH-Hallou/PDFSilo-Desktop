@@ -72,6 +72,29 @@ The existing operation-level `run(...) -> bool` functions remain available for
 backward compatibility. New Python integrations should prefer `execute(...)`
 so they can consume structured results and handle specific error subclasses.
 
+Long-running operations also accept framework-independent progress and
+cancellation callbacks:
+
+```python
+from pathlib import Path
+from threading import Event
+
+from safepdf.operations.split import execute
+
+cancel_requested = Event()
+
+result = execute(
+    Path("document.pdf"),
+    progress=lambda current, total, message: print(
+        f"{current}/{total}: {message}"
+    ),
+    is_cancelled=cancel_requested.is_set,
+)
+```
+
+The future PySide6 worker layer can connect these callbacks to Qt signals and a
+thread-safe cancellation flag without importing Qt into PDF operations.
+
 ---
 
 ## Commands

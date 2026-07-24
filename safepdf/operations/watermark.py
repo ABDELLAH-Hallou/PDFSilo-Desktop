@@ -26,8 +26,16 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core import (
+    CancellationCheck,
+    InvalidInputError,
+    OperationResult,
+    PdfProcessingError,
+    ProgressCallback,
+    SafePdfError,
+)
 from safepdf.core.output import save_document
+from safepdf.core.progress import check_cancelled, report_progress
 from safepdf.core.validation import require_pdf
 from safepdf.presentation import present_operation
 
@@ -51,6 +59,9 @@ def execute(
     angle: float = 45,
     font_size: float = 60,
     color: str = "0.5,0.5,0.5",
+    *,
+    progress: ProgressCallback | None = None,
+    is_cancelled: CancellationCheck | None = None,
 ) -> OperationResult:
     """Apply a text watermark and return structured output information."""
     path = require_pdf(input_path)
@@ -75,7 +86,8 @@ def execute(
     try:
         with fitz.open(str(path)) as doc:
             page_count = doc.page_count
-            for page in doc:
+            for current, page in enumerate(doc, start=1):
+                check_cancelled(is_cancelled)
                 # TextWriter supports arbitrary rotation angles unlike insert_text
                 tw = fitz.TextWriter(page.rect, opacity=opacity, color=rgb)
                 font = fitz.Font("helv")
@@ -91,6 +103,14 @@ def execute(
                 cos_a, sin_a = math.cos(rad), math.sin(rad)
                 rot = fitz.Matrix(cos_a, sin_a, -sin_a, cos_a, 0, 0)
                 tw.write_text(page, morph=(pivot, rot), overlay=True)
+                report_progress(
+                    progress,
+                    current,
+                    page_count,
+                    f"Watermarked page {current} of {page_count}.",
+                )
+
+            check_cancelled(is_cancelled)
             save_document(doc, out_path)
     except SafePdfError:
         raise

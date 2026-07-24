@@ -33,8 +33,16 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core import (
+    CancellationCheck,
+    InvalidInputError,
+    OperationResult,
+    PdfProcessingError,
+    ProgressCallback,
+    SafePdfError,
+)
 from safepdf.core.output import save_document
+from safepdf.core.progress import check_cancelled, report_progress
 from safepdf.core.validation import require_pdf
 from safepdf.presentation import present_operation
 
@@ -108,6 +116,9 @@ def execute(
     width: float | None = None,
     height: float | None = None,
     append: bool = False,
+    *,
+    progress: ProgressCallback | None = None,
+    is_cancelled: CancellationCheck | None = None,
 ) -> OperationResult:
     """Insert *image_paths* into the PDF at *input_path*.
 
@@ -171,6 +182,7 @@ def execute(
         with fitz.open(str(path)) as doc:
             original_pages = doc.page_count
             for idx, img_path in enumerate(image_paths_checked):
+                check_cancelled(is_cancelled)
                 # --- Open the image to read its natural dimensions ---
                 try:
                     with fitz.open(str(img_path)) as img_doc:
@@ -214,8 +226,18 @@ def execute(
                         f"Invalid image geometry: {exc}"
                     ) from exc
                 target_page.insert_image(rect, filename=str(img_path))
+                report_progress(
+                    progress,
+                    idx + 1,
+                    len(image_paths_checked),
+                    (
+                        f"Added image {idx + 1} of "
+                        f"{len(image_paths_checked)}: {img_path.name}."
+                    ),
+                )
 
             resulting_pages = doc.page_count
+            check_cancelled(is_cancelled)
             save_document(doc, out_path)
 
     except SafePdfError:

@@ -21,8 +21,16 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core import (
+    CancellationCheck,
+    InvalidInputError,
+    OperationResult,
+    PdfProcessingError,
+    ProgressCallback,
+    SafePdfError,
+)
 from safepdf.core.output import save_document
+from safepdf.core.progress import check_cancelled, report_progress
 from safepdf.core.validation import require_pdf
 from safepdf.presentation import present_operation
 from safepdf.utils import PAGE_SIZES, get_sorted_pdf_files
@@ -34,6 +42,9 @@ def execute(
     input_files: list[Path],
     output_file: Path,
     target_size: str = "A4",
+    *,
+    progress: ProgressCallback | None = None,
+    is_cancelled: CancellationCheck | None = None,
 ) -> OperationResult:
     """Merge PDFs into normalized pages and return structured details."""
     if target_size not in PAGE_SIZES:
@@ -50,11 +61,19 @@ def execute(
     processed_files = 0
 
     try:
-        for pdf_path in input_files:
+        total_files = len(input_files)
+        for file_number, pdf_path in enumerate(input_files, start=1):
+            check_cancelled(is_cancelled)
             try:
                 path = require_pdf(pdf_path)
             except InvalidInputError as exc:
                 warnings.append(str(exc))
+                report_progress(
+                    progress,
+                    file_number,
+                    total_files,
+                    f"Skipped file {file_number} of {total_files}: {pdf_path.name}.",
+                )
                 continue
 
             try:
@@ -82,9 +101,19 @@ def execute(
 
                     processed_files += 1
 
+            except SafePdfError:
+                raise
             except Exception as exc:
                 warnings.append(f"Could not process '{path}': {exc}")
 
+            report_progress(
+                progress,
+                file_number,
+                total_files,
+                f"Processed file {file_number} of {total_files}: {path.name}.",
+            )
+
+        check_cancelled(is_cancelled)
         if output_doc.page_count > 0:
             page_count = output_doc.page_count
             save_document(output_doc, output_file)

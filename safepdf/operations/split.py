@@ -19,16 +19,33 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.core import OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core import (
+    CancellationCheck,
+    OperationResult,
+    PdfProcessingError,
+    ProgressCallback,
+    SafePdfError,
+)
 from safepdf.core.errors import OutputWriteError
-from safepdf.core.output import save_document
+from safepdf.core.output import (
+    publish_staged_files,
+    save_document,
+    temporary_output_directory,
+)
+from safepdf.core.progress import check_cancelled, report_progress
 from safepdf.core.validation import require_pdf
 from safepdf.presentation import present_operation
 
 log = logging.getLogger(__name__)
 
 
-def execute(input_path: Path, output_folder: Path | None = None) -> OperationResult:
+def execute(
+    input_path: Path,
+    output_folder: Path | None = None,
+    *,
+    progress: ProgressCallback | None = None,
+    is_cancelled: CancellationCheck | None = None,
+) -> OperationResult:
     """Split a PDF and return structured output information."""
     path = require_pdf(input_path)
     out_dir = output_folder or path.parent / f"{path.stem}_pages"
@@ -44,26 +61,37 @@ def execute(input_path: Path, output_folder: Path | None = None) -> OperationRes
             )
 
     try:
-        out_dir.mkdir(parents=True, exist_ok=True)
-    except OSError as exc:
-        raise OutputWriteError(
-            f"Could not create output folder '{out_dir}': {exc}"
-        ) from exc
-
-    try:
         with fitz.open(str(path)) as src_doc:
             total = len(src_doc)
-            output_paths = []
+            with temporary_output_directory(out_dir) as staging_dir:
+                staged_paths = []
 
-            for page_num in range(total):
-                out_doc = fitz.open()
-                try:
-                    out_doc.insert_pdf(src_doc, from_page=page_num, to_page=page_num)
-                    out_path = out_dir / f"page_{page_num + 1:03d}.pdf"
-                    save_document(out_doc, out_path)
-                    output_paths.append(out_path)
-                finally:
-                    out_doc.close()
+                for page_num in range(total):
+                    check_cancelled(is_cancelled)
+                    out_doc = fitz.open()
+                    try:
+                        out_doc.insert_pdf(
+                            src_doc,
+                            from_page=page_num,
+                            to_page=page_num,
+                        )
+                        staged_path = (
+                            staging_dir / f"page_{page_num + 1:03d}.pdf"
+                        )
+                        save_document(out_doc, staged_path)
+                        staged_paths.append(staged_path)
+                    finally:
+                        out_doc.close()
+
+                    report_progress(
+                        progress,
+                        page_num + 1,
+                        total,
+                        f"Split page {page_num + 1} of {total}.",
+                    )
+
+                check_cancelled(is_cancelled)
+                output_paths = publish_staged_files(staged_paths, out_dir)
 
     except SafePdfError:
         raise

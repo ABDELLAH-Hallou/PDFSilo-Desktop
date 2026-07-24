@@ -23,8 +23,16 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core import (
+    CancellationCheck,
+    InvalidInputError,
+    OperationResult,
+    PdfProcessingError,
+    ProgressCallback,
+    SafePdfError,
+)
 from safepdf.core.output import save_document
+from safepdf.core.progress import check_cancelled, report_progress
 from safepdf.core.validation import require_pdf
 from safepdf.presentation import present_operation
 
@@ -36,6 +44,9 @@ def execute(
     start: int,
     end: int,
     output_path: Path | None = None,
+    *,
+    progress: ProgressCallback | None = None,
+    is_cancelled: CancellationCheck | None = None,
 ) -> OperationResult:
     """Extract an inclusive page range and return structured output details."""
     path = require_pdf(input_path)
@@ -52,7 +63,25 @@ def execute(
 
             out_doc = fitz.open()
             try:
-                out_doc.insert_pdf(src_doc, from_page=start - 1, to_page=end - 1)
+                pages_to_extract = end - start + 1
+                for current, page_index in enumerate(
+                    range(start - 1, end),
+                    start=1,
+                ):
+                    check_cancelled(is_cancelled)
+                    out_doc.insert_pdf(
+                        src_doc,
+                        from_page=page_index,
+                        to_page=page_index,
+                    )
+                    report_progress(
+                        progress,
+                        current,
+                        pages_to_extract,
+                        f"Extracted page {current} of {pages_to_extract}.",
+                    )
+
+                check_cancelled(is_cancelled)
                 save_document(out_doc, out_path)
                 extracted_pages = out_doc.page_count
             finally:

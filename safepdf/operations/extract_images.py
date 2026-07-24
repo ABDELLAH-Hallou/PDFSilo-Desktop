@@ -24,9 +24,21 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core import (
+    CancellationCheck,
+    InvalidInputError,
+    OperationResult,
+    PdfProcessingError,
+    ProgressCallback,
+    SafePdfError,
+)
 from safepdf.core.errors import OutputWriteError
-from safepdf.core.output import write_bytes
+from safepdf.core.output import (
+    publish_staged_files,
+    temporary_output_directory,
+    write_bytes,
+)
+from safepdf.core.progress import check_cancelled, report_progress
 from safepdf.core.validation import require_pdf
 from safepdf.presentation import present_operation
 
@@ -66,6 +78,9 @@ def execute(
     input_path: Path,
     output_folder: Path | None = None,
     fmt: str = "png",
+    *,
+    progress: ProgressCallback | None = None,
+    is_cancelled: CancellationCheck | None = None,
 ) -> OperationResult:
     """Extract embedded images and return structured output information."""
     path = require_pdf(input_path)
@@ -85,20 +100,13 @@ def execute(
             warnings.append(
                 f"Output folder '{out_dir}' is not empty — files may be overwritten."
             )
-    try:
-        out_dir.mkdir(parents=True, exist_ok=True)
-    except OSError as exc:
-        raise OutputWriteError(
-            f"Could not create output folder '{out_dir}': {exc}"
-        ) from exc
-
-    seen_xrefs: set[int] = set()
-    output_paths = []
     failed_images = 0
 
     try:
         with fitz.open(str(path)) as doc:
             page_count = doc.page_count
+            seen_xrefs: set[int] = set()
+            image_entries = []
             for page_num, page in enumerate(doc, start=1):
                 for img_index, img in enumerate(page.get_images(full=True), start=1):
                     xref = img[0]
@@ -106,7 +114,16 @@ def execute(
                     if xref in seen_xrefs:
                         continue
                     seen_xrefs.add(xref)
+                    image_entries.append((page_num, img_index, xref, smask))
 
+            total_images = len(image_entries)
+            with temporary_output_directory(out_dir) as staging_dir:
+                staged_paths = []
+                for current, (page_num, img_index, xref, smask) in enumerate(
+                    image_entries,
+                    start=1,
+                ):
+                    check_cancelled(is_cancelled)
                     try:
                         image_bytes = _image_bytes(
                             doc,
@@ -116,10 +133,12 @@ def execute(
                             warnings,
                         )
                         ext = fmt
-                        out_name = f"p{page_num:03d}_img{img_index:02d}.{ext}"
-                        out_path = out_dir / out_name
-                        write_bytes(out_path, image_bytes)
-                        output_paths.append(out_path)
+                        out_name = (
+                            f"p{page_num:03d}_img{img_index:02d}.{ext}"
+                        )
+                        staged_path = staging_dir / out_name
+                        write_bytes(staged_path, image_bytes)
+                        staged_paths.append(staged_path)
                     except OutputWriteError:
                         raise
                     except Exception as exc:
@@ -127,6 +146,16 @@ def execute(
                         warnings.append(
                             f"Could not extract image xref {xref}: {exc}"
                         )
+
+                    report_progress(
+                        progress,
+                        current,
+                        total_images,
+                        f"Extracted image {current} of {total_images}.",
+                    )
+
+                check_cancelled(is_cancelled)
+                output_paths = publish_staged_files(staged_paths, out_dir)
 
     except SafePdfError:
         raise

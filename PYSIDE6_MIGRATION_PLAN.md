@@ -60,7 +60,7 @@ important backend issues identified in
 - [x] Use temporary files and atomic replacement where practical.
 - [x] Resolve the license label and license-text mismatch.
 - [x] Add regression tests for each corrected behavior.
-- [x] Keep all existing tests passing (226 tests as of 24 July 2026).
+- [x] Keep all existing tests passing (246 tests as of 24 July 2026).
 
 ## Phase 2: Add project packaging
 
@@ -219,11 +219,28 @@ requested, the operation should remove temporary output and raise
 
 ### Implementation tasks
 
-- [ ] Define framework-independent progress and cancellation protocols.
-- [ ] Add progress reporting to long-running operations.
-- [ ] Add cooperative cancellation checks.
-- [ ] Clean temporary output after cancellation.
-- [ ] Add progress and cancellation tests at the core level.
+- [x] Define framework-independent progress and cancellation protocols.
+- [x] Add progress reporting to long-running operations.
+- [x] Add cooperative cancellation checks.
+- [x] Clean temporary output after cancellation.
+- [x] Add progress and cancellation tests at the core level.
+
+Phase 4 validation completed on 24 July 2026:
+
+- `ProgressCallback` and `CancellationCheck` are plain Python callable aliases
+  with no Qt dependency.
+- All 13 `execute(...)` APIs accept optional, keyword-only `progress` and
+  `is_cancelled` callbacks.
+- Page, file, and image loops report progress after each completed unit and
+  poll for cancellation between units and before final output publication.
+- Cancellation raises `OperationCancelledError` without being wrapped as an
+  unexpected processing failure.
+- Split, rendered-image, and extracted-image outputs are built in sibling
+  staging directories. Cancellation removes the staging directory and
+  preserves any existing destination contents.
+- Single-file operations retain their atomic-output behavior and do not replace
+  an existing destination when cancelled before publication.
+- The complete suite passed with 246 tests.
 
 ## Phase 5: Create the PySide6 application structure
 

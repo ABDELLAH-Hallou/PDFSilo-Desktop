@@ -25,9 +25,21 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.core import InvalidInputError, OperationResult, PdfProcessingError, SafePdfError
+from safepdf.core import (
+    CancellationCheck,
+    InvalidInputError,
+    OperationResult,
+    PdfProcessingError,
+    ProgressCallback,
+    SafePdfError,
+)
 from safepdf.core.errors import OutputWriteError
-from safepdf.core.output import save_pixmap
+from safepdf.core.output import (
+    publish_staged_files,
+    save_pixmap,
+    temporary_output_directory,
+)
+from safepdf.core.progress import check_cancelled, report_progress
 from safepdf.core.validation import require_pdf
 from safepdf.presentation import present_operation
 
@@ -39,6 +51,9 @@ def execute(
     output_folder: Path | None = None,
     fmt: str = "png",
     dpi: int = 150,
+    *,
+    progress: ProgressCallback | None = None,
+    is_cancelled: CancellationCheck | None = None,
 ) -> OperationResult:
     """Render PDF pages to images and return structured output details."""
     path = require_pdf(input_path)
@@ -61,35 +76,41 @@ def execute(
             warnings.append(
                 f"Output folder '{out_dir}' is not empty — files may be overwritten."
             )
-    try:
-        out_dir.mkdir(parents=True, exist_ok=True)
-    except OSError as exc:
-        raise OutputWriteError(
-            f"Could not create output folder '{out_dir}': {exc}"
-        ) from exc
-
     zoom = dpi / 72  # PyMuPDF default is 72 DPI
     mat = fitz.Matrix(zoom, zoom)
-    output_paths = []
 
     try:
         with fitz.open(str(path)) as doc:
             total = len(doc)
+            with temporary_output_directory(out_dir) as staging_dir:
+                staged_paths = []
 
-            for page_num, page in enumerate(doc, start=1):
-                pix = page.get_pixmap(matrix=mat, alpha=False)
-                out_path = out_dir / f"page_{page_num:03d}.{fmt}"
-
-                if fmt == "png":
-                    save_pixmap(pix, out_path, output="png")
-                else:
-                    save_pixmap(
-                        pix,
-                        out_path,
-                        output="jpeg",
-                        jpg_quality=85,
+                for page_num, page in enumerate(doc, start=1):
+                    check_cancelled(is_cancelled)
+                    pix = page.get_pixmap(matrix=mat, alpha=False)
+                    staged_path = (
+                        staging_dir / f"page_{page_num:03d}.{fmt}"
                     )
-                output_paths.append(out_path)
+
+                    if fmt == "png":
+                        save_pixmap(pix, staged_path, output="png")
+                    else:
+                        save_pixmap(
+                            pix,
+                            staged_path,
+                            output="jpeg",
+                            jpg_quality=85,
+                        )
+                    staged_paths.append(staged_path)
+                    report_progress(
+                        progress,
+                        page_num,
+                        total,
+                        f"Rendered page {page_num} of {total}.",
+                    )
+
+                check_cancelled(is_cancelled)
+                output_paths = publish_staged_files(staged_paths, out_dir)
 
     except SafePdfError:
         raise

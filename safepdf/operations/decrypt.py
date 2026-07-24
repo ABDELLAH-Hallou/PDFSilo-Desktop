@@ -19,8 +19,16 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.core import OperationResult, PdfPasswordError, PdfProcessingError, SafePdfError
+from safepdf.core import (
+    CancellationCheck,
+    OperationResult,
+    PdfPasswordError,
+    PdfProcessingError,
+    ProgressCallback,
+    SafePdfError,
+)
 from safepdf.core.output import save_document
+from safepdf.core.progress import check_cancelled, report_progress
 from safepdf.core.validation import require_pdf
 from safepdf.presentation import present_operation
 
@@ -31,11 +39,15 @@ def execute(
     input_path: Path,
     password: str,
     output_path: Path | None = None,
+    *,
+    progress: ProgressCallback | None = None,
+    is_cancelled: CancellationCheck | None = None,
 ) -> OperationResult:
     """Decrypt a PDF and return structured output information."""
     path = require_pdf(input_path)
     out_path = output_path or path.parent / f"{path.stem}_decrypted.pdf"
 
+    check_cancelled(is_cancelled)
     try:
         doc = fitz.open(str(path))
     except Exception as exc:
@@ -49,7 +61,14 @@ def execute(
             raise PdfPasswordError(f"Incorrect password for '{path.name}'.")
 
         page_count = doc.page_count
+        check_cancelled(is_cancelled)
         save_document(doc, out_path, encryption=fitz.PDF_ENCRYPT_NONE)
+        report_progress(
+            progress,
+            1,
+            1,
+            f"Decrypted '{path.name}'.",
+        )
     except SafePdfError:
         raise
     except Exception as exc:
