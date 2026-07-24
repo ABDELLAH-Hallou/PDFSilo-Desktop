@@ -24,7 +24,7 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import validate_pdf
+from safepdf.utils import atomic_output_path, validate_pdf
 
 log = logging.getLogger(__name__)
 
@@ -59,16 +59,17 @@ def run(input_path: str, angle: int, pages: str | None = None, output_path: str 
     out_path = Path(output_path) if output_path else path.parent / f"{path.stem}_rotated.pdf"
 
     try:
-        with fitz.open(str(path)) as doc:
-            total = len(doc)
-            targets = parse_pages(pages, total) if pages else list(range(total))
+        with atomic_output_path(out_path) as temporary:
+            with fitz.open(str(path)) as doc:
+                total = len(doc)
+                targets = parse_pages(pages, total) if pages else list(range(total))
 
-            for i in targets:
-                page = doc[i]
-                page.set_rotation((page.rotation + angle) % 360)
-                log.info("Rotated page %d by %d°", i + 1, angle)
+                for i in targets:
+                    page = doc[i]
+                    page.set_rotation((page.rotation + angle) % 360)
+                    log.info("Rotated page %d by %d°", i + 1, angle)
 
-            doc.save(str(out_path))
+                doc.save(str(temporary))
             log.info("Saved rotated PDF to '%s'.", out_path)
             return True
 

@@ -12,6 +12,7 @@ class TestExtractImagesRun:
         assert run(str(pdf_with_image), str(out_dir)) is True
         images = list(out_dir.glob("*.png"))
         assert len(images) >= 1
+        assert images[0].read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
 
     def test_default_output_folder(self, pdf_with_image: Path):
         assert run(str(pdf_with_image)) is True
@@ -21,6 +22,11 @@ class TestExtractImagesRun:
     def test_jpeg_format(self, pdf_with_image: Path, tmp_path: Path):
         out_dir = tmp_path / "imgs"
         assert run(str(pdf_with_image), str(out_dir), fmt="jpeg") is True
+        images = list(out_dir.glob("*.jpeg"))
+        assert images
+        data = images[0].read_bytes()
+        assert data.startswith(b"\xff\xd8")
+        assert data.endswith(b"\xff\xd9")
 
     def test_invalid_format(self, pdf_with_image: Path, tmp_path: Path):
         out_dir = tmp_path / "imgs"

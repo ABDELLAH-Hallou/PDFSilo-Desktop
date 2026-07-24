@@ -1,6 +1,10 @@
 import logging
+import os
 import re
+from contextlib import contextmanager
+from collections.abc import Generator
 from pathlib import Path
+from uuid import uuid4
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +22,9 @@ def setup_logging(level: str = "INFO") -> None:
 def validate_pdf(path: Path) -> bool:
     if not path.exists():
         log.error("File '%s' not found.", path)
+        return False
+    if not path.is_file():
+        log.error("'%s' is not a file.", path)
         return False
     if path.suffix.lower() != ".pdf":
         log.error("'%s' is not a PDF file.", path)
@@ -55,3 +62,37 @@ def get_sorted_image_files(folder: Path) -> list[str]:
 def warn_if_nonempty(folder: Path) -> None:
     if folder.exists() and any(folder.iterdir()):
         log.warning("Output folder '%s' is not empty — files may be overwritten.", folder)
+
+
+@contextmanager
+def atomic_output_path(destination: Path) -> Generator[Path, None, None]:
+    """Yield a temporary sibling path and atomically publish it on success.
+
+    The temporary file lives beside *destination*, so ``os.replace`` stays on
+    the same filesystem and is atomic on supported platforms. Existing output
+    is left untouched if the caller raises before the context exits.
+    """
+    destination = Path(destination)
+    parent = destination.parent
+    if not parent.is_dir():
+        raise FileNotFoundError(f"Output directory does not exist: '{parent}'")
+
+    temporary = parent / (
+        f".{destination.stem}.{uuid4().hex}.tmp{destination.suffix}"
+    )
+
+    try:
+        yield temporary
+        if not temporary.is_file():
+            raise FileNotFoundError(
+                f"Operation did not create temporary output: '{temporary}'"
+            )
+        os.replace(temporary, destination)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def atomic_write_bytes(destination: Path, data: bytes) -> None:
+    """Write *data* without exposing a partial destination file."""
+    with atomic_output_path(destination) as temporary:
+        temporary.write_bytes(data)

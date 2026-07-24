@@ -28,11 +28,12 @@ Examples:
 """
 
 import logging
+import math
 from pathlib import Path
 
 import fitz
 
-from safepdf.utils import validate_pdf
+from safepdf.utils import atomic_output_path, validate_pdf
 
 log = logging.getLogger(__name__)
 
@@ -45,7 +46,12 @@ def _parse_position(pos_str: str) -> tuple[float, float]:
     parts = pos_str.split(",")
     if len(parts) != 2:
         raise ValueError(f"Position must be 'X,Y', got: {pos_str!r}")
-    return float(parts[0].strip()), float(parts[1].strip())
+    x, y = float(parts[0].strip()), float(parts[1].strip())
+    if not math.isfinite(x) or not math.isfinite(y):
+        raise ValueError("Position coordinates must be finite numbers")
+    if x < 0 or y < 0:
+        raise ValueError("Position coordinates cannot be negative")
+    return x, y
 
 
 def _image_rect(
@@ -59,12 +65,19 @@ def _image_rect(
 ) -> fitz.Rect:
     """Compute the destination rectangle for the image on *page*."""
     margin = 72.0  # 1 inch default margin used when auto-sizing
+    if img_width <= 0 or img_height <= 0:
+        raise ValueError("Image dimensions must be positive")
+    if x >= page.rect.width or y >= page.rect.height:
+        raise ValueError("Image position must be inside the target page")
 
     if target_width is None and target_height is None:
-        # Auto-fit: fill the page width minus margins
+        # Auto-fit inside the remaining page area while preserving aspect ratio.
         available_w = page.rect.width - x - margin
-        scale = available_w / img_width if img_width else 1.0
-        tw = available_w
+        available_h = page.rect.height - y - margin
+        if available_w <= 0 or available_h <= 0:
+            raise ValueError("Image position leaves no drawable page area")
+        scale = min(available_w / img_width, available_h / img_height)
+        tw = img_width * scale
         th = img_height * scale
     elif target_width is not None and target_height is not None:
         tw, th = float(target_width), float(target_height)
@@ -75,7 +88,12 @@ def _image_rect(
         th = float(target_height)  # type: ignore[arg-type]
         tw = img_width * (th / img_height) if img_height else th
 
-    return fitz.Rect(x, y, x + tw, y + th)
+    rect = fitz.Rect(x, y, x + tw, y + th)
+    if rect.width <= 0 or rect.height <= 0:
+        raise ValueError("Image dimensions must be positive")
+    if rect.x1 > page.rect.width or rect.y1 > page.rect.height:
+        raise ValueError("Image rectangle extends beyond the target page")
+    return rect
 
 
 def run(
@@ -124,7 +142,7 @@ def run(
     image_paths_checked: list[Path] = []
     for img in image_paths:
         p = Path(img)
-        if not p.exists():
+        if not p.is_file():
             log.error("Image file not found: '%s'", p)
             return False
         if p.suffix.lower() not in SUPPORTED_EXTENSIONS:
@@ -140,6 +158,11 @@ def run(
         log.error("No image files provided.")
         return False
 
+    for label, value in (("Width", width), ("Height", height)):
+        if value is not None and (not math.isfinite(value) or value <= 0):
+            log.error("%s must be a positive finite number.", label)
+            return False
+
     try:
         x, y = _parse_position(position)
     except ValueError as exc:
@@ -153,42 +176,54 @@ def run(
     )
 
     try:
-        with fitz.open(str(path)) as doc:
-            for idx, img_path in enumerate(image_paths_checked):
-                # --- Open the image to read its natural dimensions ---
-                try:
-                    img_doc = fitz.open(str(img_path))
-                    pix = img_doc[0].get_pixmap()
-                    natural_w, natural_h = pix.width, pix.height
-                    img_doc.close()
-                except Exception as img_err:
-                    log.error("Cannot read image '%s': %s", img_path, img_err)
-                    return False
+        with atomic_output_path(out_path) as temporary:
+            with fitz.open(str(path)) as doc:
+                for idx, img_path in enumerate(image_paths_checked):
+                    # --- Open the image to read its natural dimensions ---
+                    try:
+                        with fitz.open(str(img_path)) as img_doc:
+                            pix = img_doc[0].get_pixmap()
+                            natural_w, natural_h = pix.width, pix.height
+                    except Exception as img_err:
+                        log.error("Cannot read image '%s': %s", img_path, img_err)
+                        return False
 
-                if append:
-                    # Add a new blank A4 page for each image
-                    target_page = doc.new_page(width=595, height=842)
-                else:
-                    if page is not None:
-                        # Fixed page (1-indexed)
-                        pg_idx = page - 1
-                        if pg_idx < 0 or pg_idx >= doc.page_count:
-                            log.error(
-                                "Page %d out of range (document has %d page(s)).",
-                                page,
-                                doc.page_count,
-                            )
-                            return False
-                        target_page = doc[pg_idx]
+                    if append:
+                        # Add a new blank A4 page for each image
+                        target_page = doc.new_page(width=595, height=842)
                     else:
-                        # Sequential placement; cycle if more images than pages
-                        pg_idx = idx % doc.page_count
-                        target_page = doc[pg_idx]
+                        if page is not None:
+                            # Fixed page (1-indexed)
+                            pg_idx = page - 1
+                            if pg_idx < 0 or pg_idx >= doc.page_count:
+                                log.error(
+                                    "Page %d out of range (document has %d page(s)).",
+                                    page,
+                                    doc.page_count,
+                                )
+                                return False
+                            target_page = doc[pg_idx]
+                        else:
+                            # Sequential placement; cycle if more images than pages
+                            pg_idx = idx % doc.page_count
+                            target_page = doc[pg_idx]
 
-                rect = _image_rect(target_page, x, y, natural_w, natural_h, width, height)
-                target_page.insert_image(rect, filename=str(img_path))
+                    try:
+                        rect = _image_rect(
+                            target_page,
+                            x,
+                            y,
+                            natural_w,
+                            natural_h,
+                            width,
+                            height,
+                        )
+                    except ValueError as geometry_error:
+                        log.error("Invalid image geometry: %s", geometry_error)
+                        return False
+                    target_page.insert_image(rect, filename=str(img_path))
 
-            doc.save(str(out_path))
+                doc.save(str(temporary))
 
         log.info("PDF with images saved to '%s'.", out_path)
         return True

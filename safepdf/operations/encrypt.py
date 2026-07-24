@@ -8,8 +8,8 @@ Usage:
 Arguments:
     input                   Path to the input PDF file
     -p, --password          User password required to open the document (required)
-    --owner-password        Owner password for permission control
-                            (defaults to the user password if omitted)
+    --owner-password        Owner password for permission control. Required
+                            and must differ when restrictions are requested.
     -o, --output            Output file path (default: <input_stem>_encrypted.pdf)
     --no-print              Disallow printing
     --no-copy               Disallow text/image copying
@@ -28,7 +28,7 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import validate_pdf
+from safepdf.utils import atomic_output_path, validate_pdf
 
 log = logging.getLogger(__name__)
 
@@ -47,6 +47,18 @@ def run(
         return False
 
     out_path = Path(output_path) if output_path else path.parent / f"{path.stem}_encrypted.pdf"
+    restrictions_requested = not (allow_print and allow_copy and allow_edit)
+    if restrictions_requested and not owner_password:
+        log.error(
+            "A distinct owner password is required when permission restrictions are enabled."
+        )
+        return False
+    if owner_password and owner_password == user_password and restrictions_requested:
+        log.error(
+            "Owner and user passwords must differ when permission restrictions are enabled."
+        )
+        return False
+
     owner_pw = owner_password or user_password
 
     permissions = (
@@ -58,14 +70,15 @@ def run(
     )
 
     try:
-        with fitz.open(str(path)) as doc:
-            doc.save(
-                str(out_path),
-                encryption=fitz.PDF_ENCRYPT_AES_256,
-                user_pw=user_password,
-                owner_pw=owner_pw,
-                permissions=permissions,
-            )
+        with atomic_output_path(out_path) as temporary:
+            with fitz.open(str(path)) as doc:
+                doc.save(
+                    str(temporary),
+                    encryption=fitz.PDF_ENCRYPT_AES_256,
+                    user_pw=user_password,
+                    owner_pw=owner_pw,
+                    permissions=permissions,
+                )
         log.info("Encrypted PDF saved to '%s'.", out_path)
         return True
 

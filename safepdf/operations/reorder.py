@@ -27,7 +27,7 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import validate_pdf
+from safepdf.utils import atomic_output_path, validate_pdf
 
 log = logging.getLogger(__name__)
 
@@ -68,7 +68,8 @@ def run(input_path: str, order: str, output_path: str | None = None) -> bool:
                 for idx in page_order:
                     out_doc.insert_pdf(src_doc, from_page=idx, to_page=idx)
 
-                out_doc.save(str(out_path))
+                with atomic_output_path(out_path) as temporary:
+                    out_doc.save(str(temporary))
                 log.info(
                     "Reordered %d → %d pages, saved to '%s'.",
                     total, len(page_order), out_path,

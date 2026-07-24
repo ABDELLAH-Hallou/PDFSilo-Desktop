@@ -157,7 +157,7 @@ python -m safepdf encrypt <input> -p PASSWORD [-o OUTPUT]
 |---|---|---|
 | `input` | Input PDF file | *(required)* |
 | `-p`, `--password` | User password to open the document | *(required)* |
-| `--owner-password` | Owner password for permissions | same as `-p` |
+| `--owner-password` | Owner password for permissions; required and must differ when restrictions are used | same as `-p` when unrestricted |
 | `-o`, `--output` | Output file path | `<input_stem>_encrypted.pdf` |
 | `--no-print` | Disallow printing | — |
 | `--no-copy` | Disallow copying | — |
@@ -381,7 +381,7 @@ python -m safepdf compress report_with_images.pdf -q 70
 ## License
 
 ```
-MIT License
+BSD 2-Clause License
 
 Copyright (c) 2026-present Abdellah HALLOU
 

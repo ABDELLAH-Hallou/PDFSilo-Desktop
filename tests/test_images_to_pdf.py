@@ -136,6 +136,25 @@ class TestImagesToPdfRunErrors:
             run(str(tmp_image_folder), output_path=str(tmp_path / "out.pdf"),
                 target_size="A3")
 
+    @pytest.mark.parametrize("margin", [-1, float("nan"), float("inf")])
+    def test_invalid_margin_returns_false(
+        self, tmp_image_folder: Path, tmp_path: Path, margin: float
+    ):
+        assert run(
+            str(tmp_image_folder),
+            output_path=str(tmp_path / "out.pdf"),
+            margin=margin,
+        ) is False
+
+    def test_margin_must_leave_drawable_area(
+        self, tmp_image_folder: Path, tmp_path: Path
+    ):
+        assert run(
+            str(tmp_image_folder),
+            output_path=str(tmp_path / "out.pdf"),
+            margin=298,
+        ) is False
+
 
 # ── cli_run ───────────────────────────────────────────────────────────────────
 

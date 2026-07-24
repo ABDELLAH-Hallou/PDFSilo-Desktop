@@ -51,16 +51,16 @@ Before exposing the operations through a graphical interface, address the
 important backend issues identified in
 [`CODEBASE_ANALYSIS.md`](CODEBASE_ANALYSIS.md):
 
-- [ ] Make compression quality affect actual image compression, or remove the
+- [x] Make compression quality affect actual image compression, or remove the
       misleading quality option.
-- [ ] Properly convert extracted images to the requested PNG or JPEG format.
-- [ ] Correct owner-password behavior for restricted encrypted PDFs.
-- [ ] Add validation for opacity, color components, dimensions, coordinates,
+- [x] Properly convert extracted images to the requested PNG or JPEG format.
+- [x] Correct owner-password behavior for restricted encrypted PDFs.
+- [x] Add validation for opacity, color components, dimensions, coordinates,
       and margins.
-- [ ] Use temporary files and atomic replacement where practical.
-- [ ] Resolve the license label and license-text mismatch.
-- [ ] Add regression tests for each corrected behavior.
-- [ ] Keep all existing tests passing.
+- [x] Use temporary files and atomic replacement where practical.
+- [x] Resolve the license label and license-text mismatch.
+- [x] Add regression tests for each corrected behavior.
+- [x] Keep all existing tests passing (195 tests as of 24 July 2026).
 
 ## Phase 2: Add project packaging
 

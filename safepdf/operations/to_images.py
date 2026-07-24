@@ -25,7 +25,7 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import validate_pdf, warn_if_nonempty
+from safepdf.utils import atomic_output_path, validate_pdf, warn_if_nonempty
 
 log = logging.getLogger(__name__)
 
@@ -59,10 +59,11 @@ def run(input_path: str, output_folder: str | None = None, fmt: str = "png", dpi
                 pix = page.get_pixmap(matrix=mat, alpha=False)
                 out_path = out_dir / f"page_{page_num:03d}.{fmt}"
 
-                if fmt == "png":
-                    pix.save(str(out_path))
-                else:
-                    pix.save(str(out_path), jpg_quality=85)
+                with atomic_output_path(out_path) as temporary:
+                    if fmt == "png":
+                        pix.save(str(temporary), output="png")
+                    else:
+                        pix.save(str(temporary), output="jpeg", jpg_quality=85)
 
                 log.info("Saved: %s", out_path.name)
 

@@ -41,6 +41,25 @@ class TestCompressRun:
         assert len(doc) >= 1
         doc.close()
 
+    def test_quality_is_passed_to_image_rewriter(
+        self, tmp_pdf: Path, tmp_path: Path, monkeypatch
+    ):
+        observed: list[int] = []
+        original = fitz.Document.rewrite_images
+
+        def rewrite_images(document, *args, **kwargs):
+            observed.append(kwargs["quality"])
+            return original(document, *args, **kwargs)
+
+        monkeypatch.setattr(fitz.Document, "rewrite_images", rewrite_images)
+
+        assert run(
+            str(tmp_pdf),
+            str(tmp_path / "quality.pdf"),
+            quality=37,
+        ) is True
+        assert observed == [37]
+
 
 class TestCompressCliRun:
     def test_cli_run_delegates(self, tmp_pdf: Path, tmp_path: Path):

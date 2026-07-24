@@ -29,11 +29,17 @@ Examples:
 """
 
 import logging
+import math
 from pathlib import Path
 
 import fitz
 
-from safepdf.utils import PAGE_SIZES, get_sorted_image_files, IMAGE_EXTENSIONS
+from safepdf.utils import (
+    IMAGE_EXTENSIONS,
+    PAGE_SIZES,
+    atomic_output_path,
+    get_sorted_image_files,
+)
 
 log = logging.getLogger(__name__)
 
@@ -72,6 +78,9 @@ def run(
         raise ValueError(
             f"Unsupported page size '{target_size}'. Choose from: {list(PAGE_SIZES)}"
         )
+    if not math.isfinite(margin) or margin < 0:
+        log.error("Margin must be a non-negative finite number.")
+        return False
 
     folder_path = Path(folder)
     if not folder_path.is_dir():
@@ -90,6 +99,15 @@ def run(
     out = Path(output_path) if output_path else folder_path.parent / f"{folder_path.name}.pdf"
 
     target_w, target_h = PAGE_SIZES[target_size]
+    if fit and margin * 2 >= min(target_w, target_h):
+        log.error(
+            "Margin %.1f is too large for %s pages; it must be less than %.1f.",
+            margin,
+            target_size,
+            min(target_w, target_h) / 2,
+        )
+        return False
+
     output_doc = fitz.open()
 
     try:
@@ -97,10 +115,9 @@ def run(
             img_path = Path(img_path_str)
             try:
                 # Open the image via fitz to get natural dimensions
-                img_doc = fitz.open(str(img_path))
-                pix = img_doc[0].get_pixmap()
-                nat_w, nat_h = pix.width, pix.height
-                img_doc.close()
+                with fitz.open(str(img_path)) as img_doc:
+                    pix = img_doc[0].get_pixmap()
+                    nat_w, nat_h = pix.width, pix.height
             except Exception as exc:
                 log.warning("Skipping '%s': %s", img_path.name, exc)
                 continue
@@ -136,7 +153,8 @@ def run(
             log.warning("No images could be processed. No output file created.")
             return False
 
-        output_doc.save(str(out))
+        with atomic_output_path(out) as temporary:
+            output_doc.save(str(temporary))
         log.info(
             "Created '%s' with %d page(s) from %d image(s).",
             out, output_doc.page_count, len(image_files),

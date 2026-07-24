@@ -19,7 +19,7 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import validate_pdf, warn_if_nonempty
+from safepdf.utils import atomic_output_path, validate_pdf, warn_if_nonempty
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +43,8 @@ def run(input_path: str, output_folder: str | None = None) -> bool:
                 try:
                     out_doc.insert_pdf(src_doc, from_page=page_num, to_page=page_num)
                     out_path = out_dir / f"page_{page_num + 1:03d}.pdf"
-                    out_doc.save(str(out_path))
+                    with atomic_output_path(out_path) as temporary:
+                        out_doc.save(str(temporary))
                     log.info("Saved: %s", out_path.name)
                 finally:
                     out_doc.close()

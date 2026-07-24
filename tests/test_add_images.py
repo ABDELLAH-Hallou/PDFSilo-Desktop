@@ -28,6 +28,11 @@ class TestParsePosition:
         with pytest.raises(ValueError):
             _parse_position("72,80,90")
 
+    @pytest.mark.parametrize("position", ["-1,0", "0,-1", "nan,1", "1,inf"])
+    def test_invalid_coordinates_raise(self, position: str):
+        with pytest.raises(ValueError):
+            _parse_position(position)
+
 
 # ── run — happy paths ─────────────────────────────────────────────────────────
 
@@ -150,6 +155,48 @@ class TestAddImagesRunErrors:
         out = tmp_path / "result.pdf"
         assert run(str(tmp_pdf), [str(tmp_png_image)],
                    output_path=str(out), page=0) is False
+
+    @pytest.mark.parametrize("width", [0, -1, float("nan"), float("inf")])
+    def test_invalid_width_returns_false(
+        self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path, width: float
+    ):
+        assert run(
+            str(tmp_pdf),
+            [str(tmp_png_image)],
+            output_path=str(tmp_path / "result.pdf"),
+            width=width,
+        ) is False
+
+    @pytest.mark.parametrize("height", [0, -1, float("nan"), float("inf")])
+    def test_invalid_height_returns_false(
+        self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path, height: float
+    ):
+        assert run(
+            str(tmp_pdf),
+            [str(tmp_png_image)],
+            output_path=str(tmp_path / "result.pdf"),
+            height=height,
+        ) is False
+
+    def test_position_outside_page_returns_false(
+        self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path
+    ):
+        assert run(
+            str(tmp_pdf),
+            [str(tmp_png_image)],
+            output_path=str(tmp_path / "result.pdf"),
+            position="600,10",
+        ) is False
+
+    def test_rectangle_outside_page_returns_false(
+        self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path
+    ):
+        assert run(
+            str(tmp_pdf),
+            [str(tmp_png_image)],
+            output_path=str(tmp_path / "result.pdf"),
+            width=600,
+        ) is False
 
 
 # ── cli_run ───────────────────────────────────────────────────────────────────

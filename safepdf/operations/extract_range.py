@@ -23,7 +23,7 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import validate_pdf
+from safepdf.utils import atomic_output_path, validate_pdf
 
 log = logging.getLogger(__name__)
 
@@ -49,7 +49,8 @@ def run(input_path: str, start: int, end: int, output_path: str | None = None) -
             out_doc = fitz.open()
             try:
                 out_doc.insert_pdf(src_doc, from_page=start - 1, to_page=end - 1)
-                out_doc.save(str(out_path))
+                with atomic_output_path(out_path) as temporary:
+                    out_doc.save(str(temporary))
                 log.info(
                     "Extracted pages %d–%d → '%s' (%d pages).",
                     start, end, out_path, out_doc.page_count,

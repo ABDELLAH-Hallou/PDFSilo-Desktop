@@ -6,6 +6,7 @@ from pathlib import Path
 
 from safepdf.utils import (
     PAGE_SIZES,
+    atomic_output_path,
     extract_number_from_filename,
     get_sorted_pdf_files,
     setup_logging,
@@ -52,6 +53,11 @@ class TestValidatePdf:
         f.write_text("not a pdf")
         assert validate_pdf(f) is False
 
+    def test_directory_with_pdf_suffix_is_invalid(self, tmp_path: Path):
+        folder = tmp_path / "folder.pdf"
+        folder.mkdir()
+        assert validate_pdf(folder) is False
+
 
 class TestExtractNumberFromFilename:
     def test_leading_number(self):
@@ -95,3 +101,27 @@ class TestWarnIfNonempty:
         with caplog.at_level(logging.WARNING):
             warn_if_nonempty(tmp_path / "doesnotexist")
         assert not caplog.records
+
+
+class TestAtomicOutputPath:
+    def test_replaces_destination_on_success(self, tmp_path: Path):
+        destination = tmp_path / "output.bin"
+        destination.write_bytes(b"old")
+
+        with atomic_output_path(destination) as temporary:
+            temporary.write_bytes(b"new")
+
+        assert destination.read_bytes() == b"new"
+        assert not list(tmp_path.glob(".*.tmp.bin"))
+
+    def test_preserves_destination_on_failure(self, tmp_path: Path):
+        destination = tmp_path / "output.bin"
+        destination.write_bytes(b"old")
+
+        with pytest.raises(RuntimeError, match="stop"):
+            with atomic_output_path(destination) as temporary:
+                temporary.write_bytes(b"partial")
+                raise RuntimeError("stop")
+
+        assert destination.read_bytes() == b"old"
+        assert not list(tmp_path.glob(".*.tmp.bin"))

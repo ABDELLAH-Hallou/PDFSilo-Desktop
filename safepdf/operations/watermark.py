@@ -21,11 +21,12 @@ Examples:
 """
 
 import logging
+import math
 from pathlib import Path
 
 import fitz
 
-from safepdf.utils import validate_pdf
+from safepdf.utils import atomic_output_path, validate_pdf
 
 log = logging.getLogger(__name__)
 
@@ -34,6 +35,8 @@ def parse_color(color_str: str) -> tuple[float, float, float]:
     parts = [float(c.strip()) for c in color_str.split(",")]
     if len(parts) != 3:
         raise ValueError("Color must be three comma-separated floats, e.g. '0.5,0.5,0.5'")
+    if not all(math.isfinite(component) and 0.0 <= component <= 1.0 for component in parts):
+        raise ValueError("Color components must be finite values between 0.0 and 1.0")
     return tuple(parts)
 
 
@@ -50,6 +53,16 @@ def run(
     if not validate_pdf(path):
         return False
 
+    if not math.isfinite(opacity) or not 0.0 <= opacity <= 1.0:
+        log.error("Opacity must be a finite value between 0.0 and 1.0.")
+        return False
+    if not math.isfinite(angle):
+        log.error("Angle must be a finite number.")
+        return False
+    if not math.isfinite(font_size) or font_size <= 0:
+        log.error("Font size must be a positive finite number.")
+        return False
+
     out_path = Path(output_path) if output_path else path.parent / f"{path.stem}_watermarked.pdf"
 
     try:
@@ -59,25 +72,25 @@ def run(
         return False
 
     try:
-        with fitz.open(str(path)) as doc:
-            for page in doc:
-                # TextWriter supports arbitrary rotation angles unlike insert_text
-                tw = fitz.TextWriter(page.rect, opacity=opacity, color=rgb)
-                font = fitz.Font("helv")
-                pivot = fitz.Point(page.rect.width / 2, page.rect.height / 2)
-                tw.append(
-                    pos=pivot,
-                    text=text,
-                    font=font,
-                    fontsize=font_size,
-                )
-                # Build rotation matrix around the page centre
-                import math
-                rad = math.radians(angle)
-                cos_a, sin_a = math.cos(rad), math.sin(rad)
-                rot = fitz.Matrix(cos_a, sin_a, -sin_a, cos_a, 0, 0)
-                tw.write_text(page, morph=(pivot, rot), overlay=True)
-            doc.save(str(out_path))
+        with atomic_output_path(out_path) as temporary:
+            with fitz.open(str(path)) as doc:
+                for page in doc:
+                    # TextWriter supports arbitrary rotation angles unlike insert_text
+                    tw = fitz.TextWriter(page.rect, opacity=opacity, color=rgb)
+                    font = fitz.Font("helv")
+                    pivot = fitz.Point(page.rect.width / 2, page.rect.height / 2)
+                    tw.append(
+                        pos=pivot,
+                        text=text,
+                        font=font,
+                        fontsize=font_size,
+                    )
+                    # Build rotation matrix around the page centre
+                    rad = math.radians(angle)
+                    cos_a, sin_a = math.cos(rad), math.sin(rad)
+                    rot = fitz.Matrix(cos_a, sin_a, -sin_a, cos_a, 0, 0)
+                    tw.write_text(page, morph=(pivot, rot), overlay=True)
+                doc.save(str(temporary))
         log.info("Watermarked PDF saved to '%s'.", out_path)
         return True
 

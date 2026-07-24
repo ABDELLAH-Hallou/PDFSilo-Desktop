@@ -19,7 +19,7 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import validate_pdf
+from safepdf.utils import atomic_output_path, validate_pdf
 
 log = logging.getLogger(__name__)
 
@@ -33,19 +33,20 @@ def run(input_path: str, password: str, output_path: str | None = None) -> bool:
 
     try:
         doc = fitz.open(str(path))
+        try:
+            if doc.is_encrypted:
+                result = doc.authenticate(password)
+                if result == 0:
+                    log.error("Incorrect password for '%s'.", path.name)
+                    return False
+                log.info("Authentication successful.")
+            else:
+                log.info("'%s' is not encrypted — saving a clean copy.", path.name)
 
-        if doc.is_encrypted:
-            result = doc.authenticate(password)
-            if result == 0:
-                log.error("Incorrect password for '%s'.", path.name)
-                doc.close()
-                return False
-            log.info("Authentication successful.")
-        else:
-            log.info("'%s' is not encrypted — saving a clean copy.", path.name)
-
-        doc.save(str(out_path), encryption=fitz.PDF_ENCRYPT_NONE)
-        doc.close()
+            with atomic_output_path(out_path) as temporary:
+                doc.save(str(temporary), encryption=fitz.PDF_ENCRYPT_NONE)
+        finally:
+            doc.close()
         log.info("Decrypted PDF saved to '%s'.", out_path)
         return True
 

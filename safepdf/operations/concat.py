@@ -21,7 +21,12 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import PAGE_SIZES, get_sorted_pdf_files, validate_pdf
+from safepdf.utils import (
+    PAGE_SIZES,
+    atomic_output_path,
+    get_sorted_pdf_files,
+    validate_pdf,
+)
 
 log = logging.getLogger(__name__)
 
@@ -68,7 +73,8 @@ def run(input_files: list[str], output_file: str, target_size: str = "A4") -> bo
                 log.error("Error processing '%s': %s", path, e)
 
         if output_doc.page_count > 0:
-            output_doc.save(output_file)
+            with atomic_output_path(Path(output_file)) as temporary:
+                output_doc.save(str(temporary))
             log.info("Created '%s' with %d pages.", output_file, output_doc.page_count)
             return True
 

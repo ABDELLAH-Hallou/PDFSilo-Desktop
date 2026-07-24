@@ -88,7 +88,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("encrypt", help="Password-protect a PDF (AES-256)")
     p.add_argument("input", help="Input PDF file")
     p.add_argument("-p", "--password", required=True, help="User password")
-    p.add_argument("--owner-password", default=None, help="Owner password (defaults to user password)")
+    p.add_argument(
+        "--owner-password",
+        default=None,
+        help="Owner password (required and must differ when restrictions are used)",
+    )
     p.add_argument("-o", "--output", default=None, help="Output file path")
     p.add_argument("--no-print", action="store_true", help="Disallow printing")
     p.add_argument("--no-copy", action="store_true", help="Disallow copying")

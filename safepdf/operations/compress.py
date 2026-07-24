@@ -23,7 +23,7 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.utils import validate_pdf
+from safepdf.utils import atomic_output_path, validate_pdf
 
 log = logging.getLogger(__name__)
 
@@ -41,15 +41,17 @@ def run(input_path: str, output_path: str | None = None, quality: int = 60) -> b
     original_size = path.stat().st_size
 
     try:
-        with fitz.open(str(path)) as doc:
-            doc.save(
-                str(out_path),
-                garbage=4,          # remove unused objects, xrefs, duplicates
-                deflate=True,       # compress streams
-                deflate_images=True,
-                deflate_fonts=True,
-                clean=True,         # sanitize content streams
-            )
+        with atomic_output_path(out_path) as temporary:
+            with fitz.open(str(path)) as doc:
+                doc.rewrite_images(quality=quality)
+                doc.save(
+                    str(temporary),
+                    garbage=4,          # remove unused objects, xrefs, duplicates
+                    deflate=True,       # compress streams
+                    deflate_images=True,
+                    deflate_fonts=True,
+                    clean=True,         # sanitize content streams
+                )
 
         compressed_size = out_path.stat().st_size
         saved_pct = (1 - compressed_size / original_size) * 100
