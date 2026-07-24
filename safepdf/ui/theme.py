@@ -48,15 +48,97 @@ QMainWindow {{
     background-color: {COLOR_BACKGROUND};
 }}
 
-QLabel#titleLabel {{
+QFrame#applicationHeader {{
+    background-color: {COLOR_SURFACE};
+    border-bottom: 1px solid {COLOR_BORDER};
+}}
+
+QLabel#applicationTitleLabel {{
+    color: {COLOR_TEXT};
+    font-size: {FONT_SIZE_SUBTITLE}pt;
+    font-weight: {FONT_WEIGHT_BOLD};
+}}
+
+QLabel#pageTitleLabel {{
     color: {COLOR_TEXT};
     font-size: {FONT_SIZE_TITLE}pt;
     font-weight: {FONT_WEIGHT_BOLD};
 }}
 
-QLabel#subtitleLabel {{
+QLabel#pageDescriptionLabel {{
     color: {COLOR_TEXT_MUTED};
     font-size: {FONT_SIZE_SUBTITLE}pt;
+}}
+
+QLabel#privacyLabel {{
+    color: {COLOR_SUCCESS};
+    font-weight: {FONT_WEIGHT_MEDIUM};
+}}
+
+QLabel#placeholderLabel {{
+    color: {COLOR_TEXT_MUTED};
+}}
+
+QListWidget#navigationList {{
+    background-color: {COLOR_SURFACE};
+    border: 0;
+    border-right: 1px solid {COLOR_BORDER};
+    outline: 0;
+    padding: {SPACE_SM}px;
+}}
+
+QListWidget#navigationList::item {{
+    min-height: {CONTROL_HEIGHT}px;
+    padding: 0 {SPACE_SM}px;
+    margin: {SPACE_XXS}px 0;
+    border-radius: {BORDER_RADIUS}px;
+}}
+
+QListWidget#navigationList::item:hover {{
+    background-color: {COLOR_SURFACE_MUTED};
+}}
+
+QListWidget#navigationList::item:selected {{
+    color: {COLOR_SURFACE};
+    background-color: {COLOR_PRIMARY};
+}}
+
+QStackedWidget#pageStack {{
+    background-color: {COLOR_BACKGROUND};
+}}
+
+QMenuBar, QMenu, QStatusBar {{
+    background-color: {COLOR_SURFACE};
+}}
+
+QStatusBar {{
+    border-top: 1px solid {COLOR_BORDER};
+}}
+
+QToolButton {{
+    min-height: {CONTROL_HEIGHT}px;
+    padding: 0 {SPACE_SM}px;
+    border: 0;
+    border-radius: {BORDER_RADIUS}px;
+    background-color: transparent;
+}}
+
+QToolButton:hover {{
+    background-color: {COLOR_SURFACE_MUTED};
+}}
+
+QProgressBar {{
+    min-height: 18px;
+    color: {COLOR_TEXT};
+    border: 1px solid {COLOR_BORDER};
+    border-radius: 5px;
+    background-color: {COLOR_SURFACE_MUTED};
+    text-align: center;
+}}
+
+QProgressBar::chunk {{
+    border-radius: 4px;
+    background-color: {COLOR_PRIMARY};
 }}
 
 QPushButton {{
@@ -90,4 +172,3 @@ def apply_theme(application: QApplication) -> None:
     font.setPointSize(FONT_SIZE_BODY)
     application.setFont(font)
     application.setStyleSheet(APPLICATION_STYLESHEET)
-

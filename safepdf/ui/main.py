@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 from collections.abc import Sequence
 
+from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QApplication
 
 from safepdf.ui.main_window import MainWindow
@@ -41,9 +42,9 @@ def create_application(arguments: Sequence[str] | None = None) -> QApplication:
     return application
 
 
-def create_main_window() -> MainWindow:
+def create_main_window(settings: QSettings | None = None) -> MainWindow:
     """Create the SafePDF application window."""
-    return MainWindow()
+    return MainWindow(settings=settings)
 
 
 def main() -> int:

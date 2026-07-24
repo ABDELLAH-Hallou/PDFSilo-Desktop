@@ -60,7 +60,7 @@ important backend issues identified in
 - [x] Use temporary files and atomic replacement where practical.
 - [x] Resolve the license label and license-text mismatch.
 - [x] Add regression tests for each corrected behavior.
-- [x] Keep all existing tests passing (252 tests as of 24 July 2026).
+- [x] Keep all existing tests passing (258 tests as of 24 July 2026).
 
 ## Phase 2: Add project packaging
 
@@ -364,13 +364,35 @@ Recommended Qt components:
 
 ### Implementation tasks
 
-- [ ] Create the main window.
-- [ ] Create sidebar navigation.
-- [ ] Add a stacked content area.
-- [ ] Add global status and progress controls.
-- [ ] Add application-level menus and keyboard shortcuts.
-- [ ] Restore window size and position with `QSettings`.
-- [ ] Do not store passwords in `QSettings`.
+- [x] Create the main window.
+- [x] Create sidebar navigation.
+- [x] Add a stacked content area.
+- [x] Add global status and progress controls.
+- [x] Add application-level menus and keyboard shortcuts.
+- [x] Restore window size and position with `QSettings`.
+- [x] Do not store passwords in `QSettings`.
+
+Phase 6 validation completed on 24 July 2026:
+
+- The main window contains a header, sidebar, stacked content area, and global
+  status bar.
+- Stable navigation entries exist for Home and all 13 PDF operations.
+  Operation forms remain placeholders until their implementation phases.
+- Navigation selection, stacked-page selection, Home, Previous, and Next
+  actions remain synchronized.
+- The status API supports concise messages, determinate and indeterminate
+  progress, and a non-persistent output-location display.
+- File, Navigate, Tools, and Help menus provide Open, Exit, page navigation,
+  Settings, and About actions with keyboard shortcuts.
+- The Open action uses a PDF-filtered `QFileDialog`.
+- `QSettings` persists only `window/geometry`, `window/state`, and
+  `navigation/current_index`. Input paths, output paths, document contents, and
+  passwords are not persisted.
+- Window size, valid on-screen position, and selected navigation page restore
+  successfully.
+- An offscreen visual render confirmed the header, sidebar, content, and status
+  layout.
+- The complete suite passed with 258 tests.
 
 ## Phase 7: Create reusable input widgets
 

@@ -45,9 +45,10 @@ safepdf-gui
 The CLI can also be run directly from a source checkout with
 `python -m safepdf <command> [options]`.
 
-The desktop entry point currently opens the Phase 5 application shell. Its
-metadata, theme, icon, and package structure are ready for the operation
-screens introduced by later migration phases.
+The desktop entry point opens the Phase 6 application shell with navigation for
+every PDF operation, placeholder content pages, application menus, keyboard
+shortcuts, and global status/progress controls. Operation forms are introduced
+by later migration phases.
 
 ---
 

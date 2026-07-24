@@ -1,19 +1,35 @@
-"""Smoke tests for the Phase 5 PySide6 application structure."""
+"""Smoke tests for the PySide6 application structure and main shell."""
 
 import xml.etree.ElementTree as ElementTree
+from pathlib import Path
 
 import pytest
 
 pytest.importorskip("PySide6")
 
-from PySide6.QtCore import QTimer, QSize
-from PySide6.QtWidgets import QApplication, QLabel, QWidget
+from PySide6.QtCore import QSettings, QTimer, QSize
+from PySide6.QtGui import QAction, QKeySequence
+from PySide6.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QLabel,
+    QListWidget,
+    QMenu,
+    QProgressBar,
+    QStackedWidget,
+    QToolButton,
+    QWidget,
+)
 
 from safepdf.ui import main as ui_main
 from safepdf.ui.main import create_application, create_main_window
 from safepdf.ui.main_window import (
     DEFAULT_WINDOW_HEIGHT,
     DEFAULT_WINDOW_WIDTH,
+    GEOMETRY_SETTING,
+    NAVIGATION_SETTING,
+    PERSISTED_SETTING_KEYS,
+    STATE_SETTING,
     MainWindow,
 )
 from safepdf.ui.metadata import (
@@ -25,6 +41,7 @@ from safepdf.ui.metadata import (
     ORGANIZATION_NAME,
 )
 from safepdf.ui.resources import APPLICATION_ICON_PATH, application_icon
+from safepdf.ui.pages import PAGE_DEFINITIONS
 from safepdf.ui.theme import (
     APPLICATION_STYLESHEET,
     FONT_SIZE_BODY,
@@ -36,19 +53,175 @@ from safepdf.ui.theme import (
 )
 
 
-def test_create_main_window(qtbot):
-    window = create_main_window()
+@pytest.fixture()
+def ui_settings(tmp_path: Path) -> QSettings:
+    settings = QSettings(
+        str(tmp_path / "ui-settings.ini"),
+        QSettings.Format.IniFormat,
+    )
+    settings.clear()
+    return settings
+
+
+def test_create_main_window(qtbot, ui_settings):
+    window = create_main_window(ui_settings)
     qtbot.addWidget(window)
 
     assert isinstance(window, MainWindow)
     assert window.windowTitle() == "SafePDF"
     assert window.size() == QSize(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT)
     assert isinstance(window.centralWidget(), QWidget)
-    assert window.findChild(QLabel, "titleLabel").text() == "SafePDF"
-    assert "structure is ready" in (
-        window.findChild(QLabel, "subtitleLabel").text()
-    )
+    assert window.findChild(QLabel, "applicationTitleLabel").text() == "SafePDF"
+    assert window.statusBar().currentMessage() == "Ready"
     assert not window.windowIcon().isNull()
+
+
+def test_sidebar_navigation_controls_stacked_pages(qtbot, ui_settings):
+    window = MainWindow(ui_settings)
+    qtbot.addWidget(window)
+    navigation = window.findChild(QListWidget, "navigationList")
+    stack = window.findChild(QStackedWidget, "pageStack")
+
+    assert navigation.count() == stack.count() == len(PAGE_DEFINITIONS)
+    assert [navigation.item(index).text() for index in range(navigation.count())] == [
+        definition.label for definition in PAGE_DEFINITIONS
+    ]
+    assert navigation.currentRow() == stack.currentIndex() == 0
+    assert stack.currentWidget().objectName() == "homePage"
+
+    assert window.navigate_to("split") is True
+    assert navigation.currentRow() == stack.currentIndex() == 2
+    assert stack.currentWidget().objectName() == "splitPage"
+    assert window.statusBar().currentMessage() == "Split selected."
+    assert window.navigate_to("not-a-page") is False
+
+
+def test_navigation_actions_move_between_pages(qtbot, ui_settings):
+    window = MainWindow(ui_settings)
+    qtbot.addWidget(window)
+
+    window.next_page_action.trigger()
+    assert window.navigation.currentRow() == 1
+
+    window.previous_page_action.trigger()
+    assert window.navigation.currentRow() == 0
+
+    window.navigate_to("compress")
+    window.home_action.trigger()
+    assert window.navigation.currentRow() == 0
+
+
+def test_global_status_progress_and_output_controls(qtbot, ui_settings):
+    window = MainWindow(ui_settings)
+    qtbot.addWidget(window)
+    progress = window.findChild(QProgressBar, "globalProgressBar")
+    output = window.findChild(QLabel, "outputLocationLabel")
+
+    assert progress.isHidden()
+    window.set_progress(3, 5, "Processing page 3.")
+    assert not progress.isHidden()
+    assert (progress.minimum(), progress.maximum(), progress.value()) == (0, 5, 3)
+    assert progress.format() == "3 / 5"
+    assert window.statusBar().currentMessage() == "Processing page 3."
+
+    window.set_progress(0, 0)
+    assert (progress.minimum(), progress.maximum()) == (0, 0)
+    assert progress.format() == "Working…"
+
+    output_path = Path("results") / "output.pdf"
+    window.set_output_location(output_path)
+    assert str(output_path) in output.text()
+    assert output.toolTip() == str(output_path)
+
+    window.clear_progress()
+    window.set_output_location(None)
+    assert progress.isHidden()
+    assert output.text() == "Output: —"
+
+
+def test_application_menus_shortcuts_and_header_actions(qtbot, ui_settings):
+    window = MainWindow(ui_settings)
+    qtbot.addWidget(window)
+
+    menu_titles = {
+        menu.title().replace("&", "")
+        for menu in window.menuBar().findChildren(QMenu)
+    }
+    assert {"File", "Navigate", "Tools", "Help"} <= menu_titles
+
+    expected_actions = {
+        "openAction",
+        "exitAction",
+        "homeAction",
+        "previousPageAction",
+        "nextPageAction",
+        "settingsAction",
+        "aboutAction",
+    }
+    actions = {
+        action.objectName(): action
+        for action in window.findChildren(QAction)
+        if action.objectName()
+    }
+    assert expected_actions <= actions.keys()
+    assert all(
+        not actions[name].shortcut().isEmpty()
+        for name in expected_actions
+    )
+    assert actions["homeAction"].shortcut() == QKeySequence("Ctrl+H")
+    assert window.findChild(QToolButton, "settingsButton") is not None
+    assert window.findChild(QToolButton, "helpButton") is not None
+
+
+def test_open_action_uses_pdf_file_dialog(
+    qtbot,
+    ui_settings,
+    monkeypatch,
+    tmp_path: Path,
+):
+    window = MainWindow(ui_settings)
+    qtbot.addWidget(window)
+    selected = tmp_path / "selected.pdf"
+    monkeypatch.setattr(
+        QFileDialog,
+        "getOpenFileName",
+        lambda *_args, **_kwargs: (str(selected), "PDF documents (*.pdf)"),
+    )
+
+    window.open_action.trigger()
+
+    assert window.selected_input_path == selected
+    assert selected.name in window.statusBar().currentMessage()
+
+
+def test_window_settings_round_trip_is_allowlisted(qtbot, ui_settings):
+    window = MainWindow(ui_settings)
+    qtbot.addWidget(window)
+    window.resize(800, 600)
+    window.move(24, 32)
+    window.navigation.setCurrentRow(4)
+    window.set_output_location("private-output.pdf")
+    window.selected_input_path = Path("private-input.pdf")
+    window.close()
+    ui_settings.sync()
+
+    assert set(ui_settings.allKeys()) == PERSISTED_SETTING_KEYS
+    assert ui_settings.contains(GEOMETRY_SETTING)
+    assert ui_settings.contains(STATE_SETTING)
+    assert ui_settings.value(NAVIGATION_SETTING, type=int) == 4
+    assert all("password" not in key.lower() for key in ui_settings.allKeys())
+    assert "private" not in Path(ui_settings.fileName()).read_text(
+        encoding="utf-8"
+    )
+
+    restored = MainWindow(ui_settings)
+    qtbot.addWidget(restored)
+    assert restored.navigation.currentRow() == 4
+    assert restored.page_stack.currentIndex() == 4
+    assert restored.size() == QSize(800, 600)
+    # Qt clamps the horizontal position to the 800 px offscreen display.
+    assert restored.pos().y() == window.pos().y()
+    assert restored.pos().x() >= 0
 
 
 def test_create_application_sets_metadata_and_theme(qapp):
@@ -86,12 +259,16 @@ def test_apply_theme_is_idempotent(qapp):
     assert qapp.styleSheet() == first_stylesheet
 
 
-def test_gui_entry_point_starts_and_stops_event_loop(qapp, monkeypatch):
+def test_gui_entry_point_starts_and_stops_event_loop(
+    qapp,
+    monkeypatch,
+    ui_settings,
+):
     windows: list[MainWindow] = []
     visible_while_running: list[bool] = []
 
     def create_window() -> MainWindow:
-        window = MainWindow()
+        window = MainWindow(ui_settings)
         windows.append(window)
         return window
 
