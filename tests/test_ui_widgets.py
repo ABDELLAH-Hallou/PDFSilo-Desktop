@@ -363,6 +363,10 @@ def test_result_summary_renders_structured_result_and_output_signal(
     assert summary.message_label.text() == "Expected failure"
     assert summary.output_list.isHidden()
 
+    summary.show_cancelled()
+    assert summary.property("resultState") == "cancelled"
+    assert summary.status_label.text() == "Cancelled"
+
 
 def test_output_actions_open_output_and_containing_folder(
     qtbot,

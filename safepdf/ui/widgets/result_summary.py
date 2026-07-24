@@ -119,6 +119,19 @@ class ResultSummary(QWidget):
         self.output_list.hide()
         self.show()
 
+    def show_cancelled(self, message: str = "Operation cancelled.") -> None:
+        """Render cooperative cancellation as a distinct, expected outcome."""
+        self._set_result_state("cancelled")
+        self.status_label.setText("Cancelled")
+        self.message_label.setText(message)
+        self.metrics_label.clear()
+        self.metrics_label.hide()
+        self.warning_list.clear()
+        self.warning_list.hide()
+        self.output_list.clear()
+        self.output_list.hide()
+        self.show()
+
     def clear(self) -> None:
         """Reset and hide all result content."""
         self._set_result_state("neutral")

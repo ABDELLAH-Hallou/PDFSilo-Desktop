@@ -50,7 +50,9 @@ every PDF operation, placeholder content pages, application menus, keyboard
 shortcuts, and global status/progress controls. Operation forms are introduced
 by later migration phases. A Phase 7 widget library now provides shared PDF,
 image, folder, and output pickers, drag-and-drop validation, operation controls,
-progress, result summaries, and output-opening actions for those forms.
+progress, result summaries, and output-opening actions for those forms. Phase 8
+adds a reusable thread-pool worker, GUI-thread signal bridge, cooperative
+cancellation, duplicate-start protection, and form-state restoration.
 
 ---
 

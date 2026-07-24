@@ -202,6 +202,10 @@ QWidget#resultSummary[resultState="error"] {{
     border-color: {COLOR_DANGER};
 }}
 
+QWidget#resultSummary[resultState="cancelled"] {{
+    border-color: {COLOR_TEXT_MUTED};
+}}
+
 QWidget#resultSummary[resultState="success"] QLabel#resultStatusLabel {{
     color: {COLOR_SUCCESS};
     font-weight: {FONT_WEIGHT_BOLD};
@@ -209,6 +213,11 @@ QWidget#resultSummary[resultState="success"] QLabel#resultStatusLabel {{
 
 QWidget#resultSummary[resultState="error"] QLabel#resultStatusLabel {{
     color: {COLOR_DANGER};
+    font-weight: {FONT_WEIGHT_BOLD};
+}}
+
+QWidget#resultSummary[resultState="cancelled"] QLabel#resultStatusLabel {{
+    color: {COLOR_TEXT_MUTED};
     font-weight: {FONT_WEIGHT_BOLD};
 }}
 

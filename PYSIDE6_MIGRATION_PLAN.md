@@ -60,7 +60,7 @@ important backend issues identified in
 - [x] Use temporary files and atomic replacement where practical.
 - [x] Resolve the license label and license-text mismatch.
 - [x] Add regression tests for each corrected behavior.
-- [x] Keep all existing tests passing (276 tests as of 24 July 2026).
+- [x] Keep all existing tests passing (287 tests as of 24 July 2026).
 
 ## Phase 2: Add project packaging
 
@@ -482,12 +482,36 @@ Qt widgets must only be accessed from the main UI thread.
 
 ### Implementation tasks
 
-- [ ] Implement a reusable operation worker.
-- [ ] Connect framework-independent progress callbacks to Qt signals.
-- [ ] Implement a thread-safe cancellation flag.
-- [ ] Prevent duplicate operation starts.
-- [ ] Restore UI state after every completion path.
-- [ ] Test success, failure, and cancellation signals.
+- [x] Implement a reusable operation worker.
+- [x] Connect framework-independent progress callbacks to Qt signals.
+- [x] Implement a thread-safe cancellation flag.
+- [x] Prevent duplicate operation starts.
+- [x] Restore UI state after every completion path.
+- [x] Test success, failure, and cancellation signals.
+
+Phase 8 validation completed on 24 July 2026:
+
+- `OperationWorker` executes one structured core operation through
+  `QThreadPool` and `QRunnable`.
+- Worker-managed callbacks translate framework-independent progress and
+  cancellation into Qt signals without importing Qt into the core.
+- `CancellationToken` uses `threading.Event`, making repeated cancellation
+  requests safe across threads.
+- `OperationRunner` owns the active worker, forwards signals through GUI-thread
+  slots, rejects duplicate starts, and always clears its running state.
+- Expected `SafePdfError` failures, unexpected exceptions, cancellation,
+  success, and final completion use distinct signal paths.
+- `OperationController` binds a runner to `OperationPanel`, disables form
+  controls while active, and restores each control to its exact previous
+  enabled state after every terminal outcome.
+- Run/cancel state, progress, result, error, cancellation, and output controls
+  update only through GUI-thread signal handlers.
+- Tests verify worker-versus-GUI thread identity, signal ordering, progress,
+  expected and unexpected failure, cooperative cancellation, duplicate start
+  rejection, and state restoration after success, failure, and cancellation.
+- The Qt startup smoke test uses a local event loop so it does not terminate
+  pytest's shared application before worker tests run.
+- The complete suite passed with 287 tests.
 
 ## Phase 9: Implement operation screens incrementally
 

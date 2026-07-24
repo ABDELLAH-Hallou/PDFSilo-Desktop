@@ -180,3 +180,9 @@ class OperationPanel(QWidget):
         self.output_actions.set_output_path(None)
         self.output_actions.hide()
 
+    def show_cancelled(self) -> None:
+        self.buttons.set_running(False)
+        self.progress.reset()
+        self.result.show_cancelled()
+        self.output_actions.set_output_path(None)
+        self.output_actions.hide()

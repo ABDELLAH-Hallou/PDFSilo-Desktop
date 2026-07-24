@@ -7,7 +7,7 @@ import pytest
 
 pytest.importorskip("PySide6")
 
-from PySide6.QtCore import QSettings, QTimer, QSize
+from PySide6.QtCore import QEventLoop, QSettings, QTimer, QSize
 from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
@@ -259,28 +259,45 @@ def test_apply_theme_is_idempotent(qapp):
     assert qapp.styleSheet() == first_stylesheet
 
 
-def test_gui_entry_point_starts_and_stops_event_loop(
+def test_main_window_starts_and_stops_local_event_loop(
     qapp,
-    monkeypatch,
     ui_settings,
 ):
-    windows: list[MainWindow] = []
+    window = MainWindow(ui_settings)
+    window.show()
     visible_while_running: list[bool] = []
-
-    def create_window() -> MainWindow:
-        window = MainWindow(ui_settings)
-        windows.append(window)
-        return window
-
-    monkeypatch.setattr(ui_main, "create_main_window", create_window)
+    event_loop = QEventLoop()
 
     def verify_started() -> None:
-        visible_while_running.append(windows[0].isVisible())
-        qapp.quit()
+        visible_while_running.append(window.isVisible())
+        event_loop.quit()
 
     QTimer.singleShot(0, verify_started)
 
-    assert ui_main.main() == 0
-    assert len(windows) == 1
+    assert event_loop.exec() == 0
     assert visible_while_running == [True]
-    windows[0].close()
+    window.close()
+
+
+def test_gui_entry_point_shows_window_and_returns_exit_code(monkeypatch):
+    class FakeApplication:
+        def exec(self) -> int:
+            return 17
+
+    class FakeWindow:
+        shown = False
+
+        def show(self) -> None:
+            self.shown = True
+
+    application = FakeApplication()
+    window = FakeWindow()
+    monkeypatch.setattr(
+        ui_main,
+        "create_application",
+        lambda: application,
+    )
+    monkeypatch.setattr(ui_main, "create_main_window", lambda: window)
+
+    assert ui_main.main() == 17
+    assert window.shown
