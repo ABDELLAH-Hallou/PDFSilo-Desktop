@@ -1,0 +1,8 @@
+# SafePDF — Python dependencies
+# Install with: pip install -r requirements.txt
+
+# Core PDF processing
+# https://pymupdf.readthedocs.io
+PyMuPDF>=1.27.2.2
+
+# Minimum Python version: 3.10
