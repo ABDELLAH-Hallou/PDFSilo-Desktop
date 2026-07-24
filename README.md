@@ -10,9 +10,10 @@ SafePDF is a command-line toolkit for working with PDF and image files — split
 
 - Python 3.10+
 - [PyMuPDF](https://pymupdf.readthedocs.io/) (`fitz`)
+- [PySide6](https://doc.qt.io/qtforpython-6/) for the desktop interface
 
 ```bash
-pip install -r requirements.txt
+python -m pip install .
 ```
 
 ---
@@ -22,7 +23,13 @@ pip install -r requirements.txt
 ```bash
 git clone https://github.com/ABDELLAH-Hallou/SafePDF
 cd SafePDF
-pip install -r requirements.txt
+python -m pip install .
+```
+
+For an editable development installation with test tooling:
+
+```bash
+python -m pip install -e ".[dev]"
 ```
 
 ---
@@ -30,9 +37,13 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-python -m safepdf <command> [options]
-python -m safepdf <command> --help
+safepdf <command> [options]
+safepdf <command> --help
+safepdf-gui
 ```
+
+The CLI can also be run directly from a source checkout with
+`python -m safepdf <command> [options]`.
 
 ---
 

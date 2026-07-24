@@ -60,21 +60,21 @@ important backend issues identified in
 - [x] Use temporary files and atomic replacement where practical.
 - [x] Resolve the license label and license-text mismatch.
 - [x] Add regression tests for each corrected behavior.
-- [x] Keep all existing tests passing (195 tests as of 24 July 2026).
+- [x] Keep all existing tests passing (199 tests as of 24 July 2026).
 
 ## Phase 2: Add project packaging
 
 Create a root-level `pyproject.toml` containing:
 
-- [ ] Project name and version
-- [ ] Python version requirement
-- [ ] PyMuPDF runtime dependency
-- [ ] PySide6 UI dependency
-- [ ] Optional development dependencies
-- [ ] pytest and pytest-qt test dependencies
-- [ ] CLI entry point
-- [ ] GUI entry point
-- [ ] Build-system configuration
+- [x] Project name and version
+- [x] Python version requirement
+- [x] PyMuPDF runtime dependency
+- [x] PySide6 UI dependency
+- [x] Optional development dependencies
+- [x] pytest and pytest-qt test dependencies
+- [x] CLI entry point
+- [x] GUI entry point
+- [x] Build-system configuration
 
 Suggested entry points:
 
@@ -90,6 +90,14 @@ The application should remain usable through both:
 safepdf <command> [options]
 safepdf-gui
 ```
+
+Phase 2 validation completed on 24 July 2026:
+
+- Editable development installation completed successfully.
+- `safepdf` and `safepdf-gui` were installed as console entry points.
+- The GUI entry point launched successfully in offscreen smoke testing.
+- `dist/safepdf-0.1.0-py3-none-any.whl` was built successfully.
+- The complete suite passed with 199 tests.
 
 ## Phase 3: Separate the core from CLI behavior
 

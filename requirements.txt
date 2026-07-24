@@ -5,4 +5,8 @@
 # https://pymupdf.readthedocs.io
 PyMuPDF>=1.27.2.2
 
+# Desktop interface
+# https://doc.qt.io/qtforpython-6/
+PySide6>=6.10,<7
+
 # Minimum Python version: 3.10
