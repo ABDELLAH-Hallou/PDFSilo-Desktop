@@ -32,6 +32,15 @@ For an editable development installation with test tooling:
 python -m pip install -e ".[dev]"
 ```
 
+Run the complete core, CLI, and pytest-qt UI suite with:
+
+```bash
+python -m pytest
+```
+
+The UI tests use mocked operation contracts for precise parameter assertions
+and a separate real-PDF integration layer for end-to-end validation.
+
 ---
 
 ## Usage

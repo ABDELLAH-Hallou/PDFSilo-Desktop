@@ -676,34 +676,55 @@ Keep the existing core test suite and add `pytest-qt`.
 
 ### Widget and navigation tests
 
-- [ ] Main window starts.
-- [ ] Navigation selects the correct page.
-- [ ] File and output pickers emit expected signals.
-- [ ] Invalid inputs prevent execution.
-- [ ] Keyboard navigation works.
+- [x] Main window starts.
+- [x] Navigation selects the correct page.
+- [x] File and output pickers emit expected signals.
+- [x] Invalid inputs prevent execution.
+- [x] Keyboard navigation works.
 
 ### Worker tests
 
-- [ ] Successful operations emit `succeeded`.
-- [ ] Expected errors emit `failed`.
-- [ ] Progress signals update the interface.
-- [ ] Cancellation stops the operation.
-- [ ] Controls are restored after completion.
+- [x] Successful operations emit `succeeded`.
+- [x] Expected errors emit `failed`.
+- [x] Progress signals update the interface.
+- [x] Cancellation stops the operation.
+- [x] Controls are restored after completion.
 
 ### Security tests
 
-- [ ] Password fields are masked by default.
-- [ ] Passwords are not persisted.
-- [ ] Passwords do not appear in logs.
+- [x] Password fields are masked by default.
+- [x] Passwords are not persisted.
+- [x] Passwords do not appear in logs.
 
 ### Integration tests
 
-- [ ] Each operation page sends the correct parameters to the service layer.
-- [ ] Selected end-to-end workflows produce valid output using real PDFs.
-- [ ] Existing CLI behavior remains functional.
+- [x] Each operation page sends the correct parameters to the service layer.
+- [x] Selected end-to-end workflows produce valid output using real PDFs.
+- [x] Existing CLI behavior remains functional.
 
 Most UI tests should mock the service layer. Use a smaller end-to-end suite for
 real PyMuPDF processing.
+
+Phase 12 validation completed on 25 July 2026:
+
+| Area | Direct coverage |
+|---|---|
+| Window and navigation | Construction, real event-loop startup, stable page keys, sidebar/stack synchronization, actions, and focused keyboard traversal |
+| Pickers and validation | File/output signals, dialogs, drag/drop, keyboard accessibility, invalid styling, and Run-button blocking |
+| Workers | GUI-thread signal delivery, success, expected/unexpected failure, progress, cancellation, duplicate prevention, and exact control restoration |
+| Security | Password masking, Show/Hide, confirmation, clearing, settings exclusion, and secret-free logs/results/progress |
+| Page contracts | Mocked worker-path assertions for the positional and keyword arguments sent by all 13 operation screens |
+| End-to-end | Real PDFs and images for selected UI workflows plus operation-level PyMuPDF regression coverage |
+| CLI | Parser/adapters, interactive passwords, exit behavior, and a real unified-command output workflow |
+
+- `pytest-qt` remains declared in the `dev` dependency group and supplies the
+  shared `qtbot` and `qapp` fixtures.
+- Thirteen parameterized contract tests mock each operation service while
+  retaining the real page validation, Run action, worker thread, signals, and
+  result presentation.
+- Existing real-PyMuPDF tests were retained as a separate integration layer;
+  core behavior remains independently testable without constructing Qt.
+- The complete suite passed with 338 tests.
 
 ## Phase 13: Package the desktop application
 
