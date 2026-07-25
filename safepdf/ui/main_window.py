@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from PySide6.QtCore import QByteArray, QSettings, Qt
+from PySide6.QtCore import QByteArray, QSize, QSettings, Qt
 from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QStackedWidget,
+    QStyle,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -30,13 +31,30 @@ from safepdf.ui.pages import (
     PAGE_INDEX_BY_KEY,
 )
 from safepdf.ui.resources import application_icon
-from safepdf.ui.theme import SPACE_LG, SPACE_MD, SPACE_SM
+from safepdf.ui.theme import SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XS
 
-DEFAULT_WINDOW_WIDTH = 1080
-DEFAULT_WINDOW_HEIGHT = 720
+DEFAULT_WINDOW_WIDTH = 1240
+DEFAULT_WINDOW_HEIGHT = 800
 MINIMUM_WINDOW_WIDTH = 800
 MINIMUM_WINDOW_HEIGHT = 540
-SIDEBAR_WIDTH = 210
+SIDEBAR_WIDTH = 232
+
+PAGE_ICONS = {
+    "home": QStyle.StandardPixmap.SP_DesktopIcon,
+    "merge": QStyle.StandardPixmap.SP_FileDialogNewFolder,
+    "split": QStyle.StandardPixmap.SP_FileDialogDetailedView,
+    "rotate": QStyle.StandardPixmap.SP_BrowserReload,
+    "extract_pages": QStyle.StandardPixmap.SP_FileDialogListView,
+    "compress": QStyle.StandardPixmap.SP_ArrowDown,
+    "encrypt": QStyle.StandardPixmap.SP_DialogApplyButton,
+    "decrypt": QStyle.StandardPixmap.SP_DialogResetButton,
+    "watermark": QStyle.StandardPixmap.SP_FileDialogContentsView,
+    "extract_images": QStyle.StandardPixmap.SP_DialogSaveButton,
+    "to_images": QStyle.StandardPixmap.SP_FileIcon,
+    "reorder": QStyle.StandardPixmap.SP_ArrowUp,
+    "add_images": QStyle.StandardPixmap.SP_DialogOpenButton,
+    "images_to_pdf": QStyle.StandardPixmap.SP_DriveFDIcon,
+}
 
 GEOMETRY_SETTING = "window/geometry"
 STATE_SETTING = "window/state"
@@ -100,6 +118,16 @@ class MainWindow(QMainWindow):
         self.next_page_action.setShortcut(QKeySequence("Ctrl+Down"))
         self.next_page_action.triggered.connect(self.select_next_page)
 
+        self.toggle_sidebar_action = QAction("Show Sidebar", self)
+        self.toggle_sidebar_action.setObjectName("toggleSidebarAction")
+        self.toggle_sidebar_action.setShortcut(QKeySequence("Ctrl+B"))
+        self.toggle_sidebar_action.setCheckable(True)
+        self.toggle_sidebar_action.setChecked(True)
+        self.toggle_sidebar_action.setStatusTip(
+            "Show or hide the operation sidebar"
+        )
+        self.toggle_sidebar_action.toggled.connect(self._set_sidebar_visible)
+
         self.settings_action = QAction("Settings", self)
         self.settings_action.setObjectName("settingsAction")
         self.settings_action.setShortcut(QKeySequence("Ctrl+,"))
@@ -124,6 +152,8 @@ class MainWindow(QMainWindow):
         navigate_menu.addAction(self.home_action)
         navigate_menu.addAction(self.previous_page_action)
         navigate_menu.addAction(self.next_page_action)
+        navigate_menu.addSeparator()
+        navigate_menu.addAction(self.toggle_sidebar_action)
 
         tools_menu = self.menuBar().addMenu("&Tools")
         tools_menu.setObjectName("toolsMenu")
@@ -148,14 +178,33 @@ class MainWindow(QMainWindow):
         body_layout.setContentsMargins(0, 0, 0, 0)
         body_layout.setSpacing(0)
 
-        self.navigation = QListWidget(body)
+        self.sidebar = QWidget(body)
+        self.sidebar.setObjectName("sidebar")
+        self.sidebar.setFixedWidth(SIDEBAR_WIDTH)
+        sidebar_layout = QVBoxLayout(self.sidebar)
+        sidebar_layout.setContentsMargins(0, 0, 0, 0)
+        sidebar_layout.setSpacing(0)
+        sidebar_layout.addWidget(self._create_brand_panel(self.sidebar))
+
+        section_label = QLabel("PDF TOOLS", self.sidebar)
+        section_label.setObjectName("navigationSectionLabel")
+        section_label.setContentsMargins(
+            SPACE_LG,
+            SPACE_MD,
+            SPACE_SM,
+            SPACE_XS,
+        )
+        sidebar_layout.addWidget(section_label)
+
+        self.navigation = QListWidget(self.sidebar)
         self.navigation.setObjectName("navigationList")
         self.navigation.setAccessibleName("PDF operations")
-        self.navigation.setFixedWidth(SIDEBAR_WIDTH)
         self.navigation.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
         self.navigation.setUniformItemSizes(True)
+        self.navigation.setIconSize(QSize(18, 18))
+        self.navigation.setSpacing(1)
 
         self.page_stack = QStackedWidget(body)
         self.page_stack.setObjectName("pageStack")
@@ -164,10 +213,19 @@ class MainWindow(QMainWindow):
             item = QListWidgetItem(definition.label)
             item.setData(Qt.ItemDataRole.UserRole, definition.key)
             item.setToolTip(definition.description)
+            item.setIcon(
+                self.style().standardIcon(
+                    PAGE_ICONS.get(
+                        definition.key,
+                        QStyle.StandardPixmap.SP_FileIcon,
+                    )
+                )
+            )
             self.navigation.addItem(item)
 
             if definition.key == "home":
                 page = HomePage(definition.title, definition.description)
+                page.operationRequested.connect(self.navigate_to)
             else:
                 page_factory = OPERATION_PAGE_FACTORIES[definition.key]
                 page = page_factory(definition)
@@ -178,7 +236,8 @@ class MainWindow(QMainWindow):
             self._on_navigation_changed
         )
 
-        body_layout.addWidget(self.navigation)
+        sidebar_layout.addWidget(self.navigation, 1)
+        body_layout.addWidget(self.sidebar)
         body_layout.addWidget(self.page_stack, 1)
         root_layout.addWidget(body, 1)
         self.setCentralWidget(root)
@@ -218,13 +277,47 @@ class MainWindow(QMainWindow):
         header = QFrame(self)
         header.setObjectName("applicationHeader")
         layout = QHBoxLayout(header)
-        layout.setContentsMargins(SPACE_LG, SPACE_SM, SPACE_MD, SPACE_SM)
+        layout.setContentsMargins(SPACE_LG, SPACE_XS, SPACE_MD, SPACE_XS)
         layout.setSpacing(SPACE_SM)
 
-        title = QLabel("SafePDF", header)
-        title.setObjectName("applicationTitleLabel")
-        layout.addWidget(title)
+        sidebar_button = QToolButton(header)
+        sidebar_button.setObjectName("sidebarButton")
+        sidebar_button.setDefaultAction(self.toggle_sidebar_action)
+        sidebar_button.setText("Sidebar")
+        sidebar_button.setIcon(
+            self.style().standardIcon(
+                QStyle.StandardPixmap.SP_TitleBarMenuButton
+            )
+        )
+        sidebar_button.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonIconOnly
+        )
+        sidebar_button.setAccessibleName("Show or hide sidebar")
+        layout.addWidget(sidebar_button)
+
+        context = QWidget(header)
+        context.setObjectName("headerContext")
+        context_layout = QVBoxLayout(context)
+        context_layout.setContentsMargins(0, 0, 0, 0)
+        context_layout.setSpacing(1)
+
+        self.header_title = QLabel("Home", context)
+        self.header_title.setObjectName("headerPageTitleLabel")
+        self.header_description = QLabel(
+            "Your local PDF workspace",
+            context,
+        )
+        self.header_description.setObjectName("headerDescriptionLabel")
+        context_layout.addWidget(self.header_title)
+        context_layout.addWidget(self.header_description)
+
+        layout.addWidget(context)
         layout.addStretch(1)
+
+        local_badge = QLabel("●  Processing stays local", header)
+        local_badge.setObjectName("localBadge")
+        local_badge.setAccessibleName("All processing stays on this device")
+        layout.addWidget(local_badge)
 
         settings_button = QToolButton(header)
         settings_button.setObjectName("settingsButton")
@@ -244,6 +337,41 @@ class MainWindow(QMainWindow):
         layout.addWidget(settings_button)
         layout.addWidget(help_button)
         return header
+
+    def _create_brand_panel(self, parent: QWidget) -> QFrame:
+        """Create the persistent product identity in the sidebar."""
+        panel = QFrame(parent)
+        panel.setObjectName("brandPanel")
+        layout = QHBoxLayout(panel)
+        layout.setContentsMargins(SPACE_LG, SPACE_LG, SPACE_MD, SPACE_MD)
+        layout.setSpacing(SPACE_SM)
+
+        mark = QLabel("S", panel)
+        mark.setObjectName("brandMark")
+        mark.setFixedSize(38, 38)
+        mark.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        labels = QWidget(panel)
+        labels.setObjectName("brandLabels")
+        labels_layout = QVBoxLayout(labels)
+        labels_layout.setContentsMargins(0, 0, 0, 0)
+        labels_layout.setSpacing(0)
+
+        title = QLabel("SafePDF", labels)
+        title.setObjectName("applicationTitleLabel")
+        subtitle = QLabel("Local PDF workspace", labels)
+        subtitle.setObjectName("brandSubtitle")
+        labels_layout.addWidget(title)
+        labels_layout.addWidget(subtitle)
+
+        layout.addWidget(mark)
+        layout.addWidget(labels, 1)
+        return panel
+
+    def _set_sidebar_visible(self, visible: bool) -> None:
+        """Expose more workspace without changing persisted preferences."""
+        if hasattr(self, "sidebar"):
+            self.sidebar.setVisible(visible)
 
     def _create_status_bar(self) -> None:
         status_bar = self.statusBar()
@@ -304,7 +432,10 @@ class MainWindow(QMainWindow):
         if not 0 <= index < self.page_stack.count():
             return
         self.page_stack.setCurrentIndex(index)
-        self.set_status(f"{PAGE_DEFINITIONS[index].label} selected.")
+        definition = PAGE_DEFINITIONS[index]
+        self.header_title.setText(definition.label)
+        self.header_description.setText(definition.description)
+        self.set_status(f"{definition.label} selected.")
 
     def navigate_to(self, page_key: str) -> bool:
         """Select a page by its stable key, returning whether it exists."""

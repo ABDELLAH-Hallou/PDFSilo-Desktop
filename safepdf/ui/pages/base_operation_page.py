@@ -6,17 +6,20 @@ from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import (
+    QFrame,
     QFormLayout,
     QLabel,
     QScrollArea,
+    QSplitter,
     QVBoxLayout,
     QWidget,
 )
 
 from safepdf.core import OperationResult
 from safepdf.ui.pages.registry import PageDefinition
-from safepdf.ui.theme import SPACE_LG, SPACE_MD, SPACE_SM
+from safepdf.ui.theme import SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XS
 from safepdf.ui.widgets import (
     OperationPanel,
     PathPicker,
@@ -47,6 +50,7 @@ class OperationPage(QWidget):
         self.definition = definition
         self._pickers: list[PathPicker] = []
         self.pdf_preview: PdfPreview | None = None
+        self._responsive_orientation = Qt.Orientation.Horizontal
         self.setObjectName(f"{definition.key}Page")
 
         page_layout = QVBoxLayout(self)
@@ -72,25 +76,107 @@ class OperationPage(QWidget):
         )
         content_layout.setSpacing(SPACE_MD)
 
-        title = QLabel(definition.title, content)
+        header = QFrame(content)
+        header.setObjectName("operationHeader")
+        header_layout = QVBoxLayout(header)
+        header_layout.setContentsMargins(0, 0, 0, SPACE_XS)
+        header_layout.setSpacing(SPACE_XS)
+
+        eyebrow = QLabel("PDF TOOL", header)
+        eyebrow.setObjectName("pageEyebrowLabel")
+
+        title = QLabel(definition.title, header)
         title.setObjectName("pageTitleLabel")
 
-        description = QLabel(definition.description, content)
+        description = QLabel(definition.description, header)
         description.setObjectName("pageDescriptionLabel")
         description.setWordWrap(True)
+        header_layout.addWidget(eyebrow)
+        header_layout.addWidget(title)
+        header_layout.addWidget(description)
 
-        self.form_container = QWidget(content)
+        self.workspace = QWidget(content)
+        self.workspace.setObjectName("operationWorkspace")
+        workspace_layout = QVBoxLayout(self.workspace)
+        workspace_layout.setContentsMargins(0, 0, 0, 0)
+        workspace_layout.setSpacing(0)
+
+        self.operation_splitter = QSplitter(
+            Qt.Orientation.Horizontal,
+            self.workspace,
+        )
+        self.operation_splitter.setObjectName("operationSplitter")
+        self.operation_splitter.setChildrenCollapsible(False)
+
+        self.form_container = QWidget(self.operation_splitter)
         self.form_container.setObjectName("operationForm")
         self.form_layout = QFormLayout(self.form_container)
-        self.form_layout.setContentsMargins(0, SPACE_SM, 0, 0)
+        self.form_layout.setContentsMargins(
+            SPACE_LG,
+            SPACE_LG,
+            SPACE_LG,
+            SPACE_LG,
+        )
         self.form_layout.setHorizontalSpacing(SPACE_MD)
-        self.form_layout.setVerticalSpacing(SPACE_SM)
+        self.form_layout.setVerticalSpacing(SPACE_MD)
         self.form_layout.setFieldGrowthPolicy(
             QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow
+        )
+        self.form_layout.setRowWrapPolicy(
+            QFormLayout.RowWrapPolicy.WrapLongRows
         )
         self.form_layout.setLabelAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
+
+        form_heading = QWidget(self.form_container)
+        form_heading.setObjectName("formHeading")
+        form_heading_layout = QVBoxLayout(form_heading)
+        form_heading_layout.setContentsMargins(0, 0, 0, SPACE_XS)
+        form_heading_layout.setSpacing(2)
+        form_title = QLabel("Files and options", form_heading)
+        form_title.setObjectName("panelTitleLabel")
+        form_description = QLabel(
+            "Choose your inputs, output, and processing preferences.",
+            form_heading,
+        )
+        form_description.setObjectName("panelDescriptionLabel")
+        form_description.setWordWrap(True)
+        form_heading_layout.addWidget(form_title)
+        form_heading_layout.addWidget(form_description)
+        self.form_layout.addRow(form_heading)
+
+        self.preview_card = QFrame(self.operation_splitter)
+        self.preview_card.setObjectName("previewCard")
+        preview_layout = QVBoxLayout(self.preview_card)
+        preview_layout.setContentsMargins(
+            SPACE_LG,
+            SPACE_LG,
+            SPACE_LG,
+            SPACE_LG,
+        )
+        preview_layout.setSpacing(SPACE_MD)
+        preview_title = QLabel("Document preview", self.preview_card)
+        preview_title.setObjectName("previewTitleLabel")
+        preview_description = QLabel(
+            "Preview pages before running the operation.",
+            self.preview_card,
+        )
+        preview_description.setObjectName("panelDescriptionLabel")
+        preview_description.setWordWrap(True)
+        self.preview_content_layout = QVBoxLayout()
+        self.preview_content_layout.setContentsMargins(0, 0, 0, 0)
+        self.preview_content_layout.setSpacing(0)
+        preview_layout.addWidget(preview_title)
+        preview_layout.addWidget(preview_description)
+        preview_layout.addLayout(self.preview_content_layout, 1)
+        self.preview_card.hide()
+
+        self.operation_splitter.addWidget(self.form_container)
+        self.operation_splitter.addWidget(self.preview_card)
+        self.operation_splitter.setStretchFactor(0, 3)
+        self.operation_splitter.setStretchFactor(1, 2)
+        workspace_layout.addWidget(self.operation_splitter)
 
         self.validation_label = QLabel("", content)
         self.validation_label.setObjectName("formErrorLabel")
@@ -106,9 +192,8 @@ class OperationPage(QWidget):
             parent=self,
         )
 
-        content_layout.addWidget(title)
-        content_layout.addWidget(description)
-        content_layout.addWidget(self.form_container)
+        content_layout.addWidget(header)
+        content_layout.addWidget(self.workspace)
         content_layout.addWidget(self.validation_label)
         content_layout.addWidget(self.operation_panel)
         content_layout.addStretch(1)
@@ -162,6 +247,7 @@ class OperationPage(QWidget):
     ) -> QWidget:
         """Add a labelled operation-specific control."""
         label_widget = QLabel(label, self.form_container)
+        label_widget.setObjectName("optionLabel")
         label_widget.setBuddy(buddy or widget)
         self.form_layout.addRow(label_widget, widget)
         return widget
@@ -201,10 +287,29 @@ class OperationPage(QWidget):
                 None,
             )
             if input_picker is not None:
-                self.pdf_preview = PdfPreview(self.form_container)
-                self.add_option("PDF pre&view", self.pdf_preview)
+                self.pdf_preview = PdfPreview(self.preview_card)
+                self.preview_content_layout.addWidget(self.pdf_preview)
+                self.preview_card.show()
                 input_picker.pathChanged.connect(self.pdf_preview.set_pdf)
+                self.operation_splitter.setSizes([620, 380])
         self._refresh_validation()
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        """Stack the workspace cards when horizontal space is constrained."""
+        super().resizeEvent(event)
+        orientation = (
+            Qt.Orientation.Horizontal
+            if event.size().width() >= 820
+            else Qt.Orientation.Vertical
+        )
+        if orientation == self._responsive_orientation:
+            return
+        self._responsive_orientation = orientation
+        self.operation_splitter.setOrientation(orientation)
+        if orientation is Qt.Orientation.Horizontal:
+            self.operation_splitter.setSizes([620, 380])
+        else:
+            self.operation_splitter.setSizes([520, 360])
 
     @Slot()
     def _refresh_validation(self, *_args: object) -> None:

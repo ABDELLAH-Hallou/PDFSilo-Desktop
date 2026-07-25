@@ -1,6 +1,6 @@
 """Reusable run/cancel, progress, result, and output controls."""
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QHBoxLayout,
@@ -32,7 +32,7 @@ class OperationButtons(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
 
-        self.run_button = QPushButton("&Run", self)
+        self.run_button = QPushButton("&Run operation", self)
         self.run_button.setObjectName("runButton")
         self.run_button.setProperty("primary", True)
         self.run_button.setAccessibleName("Run operation")
@@ -44,9 +44,9 @@ class OperationButtons(QWidget):
         self.cancel_button.clicked.connect(self._request_cancel)
         self.cancel_button.hide()
 
+        layout.addStretch(1)
         layout.addWidget(self.run_button)
         layout.addWidget(self.cancel_button)
-        layout.addStretch(1)
 
         self.run_shortcut = QShortcut(QKeySequence("Ctrl+Return"), self)
         self.run_shortcut.activated.connect(self._request_run)
@@ -133,10 +133,30 @@ class OperationPanel(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setObjectName("operationPanel")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(20, 18, 20, 18)
         layout.setSpacing(12)
+
+        heading_row = QHBoxLayout()
+        heading_row.setContentsMargins(0, 0, 0, 0)
+        heading_row.setSpacing(12)
+
+        labels = QWidget(self)
+        labels_layout = QVBoxLayout(labels)
+        labels_layout.setContentsMargins(0, 0, 0, 0)
+        labels_layout.setSpacing(2)
+        title = QLabel("Ready to process", labels)
+        title.setObjectName("panelTitleLabel")
+        description = QLabel(
+            "Review the settings above, then run this operation.",
+            labels,
+        )
+        description.setObjectName("panelDescriptionLabel")
+        description.setWordWrap(True)
+        labels_layout.addWidget(title)
+        labels_layout.addWidget(description)
 
         self.buttons = OperationButtons(self)
         self.progress = ProgressDisplay(self)
@@ -147,7 +167,9 @@ class OperationPanel(QWidget):
         self.buttons.runRequested.connect(self.runRequested.emit)
         self.buttons.cancelRequested.connect(self.cancelRequested.emit)
 
-        layout.addWidget(self.buttons)
+        heading_row.addWidget(labels, 1)
+        heading_row.addWidget(self.buttons)
+        layout.addLayout(heading_row)
         layout.addWidget(self.progress)
         layout.addWidget(self.result)
         layout.addWidget(self.output_actions)

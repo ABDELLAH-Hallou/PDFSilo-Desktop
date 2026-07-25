@@ -54,16 +54,20 @@ safepdf-gui
 The CLI can also be run directly from a source checkout with
 `python -m safepdf <command> [options]`.
 
-The desktop entry point opens a complete operation interface for all 13 PDF
-workflows. Each screen provides validated input and output selection,
-operation-specific options, run/cancel controls, progress, status, structured
-results, and output-opening actions. PDF work runs through a reusable
-thread-pool worker with GUI-thread signal delivery, cooperative cancellation,
-duplicate-start protection, and form-state restoration. PDF inputs have
-asynchronous low-resolution previews with file-aware thumbnail caching.
-The reorder screen provides thumbnail drag-and-drop plus selection,
-duplication, deletion, reversal, and reset without changing the source file
-before Run is confirmed.
+The desktop entry point opens a responsive workspace for all 13 PDF workflows.
+Its dashboard provides shortcuts to common tools, while the collapsible
+sidebar (`Ctrl+B`) keeps every operation within reach. On wide windows, files
+and options sit beside a dedicated document preview; at narrower sizes these
+cards stack automatically. Each screen provides validated input and output
+selection, operation-specific options, run/cancel controls, progress, status,
+structured results, and output-opening actions.
+
+PDF work runs through a reusable thread-pool worker with GUI-thread signal
+delivery, cooperative cancellation, duplicate-start protection, and form-state
+restoration. PDF inputs have asynchronous low-resolution previews with
+file-aware thumbnail caching. The reorder screen provides thumbnail
+drag-and-drop plus selection, duplication, deletion, reversal, and reset
+without changing the source file before Run is confirmed.
 
 ---
 

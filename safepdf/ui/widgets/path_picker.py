@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QStyle,
     QVBoxLayout,
     QWidget,
 )
@@ -100,8 +101,14 @@ class PathPicker(QWidget):
         self.line_edit.textEdited.connect(self._on_text_edited)
         self.label.setBuddy(self.line_edit)
 
-        self.browse_button = QPushButton("&Browse…", self)
+        self.browse_button = QPushButton("&Choose…", self)
         self.browse_button.setObjectName("browseButton")
+        icon_type = (
+            QStyle.StandardPixmap.SP_DirOpenIcon
+            if self.expects_directory
+            else QStyle.StandardPixmap.SP_DialogOpenButton
+        )
+        self.browse_button.setIcon(self.style().standardIcon(icon_type))
         self.browse_button.setAccessibleName(
             f"Browse for {label.replace('&', '').lower()}"
         )
