@@ -2,15 +2,15 @@
 decrypt.py — Remove password protection from a PDF you own.
 
 Usage:
-    python -m safepdf decrypt <input> -p PASSWORD [-o OUTPUT]
+    python -m safepdf decrypt <input> [-p PASSWORD] [-o OUTPUT]
 
 Arguments:
     input               Path to the encrypted PDF file
-    -p, --password      Password to unlock the document (required)
+    -p, --password      Password to unlock the document. Omit for a secure prompt.
     -o, --output        Output file path (default: <input_stem>_decrypted.pdf)
 
 Examples:
-    safepdf decrypt contract_encrypted.pdf -p s3cr3t
+    safepdf decrypt contract_encrypted.pdf
     safepdf decrypt contract_encrypted.pdf -p s3cr3t -o contract_open.pdf
 """
 

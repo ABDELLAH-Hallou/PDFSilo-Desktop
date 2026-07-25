@@ -22,6 +22,7 @@ from safepdf.ui.widgets.page_list import (
     PdfPageListModel,
 )
 from safepdf.ui.widgets.path_picker import PathPicker, PickerMode
+from safepdf.ui.widgets.password_field import PasswordField
 from safepdf.ui.widgets.pdf_preview import PdfPreview
 from safepdf.ui.widgets.result_summary import ResultSummary
 
@@ -39,6 +40,7 @@ __all__ = [
     "PathPicker",
     "PdfPageListModel",
     "PdfPreview",
+    "PasswordField",
     "PickerMode",
     "ProgressDisplay",
     "ResultSummary",

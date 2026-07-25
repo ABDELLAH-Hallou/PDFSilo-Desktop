@@ -2,12 +2,12 @@
 encrypt.py — Password-protect a PDF.
 
 Usage:
-    python -m safepdf encrypt <input> -p PASSWORD [-o OUTPUT] [--owner-password PASSWORD]
+    python -m safepdf encrypt <input> [-p PASSWORD] [-o OUTPUT] [--owner-password PASSWORD]
                               [--no-print] [--no-copy] [--no-edit]
 
 Arguments:
     input                   Path to the input PDF file
-    -p, --password          User password required to open the document (required)
+    -p, --password          User password. Omit for a secure interactive prompt.
     --owner-password        Owner password for permission control. Required
                             and must differ when restrictions are requested.
     -o, --output            Output file path (default: <input_stem>_encrypted.pdf)
@@ -17,7 +17,7 @@ Arguments:
 
 Examples:
     # Basic password protection
-    safepdf encrypt contract.pdf -p s3cr3t
+    safepdf encrypt contract.pdf
 
     # Full control: separate owner password, no copying allowed
     safepdf encrypt contract.pdf -p s3cr3t --owner-password adm1n --no-copy

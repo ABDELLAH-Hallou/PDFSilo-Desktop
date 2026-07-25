@@ -630,17 +630,45 @@ Phase 10 validation completed on 25 July 2026:
 
 For encryption and decryption screens:
 
-- [ ] Use `QLineEdit.Password`.
-- [ ] Add an explicit show/hide password control.
-- [ ] Require confirmation for newly created passwords.
-- [ ] Explain user-password and owner-password roles.
-- [ ] Require or recommend distinct passwords when restrictions are enabled.
-- [ ] Never include passwords in logs, errors, or progress signals.
-- [ ] Never store passwords in `QSettings`.
-- [ ] Clear password fields after the operation.
+- [x] Use `QLineEdit.Password`.
+- [x] Add an explicit show/hide password control.
+- [x] Require confirmation for newly created passwords.
+- [x] Explain user-password and owner-password roles.
+- [x] Require or recommend distinct passwords when restrictions are enabled.
+- [x] Never include passwords in logs, errors, or progress signals.
+- [x] Never store passwords in `QSettings`.
+- [x] Clear password fields after the operation.
 
 The CLI should also support interactive password input instead of requiring
 passwords in process arguments.
+
+Phase 11 validation completed on 25 July 2026:
+
+- `PasswordField` wraps a masked `QLineEdit` and an accessible, explicit
+  Show/Hide control. Clearing the field also restores masking.
+- Encryption requires matching user-password confirmation and, whenever an
+  owner password is supplied, matching owner-password confirmation.
+- Inline guidance explains that the user password opens the document and the
+  owner password controls permissions.
+- Permission restrictions require a non-empty owner password distinct from the
+  user password.
+- Encryption and decryption clear every password and confirmation field after
+  success, failure, or cancellation.
+- The strict `QSettings` allowlist remains limited to window geometry, window
+  state, and navigation index. Password fields have no persistence path.
+- Password values are absent from operation messages, warnings, progress,
+  expected errors, and logs.
+- CLI `-p/--password` options are now optional. Omitted secrets are collected
+  with `getpass.getpass()`; interactively created encryption passwords require
+  confirmation, and restricted encryption securely prompts for its owner
+  password.
+- Explicit password arguments remain supported for backward-compatible
+  automation, with help and README warnings about process-list and shell-history
+  exposure.
+- Ten Phase 11 tests cover GUI masking and visibility, confirmation and role
+  validation, clearing, settings exclusion, interactive CLI dispatch, backward
+  compatibility, and secret-free presentation.
+- The complete suite passed with 323 tests.
 
 ## Phase 12: Add UI-specific testing
 

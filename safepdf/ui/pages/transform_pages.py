@@ -7,6 +7,7 @@ import math
 from PySide6.QtWidgets import (
     QCheckBox,
     QDoubleSpinBox,
+    QLabel,
     QLineEdit,
     QSpinBox,
 )
@@ -18,7 +19,11 @@ from safepdf.ui.pages.base_operation_page import (
     set_default_output,
 )
 from safepdf.ui.pages.registry import PageDefinition
-from safepdf.ui.widgets import OutputFilePicker, SinglePdfPicker
+from safepdf.ui.widgets import (
+    OutputFilePicker,
+    PasswordField,
+    SinglePdfPicker,
+)
 
 
 class CompressPage(OperationPage):
@@ -162,10 +167,69 @@ class EncryptPage(OperationPage):
         self.output_picker = self.add_picker(
             OutputFilePicker(label="&Encrypted PDF", parent=self)
         )
-        self.user_password_edit = self._password_edit("userPasswordEdit")
-        self.owner_password_edit = self._password_edit("ownerPasswordEdit")
-        self.add_option("&User password", self.user_password_edit)
-        self.add_option("&Owner password", self.owner_password_edit)
+        user_help = QLabel(
+            "The user password opens the PDF. Share it with people who "
+            "should be able to read the document.",
+            self.form_container,
+        )
+        user_help.setObjectName("passwordRoleLabel")
+        user_help.setWordWrap(True)
+        self.form_layout.addRow(user_help)
+
+        self.user_password_field = PasswordField(
+            self.form_container,
+            object_name="userPasswordField",
+            line_edit_object_name="userPasswordEdit",
+            accessible_name="User password",
+        )
+        self.user_password_confirmation_field = PasswordField(
+            self.form_container,
+            object_name="userPasswordConfirmationField",
+            line_edit_object_name="userPasswordConfirmationEdit",
+            accessible_name="Confirm user password",
+        )
+        # Preserve the concise QLineEdit aliases used by existing callers.
+        self.user_password_edit = self.user_password_field.line_edit
+        self.user_password_confirmation_edit = (
+            self.user_password_confirmation_field.line_edit
+        )
+        self.add_option("&User password", self.user_password_field)
+        self.add_option(
+            "C&onfirm user password",
+            self.user_password_confirmation_field,
+        )
+
+        owner_help = QLabel(
+            "The owner password controls permissions. A distinct owner "
+            "password is required when printing, copying, or editing is "
+            "restricted.",
+            self.form_container,
+        )
+        owner_help.setObjectName("passwordRoleLabel")
+        owner_help.setWordWrap(True)
+        self.form_layout.addRow(owner_help)
+
+        self.owner_password_field = PasswordField(
+            self.form_container,
+            object_name="ownerPasswordField",
+            line_edit_object_name="ownerPasswordEdit",
+            accessible_name="Owner password",
+        )
+        self.owner_password_confirmation_field = PasswordField(
+            self.form_container,
+            object_name="ownerPasswordConfirmationField",
+            line_edit_object_name="ownerPasswordConfirmationEdit",
+            accessible_name="Confirm owner password",
+        )
+        self.owner_password_edit = self.owner_password_field.line_edit
+        self.owner_password_confirmation_edit = (
+            self.owner_password_confirmation_field.line_edit
+        )
+        self.add_option("&Owner password", self.owner_password_field)
+        self.add_option(
+            "Confirm o&wner password",
+            self.owner_password_confirmation_field,
+        )
 
         self.allow_print_checkbox = self._permission_checkbox(
             "Allow printing",
@@ -184,7 +248,9 @@ class EncryptPage(OperationPage):
         self.form_layout.addRow(self.allow_edit_checkbox)
 
         self.watch(self.user_password_edit.textChanged)
+        self.watch(self.user_password_confirmation_edit.textChanged)
         self.watch(self.owner_password_edit.textChanged)
+        self.watch(self.owner_password_confirmation_edit.textChanged)
         for checkbox in self._permission_checkboxes:
             self.watch(checkbox.toggled)
 
@@ -206,13 +272,6 @@ class EncryptPage(OperationPage):
             self.allow_edit_checkbox,
         )
 
-    def _password_edit(self, object_name: str) -> QLineEdit:
-        edit = QLineEdit(self)
-        edit.setObjectName(object_name)
-        edit.setEchoMode(QLineEdit.EchoMode.Password)
-        edit.setClearButtonEnabled(True)
-        return edit
-
     def _permission_checkbox(
         self,
         text: str,
@@ -231,14 +290,20 @@ class EncryptPage(OperationPage):
 
     def specific_validation_error(self) -> str:
         user_password = self.user_password_edit.text()
+        user_confirmation = self.user_password_confirmation_edit.text()
         owner_password = self.owner_password_edit.text()
+        owner_confirmation = self.owner_password_confirmation_edit.text()
         if not user_password:
             return "Enter a user password."
+        if user_confirmation != user_password:
+            return "User password confirmation does not match."
         if self._restrictions_requested() and not owner_password:
             return (
                 "A distinct owner password is required when permissions "
                 "are restricted."
             )
+        if owner_password != owner_confirmation:
+            return "Owner password confirmation does not match."
         if (
             self._restrictions_requested()
             and owner_password == user_password
@@ -266,8 +331,10 @@ class EncryptPage(OperationPage):
         )
 
     def _clear_passwords(self) -> None:
-        self.user_password_edit.clear()
-        self.owner_password_edit.clear()
+        self.user_password_field.clear()
+        self.user_password_confirmation_field.clear()
+        self.owner_password_field.clear()
+        self.owner_password_confirmation_field.clear()
 
 
 class DecryptPage(OperationPage):
@@ -281,11 +348,22 @@ class DecryptPage(OperationPage):
         self.output_picker = self.add_picker(
             OutputFilePicker(label="&Decrypted PDF", parent=self)
         )
-        self.password_edit = QLineEdit(self)
-        self.password_edit.setObjectName("decryptPasswordEdit")
-        self.password_edit.setEchoMode(QLineEdit.EchoMode.Password)
-        self.password_edit.setClearButtonEnabled(True)
-        self.add_option("&Password", self.password_edit)
+        password_help = QLabel(
+            "Enter either the user password or the owner password used to "
+            "unlock this PDF.",
+            self.form_container,
+        )
+        password_help.setObjectName("passwordRoleLabel")
+        password_help.setWordWrap(True)
+        self.form_layout.addRow(password_help)
+        self.password_field = PasswordField(
+            self.form_container,
+            object_name="decryptPasswordField",
+            line_edit_object_name="decryptPasswordEdit",
+            accessible_name="PDF password",
+        )
+        self.password_edit = self.password_field.line_edit
+        self.add_option("&Password", self.password_field)
         self.watch(self.password_edit.textChanged)
         self.input_picker.pathChanged.connect(
             lambda source: set_default_output(
@@ -294,7 +372,7 @@ class DecryptPage(OperationPage):
                 "_decrypted.pdf",
             )
         )
-        self.controller.runner.finished.connect(self.password_edit.clear)
+        self.controller.runner.finished.connect(self.password_field.clear)
         self.finish_setup()
 
     def specific_validation_error(self) -> str:

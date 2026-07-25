@@ -221,24 +221,31 @@ python -m safepdf compress large_scan.pdf -q 30 -o small.pdf
 Encrypts a PDF with AES-256, with optional permission restrictions.
 
 ```bash
-python -m safepdf encrypt <input> -p PASSWORD [-o OUTPUT]
+python -m safepdf encrypt <input> [-p PASSWORD] [-o OUTPUT]
                            [--owner-password PW] [--no-print] [--no-copy] [--no-edit]
 ```
 
 | Argument | Description | Default |
 |---|---|---|
 | `input` | Input PDF file | *(required)* |
-| `-p`, `--password` | User password to open the document | *(required)* |
-| `--owner-password` | Owner password for permissions; required and must differ when restrictions are used | same as `-p` when unrestricted |
+| `-p`, `--password` | User password to open the document | secure interactive prompt |
+| `--owner-password` | Owner password for permissions; prompted securely, required, and distinct when restrictions are used | same as user password when unrestricted |
 | `-o`, `--output` | Output file path | `<input_stem>_encrypted.pdf` |
 | `--no-print` | Disallow printing | — |
 | `--no-copy` | Disallow copying | — |
 | `--no-edit` | Disallow editing | — |
 
 ```bash
+# Recommended: enter and confirm passwords through hidden prompts
+python -m safepdf encrypt contract.pdf
+python -m safepdf encrypt contract.pdf --no-copy
+
+# Explicit arguments remain available for automation
 python -m safepdf encrypt contract.pdf -p s3cr3t
-python -m safepdf encrypt contract.pdf -p s3cr3t --owner-password adm1n --no-copy
 ```
+
+Supplying a password as a command-line argument can expose it through shell
+history or process listings. Omit password arguments for interactive use.
 
 ---
 
@@ -247,17 +254,17 @@ python -m safepdf encrypt contract.pdf -p s3cr3t --owner-password adm1n --no-cop
 Unlocks a password-protected PDF you own.
 
 ```bash
-python -m safepdf decrypt <input> -p PASSWORD [-o OUTPUT]
+python -m safepdf decrypt <input> [-p PASSWORD] [-o OUTPUT]
 ```
 
 | Argument | Description | Default |
 |---|---|---|
 | `input` | Input PDF file | *(required)* |
-| `-p`, `--password` | Password to unlock the document | *(required)* |
+| `-p`, `--password` | Password to unlock the document | secure interactive prompt |
 | `-o`, `--output` | Output file path | `<input_stem>_decrypted.pdf` |
 
 ```bash
-python -m safepdf decrypt contract_encrypted.pdf -p s3cr3t
+python -m safepdf decrypt contract_encrypted.pdf
 ```
 
 ---

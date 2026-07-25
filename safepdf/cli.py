@@ -22,8 +22,10 @@ Commands:
 Run `python -m safepdf <command> --help` for command-specific options.
 """
 
-import sys
 import argparse
+import getpass
+import sys
+from collections.abc import Callable
 
 from safepdf.utils import setup_logging, PAGE_SIZES
 from safepdf.operations import (
@@ -87,11 +89,22 @@ def build_parser() -> argparse.ArgumentParser:
     # ── encrypt ───────────────────────────────────────────────────────────────
     p = sub.add_parser("encrypt", help="Password-protect a PDF (AES-256)")
     p.add_argument("input", help="Input PDF file")
-    p.add_argument("-p", "--password", required=True, help="User password")
+    p.add_argument(
+        "-p",
+        "--password",
+        default=None,
+        help=(
+            "User password (omit to enter it securely; command-line "
+            "passwords may be visible to other processes)"
+        ),
+    )
     p.add_argument(
         "--owner-password",
         default=None,
-        help="Owner password (required and must differ when restrictions are used)",
+        help=(
+            "Owner password (prompted securely when restrictions require "
+            "one; command-line passwords may be visible to other processes)"
+        ),
     )
     p.add_argument("-o", "--output", default=None, help="Output file path")
     p.add_argument("--no-print", action="store_true", help="Disallow printing")
@@ -101,7 +114,15 @@ def build_parser() -> argparse.ArgumentParser:
     # ── decrypt ───────────────────────────────────────────────────────────────
     p = sub.add_parser("decrypt", help="Remove password from a PDF")
     p.add_argument("input", help="Input PDF file")
-    p.add_argument("-p", "--password", required=True, help="Password to unlock the document")
+    p.add_argument(
+        "-p",
+        "--password",
+        default=None,
+        help=(
+            "Password to unlock the document (omit to enter it securely; "
+            "command-line passwords may be visible to other processes)"
+        ),
+    )
     p.add_argument("-o", "--output", default=None, help="Output file path")
 
     # ── watermark ─────────────────────────────────────────────────────────────
@@ -188,9 +209,60 @@ COMMAND_MAP = {
 }
 
 
+PasswordPrompt = Callable[[str], str]
+
+
+def _prompt_confirmed_password(
+    prompt: PasswordPrompt,
+    *,
+    label: str,
+) -> str:
+    password = prompt(f"{label}: ")
+    if not password:
+        raise ValueError(f"{label} cannot be empty.")
+    confirmation = prompt(f"Confirm {label.lower()}: ")
+    if password != confirmation:
+        raise ValueError(f"{label} confirmation does not match.")
+    return password
+
+
+def resolve_interactive_passwords(
+    args: argparse.Namespace,
+    prompt: PasswordPrompt | None = None,
+) -> None:
+    """Populate omitted CLI secrets without exposing typed input on screen."""
+    password_prompt = prompt or getpass.getpass
+    if args.command == "encrypt":
+        if args.password is None:
+            args.password = _prompt_confirmed_password(
+                password_prompt,
+                label="User password",
+            )
+
+        restrictions_requested = (
+            args.no_print or args.no_copy or args.no_edit
+        )
+        if restrictions_requested and args.owner_password is None:
+            args.owner_password = _prompt_confirmed_password(
+                password_prompt,
+                label="Owner password",
+            )
+    elif args.command == "decrypt" and args.password is None:
+        password = password_prompt("PDF password: ")
+        if not password:
+            raise ValueError("PDF password cannot be empty.")
+        args.password = password
+
+
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+    try:
+        resolve_interactive_passwords(args)
+    except (EOFError, KeyboardInterrupt):
+        parser.error("Password input was cancelled.")
+    except ValueError as exc:
+        parser.error(str(exc))
     setup_logging(args.log_level)
     success = COMMAND_MAP[args.command](args)
     sys.exit(0 if success else 1)

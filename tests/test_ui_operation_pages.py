@@ -272,7 +272,9 @@ def test_encrypt_screen_runs_and_clears_passwords(qtbot, tmp_pdf, tmp_path):
     output = tmp_path / "encrypted-output.pdf"
     page.output_picker.set_path(output)
     page.user_password_edit.setText("user-secret")
+    page.user_password_confirmation_edit.setText("user-secret")
     page.owner_password_edit.setText("owner-secret")
+    page.owner_password_confirmation_edit.setText("owner-secret")
     page.allow_copy_checkbox.setChecked(False)
 
     result, progress = _run_successfully(qtbot, page)
@@ -281,7 +283,9 @@ def test_encrypt_screen_runs_and_clears_passwords(qtbot, tmp_pdf, tmp_path):
     assert result.metadata["allow_copy"] is False
     assert len(progress) == 1
     assert page.user_password_edit.text() == ""
+    assert page.user_password_confirmation_edit.text() == ""
     assert page.owner_password_edit.text() == ""
+    assert page.owner_password_confirmation_edit.text() == ""
 
 
 def test_decrypt_screen_runs_and_clears_password(
