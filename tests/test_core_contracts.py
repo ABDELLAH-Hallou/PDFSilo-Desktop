@@ -6,21 +6,21 @@ from pathlib import Path
 
 import pytest
 
-from safepdf.core import (
+from pdfsilo.core import (
     InvalidInputError,
     OperationCancelledError,
     OperationResult,
     OutputWriteError,
     PdfPasswordError,
     PdfProcessingError,
-    SafePdfError,
+    PdfSiloError,
 )
-from safepdf.operations import split
-from safepdf.operations.compress import execute as compress_pdf
-from safepdf.operations.concat import execute as concat_pdfs
-from safepdf.operations.decrypt import execute as decrypt_pdf
-from safepdf.operations.rotate import execute as rotate_pdf
-from safepdf.operations.split import execute as split_pdf
+from pdfsilo.operations import split
+from pdfsilo.operations.compress import execute as compress_pdf
+from pdfsilo.operations.concat import execute as concat_pdfs
+from pdfsilo.operations.decrypt import execute as decrypt_pdf
+from pdfsilo.operations.rotate import execute as rotate_pdf
+from pdfsilo.operations.split import execute as split_pdf
 
 
 OPERATION_MODULES = [
@@ -61,13 +61,13 @@ def test_operation_result_defaults():
         PdfProcessingError,
     ],
 )
-def test_typed_errors_share_safe_pdf_base(error_type):
-    assert issubclass(error_type, SafePdfError)
+def test_typed_errors_share_pdf_silo_base(error_type):
+    assert issubclass(error_type, PdfSiloError)
 
 
 @pytest.mark.parametrize("module_name", OPERATION_MODULES)
 def test_every_operation_exposes_structured_execute_function(module_name: str):
-    module = importlib.import_module(f"safepdf.operations.{module_name}")
+    module = importlib.import_module(f"pdfsilo.operations.{module_name}")
     assert callable(module.execute)
 
 

@@ -1,10 +1,10 @@
-"""tests/test_utils.py — Unit tests for safepdf.utils"""
+"""tests/test_utils.py — Unit tests for pdfsilo.utils"""
 
 import logging
 import pytest
 from pathlib import Path
 
-from safepdf.utils import (
+from pdfsilo.utils import (
     PAGE_SIZES,
     atomic_output_path,
     extract_number_from_filename,

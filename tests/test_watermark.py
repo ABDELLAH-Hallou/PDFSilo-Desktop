@@ -1,11 +1,11 @@
-"""tests/test_watermark.py — Unit tests for safepdf.operations.watermark"""
+"""tests/test_watermark.py — Unit tests for pdfsilo.operations.watermark"""
 
 import pytest
 from pathlib import Path
 
 import fitz
 
-from safepdf.operations.watermark import run, cli_run, parse_color
+from pdfsilo.operations.watermark import run, cli_run, parse_color
 
 
 class TestParseColor:

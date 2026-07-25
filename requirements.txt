@@ -1,4 +1,4 @@
-# SafePDF — Python dependencies
+# PDFSilo — Python dependencies
 # Install with: pip install -r requirements.txt
 
 # Core PDF processing

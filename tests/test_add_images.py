@@ -1,11 +1,11 @@
-"""tests/test_add_images.py — Unit tests for safepdf.operations.add_images"""
+"""tests/test_add_images.py — Unit tests for pdfsilo.operations.add_images"""
 
 import pytest
 from pathlib import Path
 
 import fitz
 
-from safepdf.operations.add_images import run, cli_run, _parse_position, SUPPORTED_EXTENSIONS
+from pdfsilo.operations.add_images import run, cli_run, _parse_position, SUPPORTED_EXTENSIONS
 
 
 # ── _parse_position ───────────────────────────────────────────────────────────

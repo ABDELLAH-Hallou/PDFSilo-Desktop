@@ -8,9 +8,9 @@ pytest.importorskip("PySide6")
 
 from PySide6.QtCore import QSettings, Qt
 
-from safepdf import cli
-from safepdf.core import OperationResult
-from safepdf.operations import (
+from pdfsilo import cli
+from pdfsilo.core import OperationResult
+from pdfsilo.operations import (
     add_images,
     compress,
     concat,
@@ -25,8 +25,8 @@ from safepdf.operations import (
     to_images,
     watermark,
 )
-from safepdf.ui.main_window import MainWindow
-from safepdf.ui.pages import (
+from pdfsilo.ui.main_window import MainWindow
+from pdfsilo.ui.pages import (
     OPERATION_PAGE_FACTORIES,
     PAGE_DEFINITIONS,
     OperationPage,
@@ -364,7 +364,7 @@ def test_unified_cli_still_processes_a_real_operation(
         cli.sys,
         "argv",
         [
-            "safepdf",
+            "pdfsilo",
             "rotate",
             str(tmp_pdf),
             "--angle",

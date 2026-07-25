@@ -1,11 +1,11 @@
-"""tests/test_decrypt.py — Unit tests for safepdf.operations.decrypt"""
+"""tests/test_decrypt.py — Unit tests for pdfsilo.operations.decrypt"""
 
 import pytest
 from pathlib import Path
 
 import fitz
 
-from safepdf.operations.decrypt import run, cli_run
+from pdfsilo.operations.decrypt import run, cli_run
 
 
 class TestDecryptRun:

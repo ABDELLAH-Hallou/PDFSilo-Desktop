@@ -1,10 +1,10 @@
-# SafePDF Codebase Analysis
+# PDFSilo Codebase Analysis
 
 _Analysis date: 24 July 2026_
 
 ## Executive summary
 
-SafePDF is a compact, privacy-focused Python toolkit for local PDF processing.
+PDFSilo is a compact, privacy-focused Python toolkit for local PDF processing.
 It retains its complete command-line interface and now has a functional
 PySide6 desktop interface. The desktop window exposes all 13 operations through
 validated, cancellable screens backed by the same processing layer as the CLI.
@@ -46,10 +46,10 @@ folder-level transactionality remain future work.
 
 Project packaging was added on 24 July 2026:
 
-- `pyproject.toml` defines SafePDF 0.1.0 for Python 3.10+.
+- `pyproject.toml` defines PDFSilo 0.1.0 for Python 3.10+.
 - PyMuPDF and PySide6 are declared runtime dependencies.
 - pytest, pytest-qt, and build are available through the `dev` extra.
-- `safepdf` and `safepdf-gui` are installed console entry points.
+- `pdfsilo` and `pdfsilo-gui` are installed console entry points.
 - A minimal PySide6 bootstrap window provides a working GUI entry point.
 - An editable install and distributable wheel were built successfully.
 
@@ -57,15 +57,15 @@ Project packaging was added on 24 July 2026:
 
 Core operations were separated from CLI presentation behavior on 24 July 2026:
 
-- `safepdf.core.OperationResult` reports output paths, messages, warnings,
+- `pdfsilo.core.OperationResult` reports output paths, messages, warnings,
   source paths, processing counts, file sizes, elapsed time, and metadata.
-- Expected failures use `SafePdfError` subclasses for invalid input, passwords,
+- Expected failures use `PdfSiloError` subclasses for invalid input, passwords,
   output writes, PDF processing, and cancellation.
 - All 13 operation modules expose `execute(...) -> OperationResult` and perform
   no CLI logging in that core path.
 - Wrapped PyMuPDF and filesystem failures use exception chaining so diagnostic
   context remains available through `__cause__`.
-- `safepdf.presentation.present_operation` translates structured outcomes into
+- `pdfsilo.presentation.present_operation` translates structured outcomes into
   logging and the existing boolean return contract.
 - Existing `run(...)` and `cli_run(args)` callers remain compatible.
 - CLI success and failure exit codes were verified.
@@ -75,7 +75,7 @@ Core operations were separated from CLI presentation behavior on 24 July 2026:
 Framework-independent progress and cancellation were added on 24 July 2026:
 
 - `ProgressCallback` and `CancellationCheck` callable aliases are defined in
-  `safepdf.core.progress` without importing PySide6.
+  `pdfsilo.core.progress` without importing PySide6.
 - Every operation's `execute(...)` function accepts the callbacks as optional
   keyword-only arguments, preserving all existing callers.
 - Iterative operations report completed page, file, or image units and poll for
@@ -89,14 +89,14 @@ Framework-independent progress and cancellation were added on 24 July 2026:
 
 The PySide6 application structure was created on 24 July 2026:
 
-- The installed `safepdf-gui` entry point creates and configures a
+- The installed `pdfsilo-gui` entry point creates and configures a
   process-wide `QApplication`.
 - `MainWindow` provides the empty desktop shell for the navigation work in
   Phase 6.
 - Application identity values are centralized rather than repeated throughout
   widgets.
 - Cross-platform color, spacing, typography, and control constants are
-  centralized in `safepdf.ui.theme`.
+  centralized in `pdfsilo.ui.theme`.
 - A scalable SVG icon is packaged in the wheel and assigned at application and
   window level.
 - Package locations now exist for future dialogs, pages, reusable widgets, and
@@ -157,7 +157,7 @@ The reusable background execution layer was implemented on 24 July 2026:
 - `OperationController` binds the runner to `OperationPanel` and operation-form
   controls. It preserves and restores each control's previous enabled state
   after success, failure, cancellation, or startup failure.
-- Expected `SafePdfError` messages remain distinct from unexpected exceptions,
+- Expected `PdfSiloError` messages remain distinct from unexpected exceptions,
   while unexpected tracebacks are retained in application logs.
 
 ## Phase 9 operation screen status
@@ -277,7 +277,7 @@ argparse CLI / legacy Python API          PySide6 UI
                              |
                     +--------+--------+
                     |                 |
-             OperationResult    SafePdfError
+             OperationResult    PdfSiloError
                     |                 |
                     +--------+--------+
                              |
@@ -290,19 +290,19 @@ argparse CLI / legacy Python API          PySide6 UI
 
 The important components are:
 
-- [`safepdf/__main__.py`](safepdf/__main__.py) starts the CLI.
-- [`safepdf/cli.py`](safepdf/cli.py) defines arguments and dispatches commands.
-- [`safepdf/core/`](safepdf/core/) contains structured results, typed errors,
+- [`pdfsilo/__main__.py`](pdfsilo/__main__.py) starts the CLI.
+- [`pdfsilo/cli.py`](pdfsilo/cli.py) defines arguments and dispatches commands.
+- [`pdfsilo/core/`](pdfsilo/core/) contains structured results, typed errors,
   core validation, and output publishing helpers.
-- [`safepdf/presentation.py`](safepdf/presentation.py) adapts structured core
+- [`pdfsilo/presentation.py`](pdfsilo/presentation.py) adapts structured core
   outcomes to logging and legacy boolean returns.
-- [`safepdf/utils.py`](safepdf/utils.py) contains shared page sizes, sorting,
+- [`pdfsilo/utils.py`](pdfsilo/utils.py) contains shared page sizes, sorting,
   logging setup, and atomic-path helpers.
-- [`safepdf/operations/`](safepdf/operations/) contains one module per PDF
+- [`pdfsilo/operations/`](pdfsilo/operations/) contains one module per PDF
   operation.
-- [`safepdf/ui/workers.py`](safepdf/ui/workers.py) contains cancellation,
+- [`pdfsilo/ui/workers.py`](pdfsilo/ui/workers.py) contains cancellation,
   worker, runner, and UI-controller infrastructure.
-- [`safepdf/ui/widgets/`](safepdf/ui/widgets/) contains reusable operation-form
+- [`pdfsilo/ui/widgets/`](pdfsilo/ui/widgets/) contains reusable operation-form
   and lifecycle widgets.
 - [`tests/`](tests/) contains unit and integration-style tests using real,
   temporary PyMuPDF documents.
@@ -359,7 +359,7 @@ rewriter.
 
 Original finding:
 
-[`safepdf/operations/compress.py`](safepdf/operations/compress.py) accepts and
+[`pdfsilo/operations/compress.py`](pdfsilo/operations/compress.py) accepts and
 validates a `quality` value from 1 to 100, but the value is never used during
 the save operation.
 
@@ -402,7 +402,7 @@ Regression tests verify both output file signatures.
 
 Original finding:
 
-[`safepdf/operations/extract_images.py`](safepdf/operations/extract_images.py)
+[`pdfsilo/operations/extract_images.py`](pdfsilo/operations/extract_images.py)
 uses `doc.extract_image(xref)` and writes the returned original bytes directly:
 
 ```python
@@ -455,7 +455,7 @@ user password. Tests authenticate as the user and verify the permission mask.
 
 Original finding:
 
-[`safepdf/operations/encrypt.py`](safepdf/operations/encrypt.py) defaults the
+[`pdfsilo/operations/encrypt.py`](pdfsilo/operations/encrypt.py) defaults the
 owner password to the user password:
 
 ```python
@@ -540,7 +540,7 @@ for full transactionality when merging output into an existing directory.
 Status: **Resolved in Phase 3**
 
 All operation modules now expose a structured core function that raises typed
-`SafePdfError` subclasses. Expected invalid input, password, output-write, and
+`PdfSiloError` subclasses. Expected invalid input, password, output-write, and
 PDF-processing failures can be distinguished by library and GUI callers.
 Original lower-level exceptions are retained through exception chaining.
 
@@ -735,7 +735,7 @@ Important missing assertions still include:
 
 ## Final assessment
 
-SafePDF has a good foundation: its architecture is small, comprehensible, and
+PDFSilo has a good foundation: its architecture is small, comprehensible, and
 well tested. Phase 1 corrected the compression, extracted-image, restricted
 encryption, validation, atomic-output, and licensing findings. Phase 3 added a
 structured, typed core API while preserving CLI behavior. Phase 4 added

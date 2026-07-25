@@ -11,11 +11,11 @@ pytest.importorskip("PySide6")
 from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QLabel, QLineEdit
 
-from safepdf import cli
-from safepdf.operations import decrypt, encrypt
-from safepdf.ui.main_window import MainWindow, PERSISTED_SETTING_KEYS
-from safepdf.ui.pages import PAGE_DEFINITIONS, DecryptPage, EncryptPage
-from safepdf.ui.widgets import PasswordField
+from pdfsilo import cli
+from pdfsilo.operations import decrypt, encrypt
+from pdfsilo.ui.main_window import MainWindow, PERSISTED_SETTING_KEYS
+from pdfsilo.ui.pages import PAGE_DEFINITIONS, DecryptPage, EncryptPage
+from pdfsilo.ui.widgets import PasswordField
 
 DEFINITIONS = {
     definition.key: definition
@@ -194,7 +194,7 @@ def test_cli_main_resolves_password_before_dispatch(monkeypatch):
     monkeypatch.setattr(
         cli.sys,
         "argv",
-        ["safepdf", "decrypt", "document.pdf"],
+        ["pdfsilo", "decrypt", "document.pdf"],
     )
     monkeypatch.setattr(
         cli.getpass,

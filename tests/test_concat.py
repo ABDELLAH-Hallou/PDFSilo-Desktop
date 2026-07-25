@@ -1,11 +1,11 @@
-"""tests/test_concat.py — Unit tests for safepdf.operations.concat"""
+"""tests/test_concat.py — Unit tests for pdfsilo.operations.concat"""
 
 import pytest
 from pathlib import Path
 
 import fitz
 
-from safepdf.operations.concat import run, cli_run
+from pdfsilo.operations.concat import run, cli_run
 
 
 class TestConcatRun:

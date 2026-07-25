@@ -1,9 +1,9 @@
-safepdf/
+pdfsilo/
 ├── README.md
 ├── requirements.txt
-├── safepdf/
+├── pdfsilo/
 │   ├── __init__.py
-│   ├── __main__.py           # enables `python -m safepdf`
+│   ├── __main__.py           # enables `python -m pdfsilo`
 │   ├── cli.py                # unified argument parser, routes to operations
 │   ├── utils.py              # shared helpers (logging, validation, sorting)
 │   └── operations/

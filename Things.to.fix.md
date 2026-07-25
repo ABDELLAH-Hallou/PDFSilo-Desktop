@@ -25,5 +25,11 @@
       preview, zoom, target canvas, staged save/discard, explicit image order,
       and spin-box resources.
 
-[] ![Here the logo of pysides6 isntead of sidebar show/hide icons please fix](image-5.png)
-[] The name of this whole project changed from safepdf to PDFSilo, change this in all the project
+## Additional fixes
+
+- [x] Replace the platform-provided sidebar button glyph—which displayed the
+      PySide6/Qt logo on some systems—with packaged show/hide sidebar icons.
+- [x] Rename the complete project identity from the previous name to
+      **PDFSilo**, including the Python package, imports, exception base class,
+      CLI and GUI commands, application metadata, documentation, tests, and
+      packaging configuration.

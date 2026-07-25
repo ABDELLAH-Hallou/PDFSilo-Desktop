@@ -3,7 +3,7 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "safepdf"
+name = "pdfsilo"
 version = "0.1.0"
 description = "Privacy-first, local PDF processing toolkit with CLI and desktop interfaces."
 readme = "README.md"
@@ -48,17 +48,17 @@ dev = [
 ]
 
 [project.scripts]
-safepdf = "safepdf.cli:main"
-safepdf-gui = "safepdf.ui.main:main"
+pdfsilo = "pdfsilo.cli:main"
+pdfsilo-gui = "pdfsilo.ui.main:main"
 
 [project.urls]
-Homepage = "https://github.com/ABDELLAH-Hallou/SafePDF"
-Repository = "https://github.com/ABDELLAH-Hallou/SafePDF"
-Issues = "https://github.com/ABDELLAH-Hallou/SafePDF/issues"
+Homepage = "https://github.com/ABDELLAH-Hallou/PDFSilo"
+Repository = "https://github.com/ABDELLAH-Hallou/PDFSilo"
+Issues = "https://github.com/ABDELLAH-Hallou/PDFSilo/issues"
 
 [tool.setuptools.packages.find]
-include = ["safepdf*"]
+include = ["pdfsilo*"]
 exclude = ["tests*"]
 
 [tool.setuptools.package-data]
-"safepdf.ui.resources" = ["*.svg"]
+"pdfsilo.ui.resources" = ["*.svg"]

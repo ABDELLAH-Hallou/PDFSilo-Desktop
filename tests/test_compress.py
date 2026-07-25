@@ -1,11 +1,11 @@
-"""tests/test_compress.py — Unit tests for safepdf.operations.compress"""
+"""tests/test_compress.py — Unit tests for pdfsilo.operations.compress"""
 
 import pytest
 from pathlib import Path
 
 import fitz
 
-from safepdf.operations.compress import run, cli_run
+from pdfsilo.operations.compress import run, cli_run
 
 
 class TestCompressRun:

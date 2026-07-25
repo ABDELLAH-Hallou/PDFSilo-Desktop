@@ -1,11 +1,11 @@
-"""tests/test_split.py — Unit tests for safepdf.operations.split"""
+"""tests/test_split.py — Unit tests for pdfsilo.operations.split"""
 
 import pytest
 from pathlib import Path
 
 import fitz
 
-from safepdf.operations.split import run, cli_run
+from pdfsilo.operations.split import run, cli_run
 
 
 class TestSplitRun:

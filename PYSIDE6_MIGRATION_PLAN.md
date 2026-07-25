@@ -1,10 +1,10 @@
-# SafePDF PySide6 Migration Plan
+# PDFSilo PySide6 Migration Plan
 
 _Created: 24 July 2026_
 
 ## Objective
 
-Convert SafePDF from a command-line-only toolkit into a cross-platform PySide6
+Convert PDFSilo from a command-line-only toolkit into a cross-platform PySide6
 desktop application while preserving:
 
 - The existing CLI
@@ -80,23 +80,23 @@ Suggested entry points:
 
 ```toml
 [project.scripts]
-safepdf = "safepdf.cli:main"
-safepdf-gui = "safepdf.ui.main:main"
+pdfsilo = "pdfsilo.cli:main"
+pdfsilo-gui = "pdfsilo.ui.main:main"
 ```
 
 The application should remain usable through both:
 
 ```bash
-safepdf <command> [options]
-safepdf-gui
+pdfsilo <command> [options]
+pdfsilo-gui
 ```
 
 Phase 2 validation completed on 24 July 2026:
 
 - Editable development installation completed successfully.
-- `safepdf` and `safepdf-gui` were installed as console entry points.
+- `pdfsilo` and `pdfsilo-gui` were installed as console entry points.
 - The GUI entry point launched successfully in offscreen smoke testing.
-- `dist/safepdf-0.1.0-py3-none-any.whl` was built successfully.
+- `dist/pdfsilo-0.1.0-py3-none-any.whl` was built successfully.
 - The complete suite passed with 199 tests.
 
 ## Phase 3: Separate the core from CLI behavior
@@ -135,23 +135,23 @@ Possible additional fields include:
 Introduce application-specific exceptions:
 
 ```python
-class SafePdfError(Exception):
-    """Base class for expected SafePDF errors."""
+class PdfSiloError(Exception):
+    """Base class for expected PDFSilo errors."""
 
 
-class InvalidInputError(SafePdfError):
+class InvalidInputError(PdfSiloError):
     pass
 
 
-class PdfPasswordError(SafePdfError):
+class PdfPasswordError(PdfSiloError):
     pass
 
 
-class OutputWriteError(SafePdfError):
+class OutputWriteError(PdfSiloError):
     pass
 
 
-class OperationCancelledError(SafePdfError):
+class OperationCancelledError(PdfSiloError):
     pass
 ```
 
@@ -164,7 +164,7 @@ handle them differently:
 ### Implementation tasks
 
 - [x] Introduce `OperationResult`.
-- [x] Introduce typed SafePDF exceptions.
+- [x] Introduce typed PDFSilo exceptions.
 - [x] Move CLI-specific logging decisions out of core operations.
 - [x] Preserve useful diagnostic context when wrapping PyMuPDF errors.
 - [x] Update the CLI adapters to consume structured results.
@@ -174,7 +174,7 @@ Phase 3 validation completed on 24 July 2026:
 
 - All 13 operations expose a framework-independent `execute(...)` function
   that accepts `Path` values and returns `OperationResult`.
-- Expected failures use typed `SafePdfError` subclasses. Wrapped PyMuPDF and
+- Expected failures use typed `PdfSiloError` subclasses. Wrapped PyMuPDF and
   filesystem errors retain their original exception through `__cause__`.
 - The shared presentation adapter converts results and errors into the
   existing CLI logging and boolean contract.
@@ -247,7 +247,7 @@ Phase 4 validation completed on 24 July 2026:
 Suggested project layout:
 
 ```text
-safepdf/
+pdfsilo/
 ├── core/
 │   ├── __init__.py
 │   ├── errors.py
@@ -285,13 +285,13 @@ import sys
 
 from PySide6.QtWidgets import QApplication
 
-from safepdf.ui.main_window import MainWindow
+from pdfsilo.ui.main_window import MainWindow
 
 
 def main() -> int:
     app = QApplication(sys.argv)
-    app.setApplicationName("SafePDF")
-    app.setOrganizationName("SafePDF")
+    app.setApplicationName("PDFSilo")
+    app.setOrganizationName("PDFSilo")
 
     window = MainWindow()
     window.show()
@@ -305,7 +305,7 @@ if __name__ == "__main__":
 
 ### Implementation tasks
 
-- [x] Create the `safepdf.ui` package.
+- [x] Create the `pdfsilo.ui` package.
 - [x] Add the GUI entry point.
 - [x] Add application metadata and an icon.
 - [x] Establish theme, spacing, and typography constants.
@@ -314,7 +314,7 @@ if __name__ == "__main__":
 
 Phase 5 implementation and Windows validation completed on 24 July 2026:
 
-- `safepdf.ui` now contains the application entry point, `MainWindow`,
+- `pdfsilo.ui` now contains the application entry point, `MainWindow`,
   metadata, theme tokens, packaged resources, and scaffold packages for
   dialogs, pages, widgets, and workers.
 - `create_application()` configures application name, display name, version,
@@ -322,7 +322,7 @@ Phase 5 implementation and Windows validation completed on 24 July 2026:
 - A scalable SVG application icon is applied to both the application and main
   window.
 - Color, spacing, typography, control-height, and border-radius constants are
-  centralized in `safepdf.ui.theme`.
+  centralized in `pdfsilo.ui.theme`.
 - The window was constructed and passed through a real Qt start/stop event loop
   using the offscreen Windows platform.
 - The wheel was rebuilt and inspected; the UI modules and SVG icon are present.
@@ -337,7 +337,7 @@ Use one main window with navigation between operation screens:
 
 ```text
 ┌─────────────────────────────────────────────────────┐
-│ SafePDF                               Settings Help │
+│ PDFSilo                               Settings Help │
 ├───────────────┬─────────────────────────────────────┤
 │ Home          │                                     │
 │ Merge         │                                     │
@@ -499,7 +499,7 @@ Phase 8 validation completed on 24 July 2026:
   requests safe across threads.
 - `OperationRunner` owns the active worker, forwards signals through GUI-thread
   slots, rejects duplicate starts, and always clears its running state.
-- Expected `SafePdfError` failures, unexpected exceptions, cancellation,
+- Expected `PdfSiloError` failures, unexpected exceptions, cancellation,
   success, and final completion use distinct signal paths.
 - `OperationController` binds a runner to `OperationPanel`, disables form
   controls while active, and restores each control to its exact previous
@@ -847,7 +847,7 @@ The migration is complete when:
 
 ## Guiding principle
 
-> PySide6 should be a client of the SafePDF processing engine, not part of the
+> PySide6 should be a client of the PDFSilo processing engine, not part of the
 > processing engine.
 
 Following this rule preserves the CLI, keeps the core independently testable,

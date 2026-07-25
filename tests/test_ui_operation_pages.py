@@ -11,9 +11,9 @@ pytest.importorskip("PySide6")
 
 from PySide6.QtCore import QSettings
 
-from safepdf.core import OperationCancelledError, OperationResult
-from safepdf.ui.main_window import MainWindow
-from safepdf.ui.pages import (
+from pdfsilo.core import OperationCancelledError, OperationResult
+from pdfsilo.ui.main_window import MainWindow
+from pdfsilo.ui.pages import (
     OPERATION_PAGE_FACTORIES,
     PAGE_DEFINITIONS,
     AddImagesPage,
@@ -31,7 +31,7 @@ from safepdf.ui.pages import (
     ToImagesPage,
     WatermarkPage,
 )
-from safepdf.ui.widgets import OperationPanel
+from pdfsilo.ui.widgets import OperationPanel
 
 DEFINITIONS = {
     definition.key: definition
@@ -145,6 +145,9 @@ def test_pdf_output_is_reviewed_before_atomic_save(
     assert page.pdf_preview.source_path() == staged
 
     qtbot.waitUntil(page.panel.save_button.isEnabled, timeout=5_000)
+    # This test targets atomic publishing; overwrite confirmation has
+    # dedicated coverage in test_ui_settings_about.py.
+    page.set_confirm_overwrite(False)
     page.panel.save_button.click()
 
     assert output.is_file()

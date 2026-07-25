@@ -1,4 +1,4 @@
-"""Regression tests for the responsive SafePDF visual shell."""
+"""Regression tests for the responsive PDFSilo visual shell."""
 
 from pathlib import Path
 
@@ -14,12 +14,17 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QSplitter,
+    QToolButton,
 )
 
-from safepdf.ui.dialogs import SettingsDialog
-from safepdf.ui.main_window import THEME_SETTING, MainWindow
-from safepdf.ui.pages.home_page import ToolCard
-from safepdf.ui.theme import (
+from pdfsilo.ui.dialogs import SettingsDialog
+from pdfsilo.ui.main_window import THEME_SETTING, MainWindow
+from pdfsilo.ui.pages.home_page import ToolCard
+from pdfsilo.ui.resources import (
+    SIDEBAR_HIDE_ICON_PATH,
+    SIDEBAR_SHOW_ICON_PATH,
+)
+from pdfsilo.ui.theme import (
     APPLICATION_STYLESHEET,
     DARK_STYLESHEET,
     SPIN_DOWN_ICON,
@@ -61,10 +66,23 @@ def test_sidebar_can_be_collapsed_without_persisting_sensitive_state(
     window.show()
 
     assert window.sidebar.isVisible()
+    sidebar_button = window.findChild(QToolButton, "sidebarButton")
+    assert sidebar_button is not None
+    assert not sidebar_button.icon().isNull()
+    assert window.toggle_sidebar_action.text() == "Hide Sidebar"
+    hide_icon = sidebar_button.icon().pixmap(24, 24).toImage()
+
     window.toggle_sidebar_action.setChecked(False)
     assert window.sidebar.isHidden()
+    assert window.toggle_sidebar_action.text() == "Show Sidebar"
+    assert sidebar_button.icon().pixmap(24, 24).toImage() != hide_icon
+
     window.toggle_sidebar_action.setChecked(True)
     assert window.sidebar.isVisible()
+    assert window.toggle_sidebar_action.text() == "Hide Sidebar"
+    assert sidebar_button.icon().pixmap(24, 24).toImage() == hide_icon
+    assert Path(SIDEBAR_HIDE_ICON_PATH).is_file()
+    assert Path(SIDEBAR_SHOW_ICON_PATH).is_file()
 
 
 def test_operation_workspace_stacks_at_minimum_window_width(

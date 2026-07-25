@@ -1,5 +1,5 @@
 """
-conftest.py — Shared pytest fixtures for SafePDF tests.
+conftest.py — Shared pytest fixtures for PDFSilo tests.
 
 All fixtures create real in-memory PDFs using PyMuPDF so that every
 operation module can be exercised without needing external PDF files.

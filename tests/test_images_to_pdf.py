@@ -1,12 +1,12 @@
-"""tests/test_images_to_pdf.py — Unit tests for safepdf.operations.images_to_pdf"""
+"""tests/test_images_to_pdf.py — Unit tests for pdfsilo.operations.images_to_pdf"""
 
 import pytest
 from pathlib import Path
 
 import fitz
 
-from safepdf.operations.images_to_pdf import cli_run, execute, run
-from safepdf.utils import get_sorted_image_files, IMAGE_EXTENSIONS
+from pdfsilo.operations.images_to_pdf import cli_run, execute, run
+from pdfsilo.utils import get_sorted_image_files, IMAGE_EXTENSIONS
 
 
 # ── get_sorted_image_files (utility) ─────────────────────────────────────────

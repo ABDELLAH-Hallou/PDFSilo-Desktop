@@ -6,15 +6,15 @@ from pathlib import Path
 
 import pytest
 
-from safepdf.core import OperationCancelledError
-from safepdf.core.progress import check_cancelled
-from safepdf.operations.add_images import execute as add_images
-from safepdf.operations.concat import execute as concat_pdfs
-from safepdf.operations.extract_images import execute as extract_images
-from safepdf.operations.images_to_pdf import execute as images_to_pdf
-from safepdf.operations.rotate import execute as rotate_pdf
-from safepdf.operations.split import execute as split_pdf
-from safepdf.operations.to_images import execute as render_pages
+from pdfsilo.core import OperationCancelledError
+from pdfsilo.core.progress import check_cancelled
+from pdfsilo.operations.add_images import execute as add_images
+from pdfsilo.operations.concat import execute as concat_pdfs
+from pdfsilo.operations.extract_images import execute as extract_images
+from pdfsilo.operations.images_to_pdf import execute as images_to_pdf
+from pdfsilo.operations.rotate import execute as rotate_pdf
+from pdfsilo.operations.split import execute as split_pdf
+from pdfsilo.operations.to_images import execute as render_pages
 
 
 OPERATION_MODULES = [
@@ -36,7 +36,7 @@ OPERATION_MODULES = [
 
 @pytest.mark.parametrize("module_name", OPERATION_MODULES)
 def test_every_operation_accepts_keyword_only_callbacks(module_name: str):
-    module = importlib.import_module(f"safepdf.operations.{module_name}")
+    module = importlib.import_module(f"pdfsilo.operations.{module_name}")
     parameters = inspect.signature(module.execute).parameters
 
     assert parameters["progress"].kind is inspect.Parameter.KEYWORD_ONLY

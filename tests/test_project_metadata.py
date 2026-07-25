@@ -7,8 +7,8 @@ except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility
 
 from pathlib import Path
 
-from safepdf import __version__
-from safepdf.ui.main import main as gui_main
+from pdfsilo import __version__
+from pdfsilo.ui.main import main as gui_main
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -34,7 +34,7 @@ def test_pyproject_contains_required_packaging_metadata():
         metadata = tomllib.load(file)
 
     project = metadata["project"]
-    assert project["name"] == "safepdf"
+    assert project["name"] == "pdfsilo"
     assert project["version"] == __version__ == "0.1.0"
     assert project["requires-python"] == ">=3.10"
     assert "PyMuPDF>=1.27.2.2" in project["dependencies"]
@@ -47,8 +47,8 @@ def test_pyproject_defines_cli_and_gui_entry_points():
     with (PROJECT_ROOT / "pyproject.toml").open("rb") as file:
         scripts = tomllib.load(file)["project"]["scripts"]
 
-    assert scripts["safepdf"] == "safepdf.cli:main"
-    assert scripts["safepdf-gui"] == "safepdf.ui.main:main"
+    assert scripts["pdfsilo"] == "pdfsilo.cli:main"
+    assert scripts["pdfsilo-gui"] == "pdfsilo.ui.main:main"
     assert callable(gui_main)
 
 
@@ -64,4 +64,26 @@ def test_pyproject_packages_desktop_resources():
     with (PROJECT_ROOT / "pyproject.toml").open("rb") as file:
         setuptools = tomllib.load(file)["tool"]["setuptools"]
 
-    assert "*.svg" in setuptools["package-data"]["safepdf.ui.resources"]
+    assert "*.svg" in setuptools["package-data"]["pdfsilo.ui.resources"]
+
+
+def test_legacy_project_name_is_absent_from_public_source_and_docs():
+    legacy_lower = "safe" + "pdf"
+    legacy_display = "Safe" + "PDF"
+    legacy_upper = "SAFE" + "PDF"
+    public_files = [
+        PROJECT_ROOT / "README.md",
+        PROJECT_ROOT / "CODEBASE_ANALYSIS.md",
+        PROJECT_ROOT / "PYSIDE6_MIGRATION_PLAN.md",
+        PROJECT_ROOT / "requirements.txt",
+        PROJECT_ROOT / "tree.txt",
+        *list((PROJECT_ROOT / "pdfsilo").rglob("*.py")),
+    ]
+
+    assert (PROJECT_ROOT / "pdfsilo").is_dir()
+    assert not (PROJECT_ROOT / legacy_lower).exists()
+    for path in public_files:
+        content = path.read_text(encoding="utf-8")
+        assert legacy_lower not in content
+        assert legacy_display not in content
+        assert legacy_upper not in content

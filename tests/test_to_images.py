@@ -1,9 +1,9 @@
-"""tests/test_to_images.py — Unit tests for safepdf.operations.to_images"""
+"""tests/test_to_images.py — Unit tests for pdfsilo.operations.to_images"""
 
 import pytest
 from pathlib import Path
 
-from safepdf.operations.to_images import run, cli_run
+from pdfsilo.operations.to_images import run, cli_run
 
 
 class TestToImagesRun:

@@ -10,13 +10,13 @@ pytest.importorskip("PySide6")
 
 from PySide6.QtWidgets import QLineEdit, QPushButton
 
-from safepdf.core import (
+from pdfsilo.core import (
     InvalidInputError,
     OperationCancelledError,
     OperationResult,
 )
-from safepdf.ui.widgets import OperationPanel
-from safepdf.ui.workers import (
+from pdfsilo.ui.widgets import OperationPanel
+from pdfsilo.ui.workers import (
     CancellationToken,
     OperationController,
     OperationRunner,

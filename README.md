@@ -1,8 +1,8 @@
-# SafePDF
+# PDFSilo
 
 **A privacy-first, open-source toolkit — all PDF operations run locally on your machine. No uploads, no accounts, no third parties.**
 
-SafePDF is a command-line toolkit for working with PDF and image files — split, merge, rotate, compress, encrypt, watermark, extract, reorder, and insert images — all with consistent page-size normalization. Your sensitive documents never leave your computer.
+PDFSilo is a command-line toolkit for working with PDF and image files — split, merge, rotate, compress, encrypt, watermark, extract, reorder, and insert images — all with consistent page-size normalization. Your sensitive documents never leave your computer.
 
 ---
 
@@ -21,8 +21,8 @@ python -m pip install .
 ## Installation
 
 ```bash
-git clone https://github.com/ABDELLAH-Hallou/SafePDF
-cd SafePDF
+git clone https://github.com/ABDELLAH-Hallou/PDFSilo
+cd PDFSilo
 python -m pip install .
 ```
 
@@ -46,13 +46,13 @@ and a separate real-PDF integration layer for end-to-end validation.
 ## Usage
 
 ```bash
-safepdf <command> [options]
-safepdf <command> --help
-safepdf-gui
+pdfsilo <command> [options]
+pdfsilo <command> --help
+pdfsilo-gui
 ```
 
 The CLI can also be run directly from a source checkout with
-`python -m safepdf <command> [options]`.
+`python -m pdfsilo <command> [options]`.
 
 The desktop entry point opens a responsive workspace for all 13 PDF workflows.
 Its dashboard provides shortcuts to common tools, while the collapsible
@@ -64,7 +64,7 @@ structured results, and output-opening actions. Multi-file PDF and image
 workflows use ordered lists: files can be added over multiple selections,
 dragged into position, moved with keyboard-accessible buttons, or removed.
 
-SafePDF supports **System default**, **Light**, and **Dark** appearance modes.
+PDFSilo supports **System default**, **Light**, and **Dark** appearance modes.
 Choose one from **Tools → Appearance** or open Settings with `Ctrl+,`. System
 default follows the operating-system color scheme and updates while the
 application is running. Only the selected appearance mode is persisted; file
@@ -88,17 +88,17 @@ without changing the source file before Run is confirmed.
 
 Every operation exposes an `execute(...)` function for application and GUI
 code. It accepts `pathlib.Path` values, returns an `OperationResult`, and raises
-typed `SafePdfError` exceptions for expected failures:
+typed `PdfSiloError` exceptions for expected failures:
 
 ```python
 from pathlib import Path
 
-from safepdf.core import SafePdfError
-from safepdf.operations.split import execute
+from pdfsilo.core import PdfSiloError
+from pdfsilo.operations.split import execute
 
 try:
     result = execute(Path("document.pdf"))
-except SafePdfError as exc:
+except PdfSiloError as exc:
     print(f"Could not split the PDF: {exc}")
 else:
     print(result.message)
@@ -116,7 +116,7 @@ cancellation callbacks:
 from pathlib import Path
 from threading import Event
 
-from safepdf.operations.split import execute
+from pdfsilo.operations.split import execute
 
 cancel_requested = Event()
 
@@ -141,7 +141,7 @@ thread-safe cancellation flag without importing Qt into PDF operations.
 Merges all PDF files in a folder into a single normalized PDF. Pages from different source sizes are re-rendered to a consistent target size, preserving aspect ratio and centering content.
 
 ```bash
-python -m safepdf concat <folder> [-o OUTPUT] [-s {A4,Letter}]
+python -m pdfsilo concat <folder> [-o OUTPUT] [-s {A4,Letter}]
 ```
 
 | Argument | Description | Default |
@@ -151,8 +151,8 @@ python -m safepdf concat <folder> [-o OUTPUT] [-s {A4,Letter}]
 | `-s`, `--size` | Target page size: `A4` or `Letter` | `A4` |
 
 ```bash
-python -m safepdf concat ./reports
-python -m safepdf concat ./reports -o merged.pdf -s Letter
+python -m pdfsilo concat ./reports
+python -m pdfsilo concat ./reports -o merged.pdf -s Letter
 ```
 
 ---
@@ -162,7 +162,7 @@ python -m safepdf concat ./reports -o merged.pdf -s Letter
 Splits a single PDF into one file per page.
 
 ```bash
-python -m safepdf split <input> [-o OUTPUT_FOLDER]
+python -m pdfsilo split <input> [-o OUTPUT_FOLDER]
 ```
 
 | Argument | Description | Default |
@@ -171,8 +171,8 @@ python -m safepdf split <input> [-o OUTPUT_FOLDER]
 | `-o`, `--output` | Folder to save split pages | `<input_stem>_pages/` |
 
 ```bash
-python -m safepdf split document.pdf
-python -m safepdf split document.pdf -o ./pages
+python -m pdfsilo split document.pdf
+python -m pdfsilo split document.pdf -o ./pages
 ```
 
 ---
@@ -182,7 +182,7 @@ python -m safepdf split document.pdf -o ./pages
 Rotates all or specific pages by 90, 180, or 270 degrees.
 
 ```bash
-python -m safepdf rotate <input> -a {90,180,270} [-p PAGES] [-o OUTPUT]
+python -m pdfsilo rotate <input> -a {90,180,270} [-p PAGES] [-o OUTPUT]
 ```
 
 | Argument | Description | Default |
@@ -193,8 +193,8 @@ python -m safepdf rotate <input> -a {90,180,270} [-p PAGES] [-o OUTPUT]
 | `-o`, `--output` | Output file path | `<input_stem>_rotated.pdf` |
 
 ```bash
-python -m safepdf rotate scan.pdf -a 90
-python -m safepdf rotate scan.pdf -a 180 -p 1,3,5
+python -m pdfsilo rotate scan.pdf -a 90
+python -m pdfsilo rotate scan.pdf -a 180 -p 1,3,5
 ```
 
 ---
@@ -204,7 +204,7 @@ python -m safepdf rotate scan.pdf -a 180 -p 1,3,5
 Extracts a page range into a new PDF.
 
 ```bash
-python -m safepdf extract-range <input> -s START -e END [-o OUTPUT]
+python -m pdfsilo extract-range <input> -s START -e END [-o OUTPUT]
 ```
 
 | Argument | Description | Default |
@@ -215,8 +215,8 @@ python -m safepdf extract-range <input> -s START -e END [-o OUTPUT]
 | `-o`, `--output` | Output file path | `<input_stem>_p<start>-p<end>.pdf` |
 
 ```bash
-python -m safepdf extract-range report.pdf -s 5 -e 12
-python -m safepdf extract-range report.pdf -s 3 -e 3 -o cover.pdf
+python -m pdfsilo extract-range report.pdf -s 5 -e 12
+python -m pdfsilo extract-range report.pdf -s 3 -e 3 -o cover.pdf
 ```
 
 ---
@@ -226,7 +226,7 @@ python -m safepdf extract-range report.pdf -s 3 -e 3 -o cover.pdf
 Compresses streams, fonts, and images to reduce PDF file size.
 
 ```bash
-python -m safepdf compress <input> [-o OUTPUT] [-q QUALITY]
+python -m pdfsilo compress <input> [-o OUTPUT] [-q QUALITY]
 ```
 
 | Argument | Description | Default |
@@ -236,8 +236,8 @@ python -m safepdf compress <input> [-o OUTPUT] [-q QUALITY]
 | `-q`, `--quality` | Image quality 1–100 | `60` |
 
 ```bash
-python -m safepdf compress large_scan.pdf
-python -m safepdf compress large_scan.pdf -q 30 -o small.pdf
+python -m pdfsilo compress large_scan.pdf
+python -m pdfsilo compress large_scan.pdf -q 30 -o small.pdf
 ```
 
 ---
@@ -247,7 +247,7 @@ python -m safepdf compress large_scan.pdf -q 30 -o small.pdf
 Encrypts a PDF with AES-256, with optional permission restrictions.
 
 ```bash
-python -m safepdf encrypt <input> [-p PASSWORD] [-o OUTPUT]
+python -m pdfsilo encrypt <input> [-p PASSWORD] [-o OUTPUT]
                            [--owner-password PW] [--no-print] [--no-copy] [--no-edit]
 ```
 
@@ -263,11 +263,11 @@ python -m safepdf encrypt <input> [-p PASSWORD] [-o OUTPUT]
 
 ```bash
 # Recommended: enter and confirm passwords through hidden prompts
-python -m safepdf encrypt contract.pdf
-python -m safepdf encrypt contract.pdf --no-copy
+python -m pdfsilo encrypt contract.pdf
+python -m pdfsilo encrypt contract.pdf --no-copy
 
 # Explicit arguments remain available for automation
-python -m safepdf encrypt contract.pdf -p s3cr3t
+python -m pdfsilo encrypt contract.pdf -p s3cr3t
 ```
 
 Supplying a password as a command-line argument can expose it through shell
@@ -280,7 +280,7 @@ history or process listings. Omit password arguments for interactive use.
 Unlocks a password-protected PDF you own.
 
 ```bash
-python -m safepdf decrypt <input> [-p PASSWORD] [-o OUTPUT]
+python -m pdfsilo decrypt <input> [-p PASSWORD] [-o OUTPUT]
 ```
 
 | Argument | Description | Default |
@@ -290,7 +290,7 @@ python -m safepdf decrypt <input> [-p PASSWORD] [-o OUTPUT]
 | `-o`, `--output` | Output file path | `<input_stem>_decrypted.pdf` |
 
 ```bash
-python -m safepdf decrypt contract_encrypted.pdf
+python -m pdfsilo decrypt contract_encrypted.pdf
 ```
 
 ---
@@ -300,7 +300,7 @@ python -m safepdf decrypt contract_encrypted.pdf
 Stamps a text watermark on every page.
 
 ```bash
-python -m safepdf watermark <input> -t TEXT [-o OUTPUT]
+python -m pdfsilo watermark <input> -t TEXT [-o OUTPUT]
                              [--opacity OPACITY] [--angle ANGLE] [--size SIZE] [--color R,G,B]
 ```
 
@@ -315,8 +315,8 @@ python -m safepdf watermark <input> -t TEXT [-o OUTPUT]
 | `--color` | Color as `R,G,B` floats 0.0–1.0 | `0.5,0.5,0.5` |
 
 ```bash
-python -m safepdf watermark report.pdf -t "DRAFT"
-python -m safepdf watermark report.pdf -t "CONFIDENTIAL" --opacity 0.2 --color 1,0,0
+python -m pdfsilo watermark report.pdf -t "DRAFT"
+python -m pdfsilo watermark report.pdf -t "CONFIDENTIAL" --opacity 0.2 --color 1,0,0
 ```
 
 ---
@@ -326,7 +326,7 @@ python -m safepdf watermark report.pdf -t "CONFIDENTIAL" --opacity 0.2 --color 1
 Extracts all embedded images from a PDF as PNG or JPEG files.
 
 ```bash
-python -m safepdf extract-images <input> [-o OUTPUT_FOLDER] [--format {png,jpeg}]
+python -m pdfsilo extract-images <input> [-o OUTPUT_FOLDER] [--format {png,jpeg}]
 ```
 
 | Argument | Description | Default |
@@ -336,8 +336,8 @@ python -m safepdf extract-images <input> [-o OUTPUT_FOLDER] [--format {png,jpeg}
 | `--format` | Output format: `png` or `jpeg` | `png` |
 
 ```bash
-python -m safepdf extract-images brochure.pdf
-python -m safepdf extract-images brochure.pdf -o imgs/ --format jpeg
+python -m pdfsilo extract-images brochure.pdf
+python -m pdfsilo extract-images brochure.pdf -o imgs/ --format jpeg
 ```
 
 ---
@@ -347,7 +347,7 @@ python -m safepdf extract-images brochure.pdf -o imgs/ --format jpeg
 Renders each page as a raster image at a given DPI.
 
 ```bash
-python -m safepdf to-images <input> [-o OUTPUT_FOLDER] [--format {png,jpeg}] [--dpi DPI]
+python -m pdfsilo to-images <input> [-o OUTPUT_FOLDER] [--format {png,jpeg}] [--dpi DPI]
 ```
 
 | Argument | Description | Default |
@@ -358,8 +358,8 @@ python -m safepdf to-images <input> [-o OUTPUT_FOLDER] [--format {png,jpeg}] [--
 | `--dpi` | Render resolution | `150` |
 
 ```bash
-python -m safepdf to-images presentation.pdf
-python -m safepdf to-images presentation.pdf --dpi 300 --format jpeg
+python -m pdfsilo to-images presentation.pdf
+python -m pdfsilo to-images presentation.pdf --dpi 300 --format jpeg
 ```
 
 ---
@@ -369,7 +369,7 @@ python -m safepdf to-images presentation.pdf --dpi 300 --format jpeg
 Rearranges pages in a custom order. Pages may be omitted (deleted) or repeated (duplicated).
 
 ```bash
-python -m safepdf reorder <input> -r ORDER [-o OUTPUT]
+python -m pdfsilo reorder <input> -r ORDER [-o OUTPUT]
 ```
 
 | Argument | Description | Default |
@@ -379,9 +379,9 @@ python -m safepdf reorder <input> -r ORDER [-o OUTPUT]
 | `-o`, `--output` | Output file path | `<input_stem>_reordered.pdf` |
 
 ```bash
-python -m safepdf reorder doc.pdf -r 4,3,2,1      # reverse
-python -m safepdf reorder doc.pdf -r 3,1,2,4      # move page 3 to front
-python -m safepdf reorder doc.pdf -r 1,1,3,4      # duplicate cover, drop page 2
+python -m pdfsilo reorder doc.pdf -r 4,3,2,1      # reverse
+python -m pdfsilo reorder doc.pdf -r 3,1,2,4      # move page 3 to front
+python -m pdfsilo reorder doc.pdf -r 1,1,3,4      # duplicate cover, drop page 2
 ```
 
 ---
@@ -392,7 +392,7 @@ Stamps one or more image files onto an existing PDF — either on chosen pages o
 Supported formats: **PNG, JPEG, BMP, TIFF, GIF, WebP**.
 
 ```bash
-python -m safepdf add-images <input> -i IMG [IMG …] [-o OUTPUT]
+python -m pdfsilo add-images <input> -i IMG [IMG …] [-o OUTPUT]
                               [--page PAGE] [--position X,Y]
                               [--width W] [--height H] [--append]
 ```
@@ -410,13 +410,13 @@ python -m safepdf add-images <input> -i IMG [IMG …] [-o OUTPUT]
 
 ```bash
 # Stamp a logo onto page 1 at a specific position
-python -m safepdf add-images report.pdf -i logo.png --page 1 --position 400,750 --width 100
+python -m pdfsilo add-images report.pdf -i logo.png --page 1 --position 400,750 --width 100
 
 # Append each photo as a new page at the end
-python -m safepdf add-images report.pdf -i photo1.jpg photo2.png --append
+python -m pdfsilo add-images report.pdf -i photo1.jpg photo2.png --append
 
 # Place two images sequentially on pages 1 and 2
-python -m safepdf add-images report.pdf -i header.png footer.png
+python -m pdfsilo add-images report.pdf -i header.png footer.png
 ```
 
 ---
@@ -427,7 +427,7 @@ Collects every image in a folder (sorted by the first number in the filename, th
 Supported formats: **PNG, JPEG, BMP, TIFF, GIF, WebP**.
 
 ```bash
-python -m safepdf images-to-pdf <folder> [-o OUTPUT] [-s {A4,Letter}]
+python -m pdfsilo images-to-pdf <folder> [-o OUTPUT] [-s {A4,Letter}]
                                  [--fit | --no-fit] [--margin MARGIN]
 ```
 
@@ -441,33 +441,33 @@ python -m safepdf images-to-pdf <folder> [-o OUTPUT] [-s {A4,Letter}]
 
 ```bash
 # Convert a scans folder → scans.pdf (A4, auto-fit)
-python -m safepdf images-to-pdf ./scans/
+python -m pdfsilo images-to-pdf ./scans/
 
 # Letter-size album with tighter margins
-python -m safepdf images-to-pdf ./photos/ -s Letter --margin 20 -o album.pdf
+python -m pdfsilo images-to-pdf ./photos/ -s Letter --margin 20 -o album.pdf
 
 # Embed at natural resolution, centred (no scaling)
-python -m safepdf images-to-pdf ./artwork/ --no-fit -o gallery.pdf
+python -m pdfsilo images-to-pdf ./artwork/ --no-fit -o gallery.pdf
 ```
 
 ## Typical workflows
 
 ```bash
 # Split → reorder → merge
-python -m safepdf split document.pdf -o pages/
-python -m safepdf concat pages/ -o document_final.pdf
+python -m pdfsilo split document.pdf -o pages/
+python -m pdfsilo concat pages/ -o document_final.pdf
 
 # Prepare a document for distribution
-python -m safepdf compress report.pdf -o report_small.pdf
-python -m safepdf watermark report_small.pdf -t "CONFIDENTIAL"
-python -m safepdf encrypt report_small_watermarked.pdf -p s3cr3t --no-copy
+python -m pdfsilo compress report.pdf -o report_small.pdf
+python -m pdfsilo watermark report_small.pdf -t "CONFIDENTIAL"
+python -m pdfsilo encrypt report_small_watermarked.pdf -p s3cr3t --no-copy
 
 # Build a PDF from a folder of scanned images
-python -m safepdf images-to-pdf ./scans/ -o scan_book.pdf
+python -m pdfsilo images-to-pdf ./scans/ -o scan_book.pdf
 
 # Add a cover image then compress the result
-python -m safepdf add-images report.pdf -i cover.png --page 1 --position 72,72
-python -m safepdf compress report_with_images.pdf -q 70
+python -m pdfsilo add-images report.pdf -i cover.png --page 1 --position 72,72
+python -m pdfsilo compress report_with_images.pdf -q 70
 ```
 
 ---

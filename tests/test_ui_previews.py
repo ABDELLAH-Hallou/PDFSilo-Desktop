@@ -10,15 +10,15 @@ pytest.importorskip("PySide6")
 from PySide6.QtCore import QModelIndex, Qt
 from PySide6.QtGui import QImage, QPixmap
 
-from safepdf.ui import thumbnails
-from safepdf.ui.pages import OPERATION_PAGE_FACTORIES, PAGE_DEFINITIONS
-from safepdf.ui.thumbnails import (
+from pdfsilo.ui import thumbnails
+from pdfsilo.ui.pages import OPERATION_PAGE_FACTORIES, PAGE_DEFINITIONS
+from pdfsilo.ui.thumbnails import (
     MAX_RENDER_JOBS,
     ThumbnailCache,
     ThumbnailData,
     ThumbnailService,
 )
-from safepdf.ui.widgets import (
+from pdfsilo.ui.widgets import (
     PageReorderEditor,
     PdfPageListModel,
     PdfPreview,

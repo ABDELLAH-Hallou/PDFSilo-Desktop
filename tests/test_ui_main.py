@@ -21,9 +21,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from safepdf.ui import main as ui_main
-from safepdf.ui.main import create_application, create_main_window
-from safepdf.ui.main_window import (
+from pdfsilo.ui import main as ui_main
+from pdfsilo.ui.main import create_application, create_main_window
+from pdfsilo.ui.main_window import (
     DEFAULT_WINDOW_HEIGHT,
     DEFAULT_WINDOW_WIDTH,
     GEOMETRY_SETTING,
@@ -32,7 +32,7 @@ from safepdf.ui.main_window import (
     STATE_SETTING,
     MainWindow,
 )
-from safepdf.ui.metadata import (
+from pdfsilo.ui.metadata import (
     APPLICATION_DISPLAY_NAME,
     APPLICATION_ID,
     APPLICATION_NAME,
@@ -40,9 +40,9 @@ from safepdf.ui.metadata import (
     ORGANIZATION_DOMAIN,
     ORGANIZATION_NAME,
 )
-from safepdf.ui.resources import APPLICATION_ICON_PATH, application_icon
-from safepdf.ui.pages import PAGE_DEFINITIONS
-from safepdf.ui.theme import (
+from pdfsilo.ui.resources import APPLICATION_ICON_PATH, application_icon
+from pdfsilo.ui.pages import PAGE_DEFINITIONS
+from pdfsilo.ui.theme import (
     APPLICATION_STYLESHEET,
     FONT_SIZE_BODY,
     SPACE_LG,
@@ -68,10 +68,10 @@ def test_create_main_window(qtbot, ui_settings):
     qtbot.addWidget(window)
 
     assert isinstance(window, MainWindow)
-    assert window.windowTitle() == "SafePDF"
+    assert window.windowTitle() == "PDFSilo"
     assert window.size() == QSize(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT)
     assert isinstance(window.centralWidget(), QWidget)
-    assert window.findChild(QLabel, "applicationTitleLabel").text() == "SafePDF"
+    assert window.findChild(QLabel, "applicationTitleLabel").text() == "PDFSilo"
     assert window.statusBar().currentMessage() == "Ready"
     assert not window.windowIcon().isNull()
 

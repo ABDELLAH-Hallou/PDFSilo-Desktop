@@ -1,9 +1,9 @@
-"""tests/test_extract_images.py — Unit tests for safepdf.operations.extract_images"""
+"""tests/test_extract_images.py — Unit tests for pdfsilo.operations.extract_images"""
 
 import pytest
 from pathlib import Path
 
-from safepdf.operations.extract_images import run, cli_run
+from pdfsilo.operations.extract_images import run, cli_run
 
 
 class TestExtractImagesRun:

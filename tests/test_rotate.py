@@ -1,11 +1,11 @@
-"""tests/test_rotate.py — Unit tests for safepdf.operations.rotate"""
+"""tests/test_rotate.py — Unit tests for pdfsilo.operations.rotate"""
 
 import pytest
 from pathlib import Path
 
 import fitz
 
-from safepdf.operations.rotate import run, cli_run, parse_pages
+from pdfsilo.operations.rotate import run, cli_run, parse_pages
 
 
 class TestParsePages:

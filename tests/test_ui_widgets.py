@@ -10,8 +10,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QFileDialog
 
-from safepdf.core import OperationResult
-from safepdf.ui.widgets import (
+from pdfsilo.core import OperationResult
+from pdfsilo.ui.widgets import (
     DropZone,
     FolderPicker,
     ImageFilePicker,
