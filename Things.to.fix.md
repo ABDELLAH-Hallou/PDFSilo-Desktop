@@ -1,0 +1,5 @@
+![The preview is not clear, it is low quality, can't zoom in/out, not including all the pdfs (only the first one when merging), it should give the right to order pdfs to merge, or images to include ..etc](image.png)
+![instead of selecting all pdf in one shot, you should add a button thet will make me be able to add new pdf each time](image-1.png)
+![when selecting a certain target page size it needs to be shown in the perview so I can see an example of how the output would be](image-2.png)
+![two step process is better[ run process, view the results in preview and then click save]](image-3.png)
+![the up and down buttons are not shown](image-4.png)

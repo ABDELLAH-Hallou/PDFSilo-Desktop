@@ -62,6 +62,12 @@ cards stack automatically. Each screen provides validated input and output
 selection, operation-specific options, run/cancel controls, progress, status,
 structured results, and output-opening actions.
 
+SafePDF supports **System default**, **Light**, and **Dark** appearance modes.
+Choose one from **Tools → Appearance** or open Settings with `Ctrl+,`. System
+default follows the operating-system color scheme and updates while the
+application is running. Only the selected appearance mode is persisted; file
+paths, document contents, and passwords are never stored as theme settings.
+
 PDF work runs through a reusable thread-pool worker with GUI-thread signal
 delivery, cooperative cancellation, duplicate-start protection, and form-state
 restoration. PDF inputs have asynchronous low-resolution previews with

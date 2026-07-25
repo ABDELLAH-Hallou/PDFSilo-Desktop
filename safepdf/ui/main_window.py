@@ -3,8 +3,9 @@
 from pathlib import Path
 
 from PySide6.QtCore import QByteArray, QSize, QSettings, Qt
-from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
+from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QKeySequence
 from PySide6.QtWidgets import (
+    QApplication,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -22,6 +23,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from safepdf.ui.dialogs import SettingsDialog
 from safepdf.ui.metadata import APPLICATION_VERSION, WINDOW_TITLE
 from safepdf.ui.pages import (
     HomePage,
@@ -31,7 +33,15 @@ from safepdf.ui.pages import (
     PAGE_INDEX_BY_KEY,
 )
 from safepdf.ui.resources import application_icon
-from safepdf.ui.theme import SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XS
+from safepdf.ui.theme import (
+    SPACE_LG,
+    SPACE_MD,
+    SPACE_SM,
+    SPACE_XS,
+    ThemeMode,
+    normalize_theme_mode,
+    theme_manager,
+)
 
 DEFAULT_WINDOW_WIDTH = 1240
 DEFAULT_WINDOW_HEIGHT = 800
@@ -59,11 +69,13 @@ PAGE_ICONS = {
 GEOMETRY_SETTING = "window/geometry"
 STATE_SETTING = "window/state"
 NAVIGATION_SETTING = "navigation/current_index"
+THEME_SETTING = "appearance/theme"
 PERSISTED_SETTING_KEYS = frozenset(
     {
         GEOMETRY_SETTING,
         STATE_SETTING,
         NAVIGATION_SETTING,
+        THEME_SETTING,
     }
 )
 
@@ -77,6 +89,17 @@ class MainWindow(QMainWindow):
         self.selected_input_path: Path | None = None
         self._page_indexes = dict(PAGE_INDEX_BY_KEY)
         self._running_pages: set[OperationPage] = set()
+        self._settings_dialog: SettingsDialog | None = None
+        self._theme_mode = normalize_theme_mode(
+            self.settings.value(
+                THEME_SETTING,
+                ThemeMode.SYSTEM.value,
+            )
+        )
+        application = QApplication.instance()
+        assert application is not None
+        self._theme_manager = theme_manager(application)
+        self._theme_manager.set_mode(self._theme_mode)
 
         self.setObjectName("mainWindow")
         self.setWindowTitle(WINDOW_TITLE)
@@ -132,7 +155,28 @@ class MainWindow(QMainWindow):
         self.settings_action.setObjectName("settingsAction")
         self.settings_action.setShortcut(QKeySequence("Ctrl+,"))
         self.settings_action.setStatusTip("Open application settings")
-        self.settings_action.triggered.connect(self.show_settings_placeholder)
+        self.settings_action.triggered.connect(self.show_settings_dialog)
+
+        self.theme_action_group = QActionGroup(self)
+        self.theme_action_group.setObjectName("themeActionGroup")
+        self.theme_action_group.setExclusive(True)
+        self.theme_actions: dict[ThemeMode, QAction] = {}
+        for mode, label in (
+            (ThemeMode.SYSTEM, "System Default"),
+            (ThemeMode.LIGHT, "Light"),
+            (ThemeMode.DARK, "Dark"),
+        ):
+            action = QAction(label, self.theme_action_group)
+            action.setObjectName(f"{mode.value}ThemeAction")
+            action.setCheckable(True)
+            action.setChecked(mode is self._theme_mode)
+            action.setData(mode.value)
+            action.triggered.connect(
+                lambda _checked=False, selected=mode: (
+                    self.set_theme_mode(selected)
+                )
+            )
+            self.theme_actions[mode] = action
 
         self.about_action = QAction("About SafePDF", self)
         self.about_action.setObjectName("aboutAction")
@@ -158,6 +202,9 @@ class MainWindow(QMainWindow):
         tools_menu = self.menuBar().addMenu("&Tools")
         tools_menu.setObjectName("toolsMenu")
         tools_menu.addAction(self.settings_action)
+        appearance_menu = tools_menu.addMenu("&Appearance")
+        appearance_menu.setObjectName("appearanceMenu")
+        appearance_menu.addActions(self.theme_action_group.actions())
 
         help_menu = self.menuBar().addMenu("&Help")
         help_menu.setObjectName("helpMenu")
@@ -426,6 +473,7 @@ class MainWindow(QMainWindow):
             NAVIGATION_SETTING,
             self.navigation.currentRow(),
         )
+        self.settings.setValue(THEME_SETTING, self._theme_mode.value)
         self.settings.sync()
 
     def _on_navigation_changed(self, index: int) -> None:
@@ -517,9 +565,30 @@ class MainWindow(QMainWindow):
                     input_picker.set_path(self.selected_input_path)
             self.set_status(f"Selected '{self.selected_input_path.name}'.")
 
-    def show_settings_placeholder(self) -> None:
-        """Report availability until the settings dialog is implemented."""
-        self.set_status("Settings will be available in a later UI phase.")
+    def set_theme_mode(self, mode: ThemeMode | str) -> None:
+        """Apply and persist a non-sensitive appearance preference."""
+        self._theme_mode = normalize_theme_mode(mode)
+        self._theme_manager.set_mode(self._theme_mode)
+        self.theme_actions[self._theme_mode].setChecked(True)
+        self.settings.setValue(THEME_SETTING, self._theme_mode.value)
+        self.settings.sync()
+        if self._settings_dialog is not None:
+            self._settings_dialog.set_theme_mode(self._theme_mode)
+        label = self.theme_actions[self._theme_mode].text()
+        self.set_status(f"{label} theme selected.")
+
+    def show_settings_dialog(self) -> None:
+        """Show the reusable, non-modal appearance settings dialog."""
+        if self._settings_dialog is None:
+            self._settings_dialog = SettingsDialog(self._theme_mode, self)
+            self._settings_dialog.themeModeChanged.connect(
+                self.set_theme_mode
+            )
+        else:
+            self._settings_dialog.set_theme_mode(self._theme_mode)
+        self._settings_dialog.show()
+        self._settings_dialog.raise_()
+        self._settings_dialog.activateWindow()
 
     def show_about_dialog(self) -> None:
         """Display application identity and privacy information."""
