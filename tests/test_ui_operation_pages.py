@@ -148,10 +148,15 @@ def test_extract_range_screen_runs_in_background(
 
 def test_reorder_screen_runs_in_background(qtbot, tmp_multi_pdf, tmp_path):
     page = _page(qtbot, ReorderPage, "reorder")
-    page.input_picker.set_path(tmp_multi_pdf)
+    with qtbot.waitSignal(
+        page.page_editor.documentLoaded,
+        timeout=5_000,
+    ):
+        page.input_picker.set_path(tmp_multi_pdf)
     output = tmp_path / "reordered-output.pdf"
     page.output_picker.set_path(output)
-    page.order_edit.setText("5,3,1")
+    page.page_editor.model.remove_rows([1, 3])
+    page.page_editor.model.reverse()
 
     result, progress = _run_successfully(qtbot, page)
 

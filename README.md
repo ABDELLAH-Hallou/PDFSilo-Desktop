@@ -50,7 +50,11 @@ workflows. Each screen provides validated input and output selection,
 operation-specific options, run/cancel controls, progress, status, structured
 results, and output-opening actions. PDF work runs through a reusable
 thread-pool worker with GUI-thread signal delivery, cooperative cancellation,
-duplicate-start protection, and form-state restoration.
+duplicate-start protection, and form-state restoration. PDF inputs have
+asynchronous low-resolution previews with file-aware thumbnail caching.
+The reorder screen provides thumbnail drag-and-drop plus selection,
+duplication, deletion, reversal, and reset without changing the source file
+before Run is confirmed.
 
 ---
 

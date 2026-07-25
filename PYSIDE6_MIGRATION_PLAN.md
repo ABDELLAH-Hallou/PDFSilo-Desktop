@@ -585,20 +585,46 @@ display them through `QPixmap`.
 
 Preview rendering should:
 
-- [ ] Run outside the main UI thread.
-- [ ] Cache thumbnails using file path, modification time, page, and scale.
-- [ ] Limit simultaneous render jobs.
-- [ ] Release documents and pixmaps promptly.
-- [ ] Invalidate cached images when the source changes.
-- [ ] Display a clear placeholder for encrypted or invalid PDFs.
+- [x] Run outside the main UI thread.
+- [x] Cache thumbnails using file path, modification time, page, and scale.
+- [x] Limit simultaneous render jobs.
+- [x] Release documents and pixmaps promptly.
+- [x] Invalidate cached images when the source changes.
+- [x] Display a clear placeholder for encrypted or invalid PDFs.
 
 For page reordering:
 
-- [ ] Use `QListView` with a custom page model.
-- [ ] Store original page indexes in the model.
-- [ ] Enable internal drag-and-drop.
-- [ ] Support selection, duplication, deletion, and reversal.
-- [ ] Do not modify th  e source PDF until the user confirms the operation.
+- [x] Use `QListView` with a custom page model.
+- [x] Store original page indexes in the model.
+- [x] Enable internal drag-and-drop.
+- [x] Support selection, duplication, deletion, and reversal.
+- [x] Do not modify the source PDF until the user confirms the operation.
+
+Phase 10 validation completed on 25 July 2026:
+
+- `ThumbnailService` renders through its own `QThreadPool`, limited to two
+  simultaneous jobs, so preview work neither blocks Qt's main thread nor
+  consumes operation-worker slots.
+- PyMuPDF documents are scoped with context managers. Render tasks copy pixel
+  data into detached `QImage` objects and release pixmaps before returning;
+  widgets create `QPixmap` instances only on the GUI thread.
+- The bounded LRU cache keys entries by resolved file path, nanosecond
+  modification time, file size, zero-based page index, and render scale.
+  Older entries for a changed source signature are removed automatically.
+- Preview widgets watch their current source file and refresh after changes.
+  Missing, invalid, and encrypted files display explicit placeholders.
+- Standard PDF operation screens show a navigable preview. Reorder uses a
+  custom `PdfPageListModel` and thumbnail `QListView`.
+- Reorder entries retain immutable source-page indexes while their current
+  positions change. Extended selection, internal drag/drop, duplication,
+  deletion, reversal, and original-order reset are supported.
+- Reorder editing changes only the in-memory model. The source PDF is not
+  written; pressing Run passes the confirmed order to the existing atomic
+  output operation.
+- Nine Phase 10 tests cover worker-thread execution, cache behavior and
+  invalidation, concurrency limits, placeholders, navigation, application
+  integration, lazy model thumbnails, and non-destructive editing.
+- The complete suite passed with 313 tests.
 
 ## Phase 11: Handle passwords securely
 

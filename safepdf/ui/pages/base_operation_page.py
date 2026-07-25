@@ -17,7 +17,13 @@ from PySide6.QtWidgets import (
 from safepdf.core import OperationResult
 from safepdf.ui.pages.registry import PageDefinition
 from safepdf.ui.theme import SPACE_LG, SPACE_MD, SPACE_SM
-from safepdf.ui.widgets import OperationPanel, PathPicker
+from safepdf.ui.widgets import (
+    OperationPanel,
+    PathPicker,
+    PdfPreview,
+    MultiplePdfPicker,
+    SinglePdfPicker,
+)
 from safepdf.ui.workers import OperationCallable, OperationController
 
 OperationInvocation = tuple[
@@ -40,6 +46,7 @@ class OperationPage(QWidget):
         super().__init__()
         self.definition = definition
         self._pickers: list[PathPicker] = []
+        self.pdf_preview: PdfPreview | None = None
         self.setObjectName(f"{definition.key}Page")
 
         page_layout = QVBoxLayout(self)
@@ -179,8 +186,24 @@ class OperationPage(QWidget):
         """Build the core callable and arguments for this page."""
         raise NotImplementedError
 
-    def finish_setup(self) -> None:
+    def finish_setup(self, *, add_pdf_preview: bool = True) -> None:
         """Perform initial validation after a subclass creates its form."""
+        if add_pdf_preview and self.pdf_preview is None:
+            input_picker = next(
+                (
+                    picker
+                    for picker in self._pickers
+                    if isinstance(
+                        picker,
+                        (SinglePdfPicker, MultiplePdfPicker),
+                    )
+                ),
+                None,
+            )
+            if input_picker is not None:
+                self.pdf_preview = PdfPreview(self.form_container)
+                self.add_option("PDF pre&view", self.pdf_preview)
+                input_picker.pathChanged.connect(self.pdf_preview.set_pdf)
         self._refresh_validation()
 
     @Slot()

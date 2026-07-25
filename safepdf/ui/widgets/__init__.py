@@ -17,7 +17,12 @@ from safepdf.ui.widgets.output_picker import (
     OutputDirectoryPicker,
     OutputFilePicker,
 )
+from safepdf.ui.widgets.page_list import (
+    PageReorderEditor,
+    PdfPageListModel,
+)
 from safepdf.ui.widgets.path_picker import PathPicker, PickerMode
+from safepdf.ui.widgets.pdf_preview import PdfPreview
 from safepdf.ui.widgets.result_summary import ResultSummary
 
 __all__ = [
@@ -30,7 +35,10 @@ __all__ = [
     "OutputActions",
     "OutputDirectoryPicker",
     "OutputFilePicker",
+    "PageReorderEditor",
     "PathPicker",
+    "PdfPageListModel",
+    "PdfPreview",
     "PickerMode",
     "ProgressDisplay",
     "ResultSummary",

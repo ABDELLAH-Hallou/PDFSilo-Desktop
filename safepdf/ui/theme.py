@@ -178,6 +178,43 @@ QWidget#operationForm {{
     background-color: {COLOR_SURFACE};
 }}
 
+QWidget#pdfPreview, QWidget#pageReorderEditor {{
+    padding: {SPACE_SM}px;
+    border: 1px solid {COLOR_BORDER};
+    border-radius: {BORDER_RADIUS}px;
+    background-color: {COLOR_SURFACE_MUTED};
+}}
+
+QLabel#pdfPreviewImage {{
+    border: 1px solid {COLOR_BORDER};
+    border-radius: 4px;
+    background-color: {COLOR_SURFACE};
+}}
+
+QLabel#pdfPreviewStatus, QLabel#pageListStatus {{
+    color: {COLOR_TEXT_MUTED};
+}}
+
+QListView#pageListView {{
+    border: 1px solid {COLOR_BORDER};
+    border-radius: {BORDER_RADIUS}px;
+    background-color: {COLOR_SURFACE};
+    outline: 0;
+}}
+
+QListView#pageListView::item {{
+    padding: {SPACE_XS}px;
+    margin: {SPACE_XS}px;
+    border: 1px solid transparent;
+    border-radius: {BORDER_RADIUS}px;
+}}
+
+QListView#pageListView::item:selected {{
+    color: {COLOR_TEXT};
+    border-color: {COLOR_PRIMARY};
+    background-color: {COLOR_SURFACE_MUTED};
+}}
+
 QWidget#dropZone {{
     min-height: 96px;
     border: 2px dashed {COLOR_BORDER};

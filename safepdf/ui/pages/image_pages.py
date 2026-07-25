@@ -8,7 +8,6 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
-    QLineEdit,
     QSpinBox,
 )
 
@@ -30,17 +29,9 @@ from safepdf.ui.widgets import (
     ImageFilePicker,
     OutputDirectoryPicker,
     OutputFilePicker,
+    PageReorderEditor,
     SinglePdfPicker,
 )
-
-
-def _positive_page_list_error(value: str) -> str:
-    parts = [part.strip() for part in value.strip().split(",")]
-    if not value.strip():
-        return "Enter the new page order."
-    if any(not part or not part.isdigit() or int(part) < 1 for part in parts):
-        return "The page order must contain positive integers separated by commas."
-    return ""
 
 
 def _format_combo(parent: OperationPage) -> QComboBox:
@@ -62,11 +53,10 @@ class ReorderPage(OperationPage):
         self.output_picker = self.add_picker(
             OutputFilePicker(label="&Reordered PDF", parent=self)
         )
-        self.order_edit = QLineEdit(self)
-        self.order_edit.setObjectName("pageOrderEdit")
-        self.order_edit.setPlaceholderText("For example: 3,1,2,4")
-        self.add_option("New page &order", self.order_edit)
-        self.watch(self.order_edit.textChanged)
+        self.page_editor = PageReorderEditor(self.form_container)
+        self.add_option("Page &order", self.page_editor)
+        self.watch(self.page_editor.orderChanged)
+        self.input_picker.pathChanged.connect(self.page_editor.set_pdf)
         self.input_picker.pathChanged.connect(
             lambda source: set_default_output(
                 self.output_picker,
@@ -74,10 +64,12 @@ class ReorderPage(OperationPage):
                 "_reordered.pdf",
             )
         )
-        self.finish_setup()
+        self.finish_setup(add_pdf_preview=False)
 
     def specific_validation_error(self) -> str:
-        return _positive_page_list_error(self.order_edit.text())
+        if not self.page_editor.order_string():
+            return "Load and keep at least one page in the output order."
+        return ""
 
     def operation_invocation(self) -> OperationInvocation:
         source = self.input_picker.path()
@@ -85,7 +77,7 @@ class ReorderPage(OperationPage):
         assert source is not None and output is not None
         return (
             reorder.execute,
-            (source, self.order_edit.text().strip()),
+            (source, self.page_editor.order_string()),
             {"output_path": output},
         )
 
