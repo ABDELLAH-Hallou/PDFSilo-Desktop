@@ -519,28 +519,28 @@ Implement operations in an order that establishes reusable patterns early.
 
 ### Stage A: Basic document workflows
 
-- [ ] Merge PDFs
-- [ ] Split PDF
-- [ ] Rotate pages
-- [ ] Extract page range
+- [x] Merge PDFs
+- [x] Split PDF
+- [x] Rotate pages
+- [x] Extract page range
 
 These screens establish file selection, output handling, validation, workers,
 and progress reporting.
 
 ### Stage B: Page and image workflows
 
-- [ ] Reorder pages
-- [ ] Render PDF pages to images
-- [ ] Build PDF from images
-- [ ] Extract embedded images
-- [ ] Add images to PDF
+- [x] Reorder pages
+- [x] Render PDF pages to images
+- [x] Build PDF from images
+- [x] Extract embedded images
+- [x] Add images to PDF
 
 ### Stage C: Document transformation and security
 
-- [ ] Compress PDF
-- [ ] Add watermark
-- [ ] Encrypt PDF
-- [ ] Decrypt PDF
+- [x] Compress PDF
+- [x] Add watermark
+- [x] Encrypt PDF
+- [x] Decrypt PDF
 
 Every operation screen should include:
 
@@ -551,6 +551,32 @@ Every operation screen should include:
 - Run and cancel controls
 - Progress and status
 - Result summary
+
+Phase 9 validation completed on 24 July 2026:
+
+- A shared `OperationPage` base owns the scrollable form layout, picker and
+  option validation, operation panel, background controller, progress/status
+  forwarding, cancellation, and structured result handling.
+- All 13 navigation entries now open concrete operation screens; no operation
+  relies on placeholder content.
+- Each screen maps its controls to the existing framework-independent
+  `execute(...)` API. PDF processing continues to run through the Phase 8
+  thread-pool worker rather than Qt's main thread.
+- Output paths are derived from the selected input when practical without
+  replacing a destination chosen by the user.
+- Inline checks cover required paths, page lists and ranges, page order,
+  watermark text and color, and password/permission combinations. Numeric Qt
+  controls constrain DPI, quality, opacity, margins, dimensions, coordinates,
+  font size, and angles.
+- The application shell receives operation status, progress, and output
+  updates. Navigation and file replacement are disabled while work is active
+  and restored on every completion path.
+- Password controls use masked echo modes and are cleared after encryption or
+  decryption finishes.
+- Seventeen Phase 9 tests exercise every screen with real PDFs or images,
+  validate failures, verify password clearing, and cover shell-level
+  cancellation and navigation locking.
+- The complete suite passed with 304 tests.
 
 ## Phase 10: Add PDF preview and thumbnails
 
@@ -572,7 +598,7 @@ For page reordering:
 - [ ] Store original page indexes in the model.
 - [ ] Enable internal drag-and-drop.
 - [ ] Support selection, duplication, deletion, and reversal.
-- [ ] Do not modify the source PDF until the user confirms the operation.
+- [ ] Do not modify th  e source PDF until the user confirms the operation.
 
 ## Phase 11: Handle passwords securely
 

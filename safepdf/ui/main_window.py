@@ -24,7 +24,8 @@ from PySide6.QtWidgets import (
 from safepdf.ui.metadata import APPLICATION_VERSION, WINDOW_TITLE
 from safepdf.ui.pages import (
     HomePage,
-    OperationPlaceholderPage,
+    OPERATION_PAGE_FACTORIES,
+    OperationPage,
     PAGE_DEFINITIONS,
     PAGE_INDEX_BY_KEY,
 )
@@ -57,6 +58,7 @@ class MainWindow(QMainWindow):
         self.settings = settings if settings is not None else QSettings()
         self.selected_input_path: Path | None = None
         self._page_indexes = dict(PAGE_INDEX_BY_KEY)
+        self._running_pages: set[OperationPage] = set()
 
         self.setObjectName("mainWindow")
         self.setWindowTitle(WINDOW_TITLE)
@@ -167,7 +169,9 @@ class MainWindow(QMainWindow):
             if definition.key == "home":
                 page = HomePage(definition.title, definition.description)
             else:
-                page = OperationPlaceholderPage(definition)
+                page_factory = OPERATION_PAGE_FACTORIES[definition.key]
+                page = page_factory(definition)
+                self._connect_operation_page(page)
             self.page_stack.addWidget(page)
 
         self.navigation.currentRowChanged.connect(
@@ -178,6 +182,37 @@ class MainWindow(QMainWindow):
         body_layout.addWidget(self.page_stack, 1)
         root_layout.addWidget(body, 1)
         self.setCentralWidget(root)
+
+    def _connect_operation_page(self, page: OperationPage) -> None:
+        """Connect one operation screen to application-wide shell state."""
+        page.statusChanged.connect(self.set_status)
+        page.progressChanged.connect(self.set_progress)
+        page.progressCleared.connect(self.clear_progress)
+        page.outputChanged.connect(self.set_output_location)
+        page.runningChanged.connect(
+            lambda running, current_page=page: self._operation_running_changed(
+                current_page,
+                running,
+            )
+        )
+
+    def _operation_running_changed(
+        self,
+        page: OperationPage,
+        running: bool,
+    ) -> None:
+        """Prevent navigation and input replacement during active work."""
+        if running:
+            self._running_pages.add(page)
+        else:
+            self._running_pages.discard(page)
+
+        can_navigate = not self._running_pages
+        self.navigation.setEnabled(can_navigate)
+        self.open_action.setEnabled(can_navigate)
+        self.home_action.setEnabled(can_navigate)
+        self.previous_page_action.setEnabled(can_navigate)
+        self.next_page_action.setEnabled(can_navigate)
 
     def _create_header(self) -> QFrame:
         header = QFrame(self)
@@ -344,6 +379,11 @@ class MainWindow(QMainWindow):
         )
         if selected:
             self.selected_input_path = Path(selected)
+            current_page = self.page_stack.currentWidget()
+            if isinstance(current_page, OperationPage):
+                input_picker = getattr(current_page, "input_picker", None)
+                if input_picker is not None and not input_picker.allows_multiple:
+                    input_picker.set_path(self.selected_input_path)
             self.set_status(f"Selected '{self.selected_input_path.name}'.")
 
     def show_settings_placeholder(self) -> None:
@@ -365,4 +405,3 @@ class MainWindow(QMainWindow):
         """Persist allowlisted UI state before the window closes."""
         self._save_settings()
         super().closeEvent(event)
-

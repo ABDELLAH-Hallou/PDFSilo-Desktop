@@ -45,14 +45,12 @@ safepdf-gui
 The CLI can also be run directly from a source checkout with
 `python -m safepdf <command> [options]`.
 
-The desktop entry point opens the Phase 6 application shell with navigation for
-every PDF operation, placeholder content pages, application menus, keyboard
-shortcuts, and global status/progress controls. Operation forms are introduced
-by later migration phases. A Phase 7 widget library now provides shared PDF,
-image, folder, and output pickers, drag-and-drop validation, operation controls,
-progress, result summaries, and output-opening actions for those forms. Phase 8
-adds a reusable thread-pool worker, GUI-thread signal bridge, cooperative
-cancellation, duplicate-start protection, and form-state restoration.
+The desktop entry point opens a complete operation interface for all 13 PDF
+workflows. Each screen provides validated input and output selection,
+operation-specific options, run/cancel controls, progress, status, structured
+results, and output-opening actions. PDF work runs through a reusable
+thread-pool worker with GUI-thread signal delivery, cooperative cancellation,
+duplicate-start protection, and form-state restoration.
 
 ---
 
@@ -101,7 +99,7 @@ result = execute(
 )
 ```
 
-The future PySide6 worker layer can connect these callbacks to Qt signals and a
+The PySide6 worker layer connects these callbacks to Qt signals and a
 thread-safe cancellation flag without importing Qt into PDF operations.
 
 ---

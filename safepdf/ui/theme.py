@@ -141,7 +141,7 @@ QProgressBar::chunk {{
     background-color: {COLOR_PRIMARY};
 }}
 
-QLineEdit {{
+QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{
     min-height: {CONTROL_HEIGHT}px;
     padding: 0 {SPACE_SM}px;
     border: 1px solid {COLOR_BORDER};
@@ -149,7 +149,7 @@ QLineEdit {{
     background-color: {COLOR_SURFACE};
 }}
 
-QLineEdit:focus {{
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {{
     border: 2px solid {COLOR_PRIMARY};
 }}
 
@@ -164,6 +164,18 @@ QLineEdit[validationState="valid"] {{
 QLabel#pathErrorLabel {{
     color: {COLOR_DANGER};
     font-size: {FONT_SIZE_CAPTION}pt;
+}}
+
+QLabel#formErrorLabel {{
+    color: {COLOR_DANGER};
+    font-size: {FONT_SIZE_CAPTION}pt;
+}}
+
+QWidget#operationForm {{
+    padding: {SPACE_MD}px;
+    border: 1px solid {COLOR_BORDER};
+    border-radius: {BORDER_RADIUS}px;
+    background-color: {COLOR_SURFACE};
 }}
 
 QWidget#dropZone {{
