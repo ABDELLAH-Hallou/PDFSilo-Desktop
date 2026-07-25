@@ -22,6 +22,8 @@ from safepdf.ui.pages.home_page import ToolCard
 from safepdf.ui.theme import (
     APPLICATION_STYLESHEET,
     DARK_STYLESHEET,
+    SPIN_DOWN_ICON,
+    SPIN_UP_ICON,
     ThemeMode,
     apply_theme,
 )
@@ -159,3 +161,15 @@ def test_system_mode_reacts_to_qt_color_scheme_signal(
     assert qapp.styleSheet() == DARK_STYLESHEET
     monkeypatch.undo()
     apply_theme(qapp, ThemeMode.SYSTEM)
+
+
+def test_spin_controls_use_visible_packaged_arrow_icons():
+    up_icon = Path(SPIN_UP_ICON)
+    down_icon = Path(SPIN_DOWN_ICON)
+
+    assert up_icon.is_file()
+    assert down_icon.is_file()
+    assert f'url("{SPIN_UP_ICON}")' in APPLICATION_STYLESHEET
+    assert f'url("{SPIN_DOWN_ICON}")' in APPLICATION_STYLESHEET
+    assert "QSpinBox::up-button" in APPLICATION_STYLESHEET
+    assert "QSpinBox::down-button" in APPLICATION_STYLESHEET

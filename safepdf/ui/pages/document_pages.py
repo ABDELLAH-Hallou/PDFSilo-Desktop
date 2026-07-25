@@ -49,6 +49,13 @@ class MergePage(OperationPage):
 
         self.input_picker.pathChanged.connect(self._set_default_output)
         self.finish_setup()
+        assert self.pdf_preview is not None
+        self.pdf_preview.set_target_page_size(
+            self.target_size_combo.currentText()
+        )
+        self.target_size_combo.currentTextChanged.connect(
+            self.pdf_preview.set_target_page_size
+        )
 
     def _set_default_output(self, source: Path | None) -> None:
         if source is not None and self.output_picker.path() is None:

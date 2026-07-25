@@ -9,6 +9,8 @@ from PySide6.QtCore import QObject, Qt, Signal, Slot
 from PySide6.QtGui import QColor, QFont, QFontDatabase, QPalette
 from PySide6.QtWidgets import QApplication
 
+from safepdf.ui.resources import RESOURCE_DIRECTORY
+
 # A calm, high-contrast palette suited to document work.
 COLOR_CANVAS = "#F5F7FB"
 COLOR_BACKGROUND = COLOR_CANVAS
@@ -59,6 +61,8 @@ FONT_WEIGHT_BOLD = 700
 CONTROL_HEIGHT = 40
 BORDER_RADIUS = 10
 CARD_RADIUS = 14
+SPIN_UP_ICON = (RESOURCE_DIRECTORY / "spin_up.svg").as_posix()
+SPIN_DOWN_ICON = (RESOURCE_DIRECTORY / "spin_down.svg").as_posix()
 
 
 class ThemeMode(str, Enum):
@@ -431,6 +435,49 @@ QDoubleSpinBox {{
     selection-background-color: {COLOR_PRIMARY};
 }}
 
+QSpinBox, QDoubleSpinBox {{
+    padding-left: {SPACE_SM}px;
+    padding-right: 36px;
+}}
+
+QSpinBox::up-button, QDoubleSpinBox::up-button {{
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    width: 28px;
+    border: 0;
+    border-left: 1px solid {COLOR_BORDER};
+    border-bottom: 1px solid {COLOR_BORDER};
+    border-top-right-radius: {BORDER_RADIUS}px;
+    background-color: {COLOR_SURFACE_MUTED};
+}}
+
+QSpinBox::down-button, QDoubleSpinBox::down-button {{
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    width: 28px;
+    border: 0;
+    border-left: 1px solid {COLOR_BORDER};
+    border-bottom-right-radius: {BORDER_RADIUS}px;
+    background-color: {COLOR_SURFACE_MUTED};
+}}
+
+QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover,
+QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{
+    background-color: {COLOR_PRIMARY_SOFT};
+}}
+
+QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{
+    image: url("{SPIN_UP_ICON}");
+    width: 10px;
+    height: 7px;
+}}
+
+QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{
+    image: url("{SPIN_DOWN_ICON}");
+    width: 9px;
+    height: 7px;
+}}
+
 QTextEdit, QPlainTextEdit {{
     padding-top: {SPACE_XS}px;
     padding-bottom: {SPACE_XS}px;
@@ -501,24 +548,47 @@ QWidget#pdfPreview, QWidget#pageReorderEditor {{
     background-color: {COLOR_SURFACE_MUTED};
 }}
 
-QLabel#pdfPreviewImage {{
-    color: {COLOR_TEXT_SUBTLE};
+QScrollArea#pdfPreviewScrollArea {{
     border: 1px solid {COLOR_BORDER};
     border-radius: {BORDER_RADIUS}px;
+    background-color: #DDE3EC;
+}}
+
+QLabel#pdfPreviewImage {{
+    color: {COLOR_TEXT_SUBTLE};
+    border: 0;
     background-color: {COLOR_SURFACE};
 }}
 
-QLabel#pdfPreviewStatus, QLabel#pageListStatus, QLabel#previewPageLabel {{
+QLabel#pdfPreviewStatus, QLabel#pageListStatus, QLabel#previewPageLabel,
+QLabel#previewZoomLabel, QLabel#previewTargetLabel,
+QLabel#previewControlLabel {{
     color: {COLOR_TEXT_MUTED};
     background: transparent;
 }}
 
 QListView#pageListView, QListWidget#resultWarningList,
-QListWidget#resultOutputList {{
+QListWidget#resultOutputList, QListWidget#orderedFileList {{
     border: 1px solid {COLOR_BORDER};
     border-radius: {BORDER_RADIUS}px;
     background-color: {COLOR_SURFACE};
     outline: 0;
+}}
+
+QListWidget#orderedFileList[validationState="invalid"] {{
+    border: 2px solid {COLOR_DANGER};
+    background-color: {COLOR_DANGER_SOFT};
+}}
+
+QListWidget#orderedFileList::item {{
+    min-height: 34px;
+    padding: 2px {SPACE_XS}px;
+    border-radius: 6px;
+}}
+
+QListWidget#orderedFileList::item:selected {{
+    color: {COLOR_TEXT};
+    background-color: {COLOR_PRIMARY_SOFT};
 }}
 
 QListView#pageListView::item {{
@@ -568,6 +638,11 @@ QWidget#resultSummary[resultState="success"] {{
     background-color: {COLOR_SUCCESS_SOFT};
 }}
 
+QWidget#resultSummary[resultState="review"] {{
+    border-color: #B2CCFF;
+    background-color: {COLOR_PRIMARY_SOFT};
+}}
+
 QWidget#resultSummary[resultState="error"] {{
     border-color: #FECDCA;
     background-color: {COLOR_DANGER_SOFT};
@@ -589,6 +664,11 @@ QWidget#resultSummary[resultState="error"] QLabel#resultStatusLabel {{
 
 QWidget#resultSummary[resultState="cancelled"] QLabel#resultStatusLabel {{
     color: {COLOR_TEXT_MUTED};
+    font-weight: {FONT_WEIGHT_BOLD};
+}}
+
+QWidget#resultSummary[resultState="review"] QLabel#resultStatusLabel {{
+    color: {COLOR_PRIMARY};
     font-weight: {FONT_WEIGHT_BOLD};
 }}
 
@@ -646,6 +726,18 @@ QPushButton[primary="true"]:pressed {{
 
 QPushButton#browseButton {{
     min-width: 88px;
+}}
+
+QPushButton#previewZoomOutButton, QPushButton#previewZoomInButton {{
+    min-width: 38px;
+    max-width: 38px;
+    padding: 0;
+    font-size: {FONT_SIZE_SUBTITLE}pt;
+}}
+
+QPushButton#previewFitButton {{
+    min-width: 52px;
+    padding: 0 {SPACE_XS}px;
 }}
 
 QScrollBar:vertical {{

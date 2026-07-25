@@ -222,18 +222,20 @@ def _configure_page(
         )
 
     if key == "images_to_pdf":
-        page.input_picker.set_path(tmp_image_folder)
+        images = sorted(tmp_image_folder.glob("*.png"), reverse=True)
+        page.input_picker.set_paths(images)
         page.output_picker.set_path(output)
         page.target_size_combo.setCurrentText("Letter")
         page.fit_checkbox.setChecked(False)
         page.margin_spin.setValue(20)
         return (
-            (tmp_image_folder,),
+            (None,),
             {
                 "output_path": output,
                 "target_size": "Letter",
                 "fit": False,
                 "margin": 20.0,
+                "image_paths": images,
             },
             output,
         )
@@ -278,7 +280,16 @@ def test_operation_page_sends_exact_parameters_through_worker(
             }
         )
         progress(1, 1, f"Mocked {page_key}.")
-        return OperationResult([result_path], f"Mocked {page_key} complete.")
+        actual_result_path = result_path
+        if result_path.suffix.lower() == ".pdf":
+            actual_result_path = kwargs.get("output_path", result_path)
+            if page_key == "merge":
+                actual_result_path = args[1]
+            actual_result_path.write_bytes(b"%PDF-1.4\n%%EOF\n")
+        return OperationResult(
+            [actual_result_path],
+            f"Mocked {page_key} complete.",
+        )
 
     monkeypatch.setattr(
         OPERATION_MODULES[page_key],
@@ -290,6 +301,17 @@ def test_operation_page_sends_exact_parameters_through_worker(
     with qtbot.waitSignal(page.controller.runner.finished, timeout=5_000):
         page.panel.buttons.run_button.click()
 
+    if page._staged_path is not None:
+        expected_args = page._replace_path(
+            expected_args,
+            result_path,
+            page._staged_path,
+        )
+        expected_kwargs = page._replace_path(
+            expected_kwargs,
+            result_path,
+            page._staged_path,
+        )
     assert calls == [
         {
             "args": expected_args,
@@ -297,7 +319,12 @@ def test_operation_page_sends_exact_parameters_through_worker(
             "cancelled": False,
         }
     ]
-    assert page.panel.result.property("resultState") == "success"
+    expected_state = (
+        "review"
+        if page._staged_result is not None
+        else "success"
+    )
+    assert page.panel.result.property("resultState") == expected_state
 
 
 def test_main_window_keyboard_shortcuts_navigate_pages(

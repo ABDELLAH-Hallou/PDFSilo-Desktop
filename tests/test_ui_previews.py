@@ -191,6 +191,41 @@ def test_pdf_preview_navigation_uses_qpixmap_on_gui_thread(
     assert preview.previous_button.isEnabled()
 
 
+def test_pdf_preview_switches_merge_inputs_zooms_and_shows_target_canvas(
+    qtbot,
+    tmp_pdf_folder,
+):
+    sources = sorted(tmp_pdf_folder.glob("*.pdf"))
+    preview = PdfPreview(service=ThumbnailService())
+    preview.resize(520, 620)
+    qtbot.addWidget(preview)
+
+    with qtbot.waitSignal(preview.previewReady, timeout=5_000):
+        preview.set_pdfs(sources)
+
+    assert preview.source_paths() == sources
+    assert not preview.document_row.isHidden()
+    assert preview.document_combo.count() == len(sources)
+
+    with qtbot.waitSignal(preview.previewReady, timeout=5_000):
+        preview.document_combo.setCurrentIndex(1)
+    assert preview.source_path() == sources[1]
+
+    preview.set_target_page_size("A4")
+    assert preview.target_label.text() == "Output canvas · A4"
+    pixmap = preview.image_label.pixmap()
+    assert not pixmap.isNull()
+    assert pixmap.height() > pixmap.width()
+
+    preview.zoom_in_button.click()
+    assert not preview.is_fit_to_window()
+    assert preview.zoom_factor() == 1.25
+    assert preview.zoom_label.text() == "125%"
+    preview.fit_button.click()
+    assert preview.is_fit_to_window()
+    assert preview.zoom_label.text() == "Fit"
+
+
 def test_page_model_stores_original_indexes_and_loads_thumbnails_lazily(
     qtbot,
     tmp_multi_pdf,

@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import os
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
-from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtCore import QCoreApplication, Qt, Signal, Slot
 from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import (
     QFrame,
@@ -22,6 +25,7 @@ from safepdf.ui.pages.registry import PageDefinition
 from safepdf.ui.theme import SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XS
 from safepdf.ui.widgets import (
     OperationPanel,
+    OutputFilePicker,
     PathPicker,
     PdfPreview,
     MultiplePdfPicker,
@@ -50,6 +54,9 @@ class OperationPage(QWidget):
         self.definition = definition
         self._pickers: list[PathPicker] = []
         self.pdf_preview: PdfPreview | None = None
+        self._staged_path: Path | None = None
+        self._staged_destination: Path | None = None
+        self._staged_result: OperationResult | None = None
         self._responsive_orientation = Qt.Orientation.Horizontal
         self.setObjectName(f"{definition.key}Page")
 
@@ -203,6 +210,10 @@ class OperationPage(QWidget):
 
         runner = self.controller.runner
         self.operation_panel.runRequested.connect(self._start_operation)
+        self.operation_panel.saveRequested.connect(self._save_staged_output)
+        self.operation_panel.discardRequested.connect(
+            self._discard_staged_output
+        )
         runner.started.connect(
             lambda: self.statusChanged.emit(
                 f"{self.definition.label} started."
@@ -220,16 +231,21 @@ class OperationPage(QWidget):
                 f"{self.definition.label} failed: {message}"
             )
         )
+        runner.failed.connect(self._failed_or_cancelled)
         runner.cancelled.connect(
             lambda: self.statusChanged.emit(
                 f"{self.definition.label} cancelled."
             )
         )
+        runner.cancelled.connect(self._failed_or_cancelled)
         runner.finished.connect(self.progressCleared.emit)
         runner.runningChanged.connect(self.runningChanged.emit)
         runner.runningChanged.connect(self._running_changed)
 
         self.operation_panel.set_can_run(False)
+        application = QCoreApplication.instance()
+        if application is not None:
+            application.aboutToQuit.connect(self._discard_staged_output)
 
     def add_picker(self, picker: PathPicker) -> PathPicker:
         """Add a full-width path picker and include it in validation."""
@@ -290,7 +306,14 @@ class OperationPage(QWidget):
                 self.pdf_preview = PdfPreview(self.preview_card)
                 self.preview_content_layout.addWidget(self.pdf_preview)
                 self.preview_card.show()
-                input_picker.pathChanged.connect(self.pdf_preview.set_pdf)
+                if isinstance(input_picker, MultiplePdfPicker):
+                    input_picker.pathsChanged.connect(
+                        self.pdf_preview.set_pdfs
+                    )
+                else:
+                    input_picker.pathChanged.connect(
+                        self.pdf_preview.set_pdf
+                    )
                 self.operation_splitter.setSizes([620, 380])
         self._refresh_validation()
 
@@ -329,13 +352,50 @@ class OperationPage(QWidget):
             return
 
         operation, args, kwargs = self.operation_invocation()
+        output_picker = next(
+            (
+                picker
+                for picker in self._pickers
+                if isinstance(picker, OutputFilePicker)
+            ),
+            None,
+        )
+        if output_picker is not None:
+            destination = output_picker.path()
+            assert destination is not None
+            self._prepare_staged_output(destination)
+            assert self._staged_path is not None
+            args = self._replace_path(args, destination, self._staged_path)
+            kwargs = self._replace_path(
+                kwargs,
+                destination,
+                self._staged_path,
+            )
         if not self.controller.start(operation, *args, **kwargs):
+            self._discard_staged_output()
             self.statusChanged.emit(
                 f"{self.definition.label} is already running."
             )
 
     @Slot(object)
     def _operation_succeeded(self, result: OperationResult) -> None:
+        if (
+            self._staged_path is not None
+            and self._staged_destination is not None
+            and self._staged_path.is_file()
+        ):
+            self._staged_result = result
+            self.operation_panel.show_review_result(
+                result,
+                self._staged_destination,
+            )
+            self._show_staged_preview()
+            self.form_container.setEnabled(False)
+            self.statusChanged.emit(
+                "Processing complete. Review the result, then choose Save "
+                "result or Discard result."
+            )
+            return
         self.statusChanged.emit(result.message)
         output = result.output_paths[0] if result.output_paths else None
         self.outputChanged.emit(output)
@@ -344,6 +404,152 @@ class OperationPage(QWidget):
     def _running_changed(self, running: bool) -> None:
         if not running:
             self._refresh_validation()
+            if self._staged_result is not None:
+                self.form_container.setEnabled(False)
+                self.operation_panel.set_can_run(False)
+
+    def _prepare_staged_output(self, destination: Path) -> None:
+        self._discard_staged_output()
+        self._staged_destination = destination
+        self._staged_path = destination.with_name(
+            f".{destination.stem}.{uuid4().hex}.preview{destination.suffix}"
+        )
+
+    @staticmethod
+    def _replace_path(
+        value: Any,
+        source: Path,
+        replacement: Path,
+    ) -> Any:
+        if isinstance(value, Path):
+            return replacement if value == source else value
+        if isinstance(value, tuple):
+            return tuple(
+                OperationPage._replace_path(item, source, replacement)
+                for item in value
+            )
+        if isinstance(value, list):
+            return [
+                OperationPage._replace_path(item, source, replacement)
+                for item in value
+            ]
+        if isinstance(value, dict):
+            return {
+                key: OperationPage._replace_path(item, source, replacement)
+                for key, item in value.items()
+            }
+        return value
+
+    def _show_staged_preview(self) -> None:
+        assert self._staged_path is not None
+        if self.pdf_preview is None:
+            self.pdf_preview = PdfPreview(self.preview_card)
+            self.preview_content_layout.addWidget(self.pdf_preview)
+            self.preview_card.show()
+            self.operation_splitter.setSizes([620, 380])
+        if not self.pdf_preview.property("stagedSaveSignalsConnected"):
+            self.pdf_preview.previewReady.connect(
+                self._staged_preview_finished
+            )
+            self.pdf_preview.previewFailed.connect(
+                self._staged_preview_finished
+            )
+            self.pdf_preview.setProperty("stagedSaveSignalsConnected", True)
+        # PyMuPDF may briefly hold the staged file open on Windows. Saving is
+        # enabled as soon as preview rendering closes the document.
+        self.operation_panel.save_button.setEnabled(False)
+        self.operation_panel.discard_button.setEnabled(False)
+        self.pdf_preview.set_pdf(self._staged_path)
+
+    @Slot()
+    def _staged_preview_finished(self, *_args: object) -> None:
+        if (
+            self._staged_result is not None
+            and self.pdf_preview is not None
+            and self.pdf_preview.source_path() == self._staged_path
+        ):
+            self.operation_panel.save_button.setEnabled(True)
+            self.operation_panel.discard_button.setEnabled(True)
+
+    @Slot()
+    def _save_staged_output(self) -> None:
+        staged = self._staged_path
+        destination = self._staged_destination
+        result = self._staged_result
+        if staged is None or destination is None or result is None:
+            return
+        try:
+            os.replace(staged, destination)
+        except OSError as exc:
+            message = f"Could not save '{destination}': {exc}"
+            self.operation_panel.show_error(message)
+            self.statusChanged.emit(message)
+            return
+
+        final_result = replace(
+            result,
+            output_paths=[destination],
+            message=f"Saved '{destination}'.",
+        )
+        self._staged_path = None
+        self._staged_destination = None
+        self._staged_result = None
+        self.form_container.setEnabled(True)
+        self.operation_panel.save_button.setEnabled(True)
+        self.operation_panel.discard_button.setEnabled(True)
+        self.operation_panel.show_result(final_result)
+        if self.pdf_preview is not None:
+            self.pdf_preview.set_pdf(destination)
+        self.statusChanged.emit(final_result.message)
+        self.outputChanged.emit(destination)
+        self._refresh_validation()
+
+    @Slot()
+    def _discard_staged_output(self) -> None:
+        staged = self._staged_path
+        if staged is not None:
+            try:
+                staged.unlink(missing_ok=True)
+            except OSError:
+                # A preview worker can still own the file during application
+                # shutdown. It remains hidden and is never published.
+                pass
+        had_result = self._staged_result is not None
+        self._staged_path = None
+        self._staged_destination = None
+        self._staged_result = None
+        self.operation_panel.save_button.setEnabled(True)
+        self.operation_panel.discard_button.setEnabled(True)
+        if had_result:
+            self.operation_panel.review_actions.hide()
+            self.operation_panel.result.clear()
+            self.form_container.setEnabled(True)
+            self._restore_input_preview()
+            self.statusChanged.emit("The generated result was discarded.")
+            self._refresh_validation()
+
+    @Slot()
+    def _failed_or_cancelled(self, *_args: object) -> None:
+        self._discard_staged_output()
+
+    def _restore_input_preview(self) -> None:
+        if self.pdf_preview is None:
+            return
+        input_picker = next(
+            (
+                picker
+                for picker in self._pickers
+                if isinstance(
+                    picker,
+                    (SinglePdfPicker, MultiplePdfPicker),
+                )
+            ),
+            None,
+        )
+        if isinstance(input_picker, MultiplePdfPicker):
+            self.pdf_preview.set_pdfs(input_picker.paths())
+        elif isinstance(input_picker, SinglePdfPicker):
+            self.pdf_preview.set_pdf(input_picker.path())
 
 
 def set_default_output(

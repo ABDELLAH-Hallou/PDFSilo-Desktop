@@ -1,5 +1,7 @@
 """Reusable run/cancel, progress, result, and output controls."""
 
+from pathlib import Path
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
@@ -129,6 +131,8 @@ class OperationPanel(QWidget):
 
     runRequested = Signal()
     cancelRequested = Signal()
+    saveRequested = Signal()
+    discardRequested = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -163,6 +167,22 @@ class OperationPanel(QWidget):
         self.result = ResultSummary(self)
         self.output_actions = OutputActions(self)
         self.output_actions.hide()
+        self.review_actions = QWidget(self)
+        self.review_actions.setObjectName("reviewActions")
+        review_layout = QHBoxLayout(self.review_actions)
+        review_layout.setContentsMargins(0, 0, 0, 0)
+        review_layout.setSpacing(8)
+        self.discard_button = QPushButton("&Discard result", self.review_actions)
+        self.discard_button.setObjectName("discardResultButton")
+        self.save_button = QPushButton("&Save result", self.review_actions)
+        self.save_button.setObjectName("saveResultButton")
+        self.save_button.setProperty("primary", True)
+        self.discard_button.clicked.connect(self.discardRequested.emit)
+        self.save_button.clicked.connect(self.saveRequested.emit)
+        review_layout.addStretch(1)
+        review_layout.addWidget(self.discard_button)
+        review_layout.addWidget(self.save_button)
+        self.review_actions.hide()
 
         self.buttons.runRequested.connect(self.runRequested.emit)
         self.buttons.cancelRequested.connect(self.cancelRequested.emit)
@@ -173,6 +193,7 @@ class OperationPanel(QWidget):
         layout.addWidget(self.progress)
         layout.addWidget(self.result)
         layout.addWidget(self.output_actions)
+        layout.addWidget(self.review_actions)
 
     def set_can_run(self, can_run: bool) -> None:
         self.buttons.set_can_run(can_run)
@@ -183,6 +204,7 @@ class OperationPanel(QWidget):
             self.result.clear()
             self.output_actions.set_output_path(None)
             self.output_actions.hide()
+            self.review_actions.hide()
 
     def set_progress(self, current: int, total: int, message: str = "") -> None:
         self.progress.set_progress(current, total, message)
@@ -194,6 +216,21 @@ class OperationPanel(QWidget):
         output_path = result.output_paths[0] if result.output_paths else None
         self.output_actions.set_output_path(output_path)
         self.output_actions.setVisible(output_path is not None)
+        self.review_actions.hide()
+
+    def show_review_result(
+        self,
+        result: OperationResult,
+        destination: Path,
+    ) -> None:
+        """Offer Save/Discard after an operation produced a staged file."""
+        self.buttons.set_running(False)
+        self.buttons.set_can_run(False)
+        self.progress.reset()
+        self.result.show_review(result, destination)
+        self.output_actions.set_output_path(None)
+        self.output_actions.hide()
+        self.review_actions.show()
 
     def show_error(self, message: str) -> None:
         self.buttons.set_running(False)
@@ -201,6 +238,7 @@ class OperationPanel(QWidget):
         self.result.show_error(message)
         self.output_actions.set_output_path(None)
         self.output_actions.hide()
+        self.review_actions.hide()
 
     def show_cancelled(self) -> None:
         self.buttons.set_running(False)
@@ -208,3 +246,4 @@ class OperationPanel(QWidget):
         self.result.show_cancelled()
         self.output_actions.set_output_path(None)
         self.output_actions.hide()
+        self.review_actions.hide()

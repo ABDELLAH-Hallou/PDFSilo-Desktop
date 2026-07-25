@@ -1,5 +1,6 @@
 """End-to-end tests for Phase 9 operation screens."""
 
+from dataclasses import replace
 from pathlib import Path
 from threading import Event
 from time import sleep
@@ -63,6 +64,24 @@ def _run_successfully(qtbot, page: OperationPage, timeout: int = 10_000):
     assert failures == []
     assert len(results) == 1
     assert isinstance(results[0], OperationResult)
+    if page.panel.result.property("resultState") == "review":
+        staged_path = results[0].output_paths[0]
+        destination = page.output_picker.path()
+        assert staged_path.is_file()
+        assert destination is not None
+        assert not destination.exists()
+        assert not page.form_container.isEnabled()
+        qtbot.waitUntil(
+            page.panel.save_button.isEnabled,
+            timeout=5_000,
+        )
+        page.panel.save_button.click()
+        assert destination.is_file()
+        results[0] = replace(
+            results[0],
+            output_paths=[destination],
+            message=f"Saved '{destination}'.",
+        )
     assert page.panel.result.property("resultState") == "success"
     assert not page.controller.is_running()
     return results[0], progress_events
@@ -97,6 +116,65 @@ def test_merge_screen_runs_in_background(qtbot, tmp_pdf_folder, tmp_path):
     assert result.output_paths == [output]
     assert result.processed_files == 3
     assert len(progress) == 3
+
+
+def test_pdf_output_is_reviewed_before_atomic_save(
+    qtbot,
+    tmp_pdf_folder,
+    tmp_path,
+):
+    page = _page(qtbot, MergePage, "merge")
+    page.input_picker.set_paths(sorted(tmp_pdf_folder.glob("*.pdf")))
+    output = tmp_path / "reviewed-merge.pdf"
+    original_output = b"existing destination remains untouched"
+    output.write_bytes(original_output)
+    page.output_picker.set_path(output)
+    results = []
+    page.controller.runner.succeeded.connect(results.append)
+
+    with qtbot.waitSignal(page.controller.runner.finished, timeout=10_000):
+        page.panel.buttons.run_button.click()
+
+    assert len(results) == 1
+    staged = results[0].output_paths[0]
+    assert staged.is_file()
+    assert output.read_bytes() == original_output
+    assert page.panel.result.property("resultState") == "review"
+    assert not page.panel.review_actions.isHidden()
+    assert page.pdf_preview is not None
+    assert page.pdf_preview.source_path() == staged
+
+    qtbot.waitUntil(page.panel.save_button.isEnabled, timeout=5_000)
+    page.panel.save_button.click()
+
+    assert output.is_file()
+    assert output.read_bytes() != original_output
+    assert not staged.exists()
+    assert page.panel.result.property("resultState") == "success"
+    assert page.panel.output_actions.output_path() == output
+
+
+def test_discarded_review_removes_staged_output(qtbot, tmp_pdf, tmp_path):
+    page = _page(qtbot, RotatePage, "rotate")
+    page.input_picker.set_path(tmp_pdf)
+    output = tmp_path / "discarded.pdf"
+    page.output_picker.set_path(output)
+    results = []
+    page.controller.runner.succeeded.connect(results.append)
+
+    with qtbot.waitSignal(page.controller.runner.finished, timeout=10_000):
+        page.panel.buttons.run_button.click()
+
+    staged = results[0].output_paths[0]
+    assert staged.is_file()
+    qtbot.waitUntil(page.panel.discard_button.isEnabled, timeout=5_000)
+    page.panel.discard_button.click()
+
+    assert not staged.exists()
+    assert not output.exists()
+    assert page.form_container.isEnabled()
+    assert page.panel.result.isHidden()
+    assert page.panel.buttons.run_button.isEnabled()
 
 
 def test_split_screen_runs_in_background(qtbot, tmp_multi_pdf, tmp_path):
@@ -189,7 +267,9 @@ def test_images_to_pdf_screen_runs_in_background(
     tmp_path,
 ):
     page = _page(qtbot, ImagesToPdfPage, "images_to_pdf")
-    page.input_picker.set_path(tmp_image_folder)
+    page.input_picker.set_paths(
+        sorted(tmp_image_folder.glob("*.png"), reverse=True)
+    )
     output = tmp_path / "images-output.pdf"
     page.output_picker.set_path(output)
 
@@ -198,6 +278,10 @@ def test_images_to_pdf_screen_runs_in_background(
     assert output.is_file()
     assert result.processed_pages == 3
     assert len(progress) == 3
+    assert result.source_paths == sorted(
+        tmp_image_folder.glob("*.png"),
+        reverse=True,
+    )
 
 
 def test_extract_images_screen_runs_in_background(

@@ -100,6 +100,42 @@ def test_multiple_pdf_picker_accepts_multiple_existing_files(
     assert all(str(path) in picker.line_edit.text() for path in pdfs)
 
 
+def test_ordered_file_picker_appends_reorders_and_removes_files(
+    qtbot,
+    monkeypatch,
+    tmp_pdf_folder: Path,
+):
+    picker = MultiplePdfPicker()
+    qtbot.addWidget(picker)
+    pdfs = sorted(tmp_pdf_folder.glob("*.pdf"))
+    dialog_results = iter(
+        [
+            ([str(pdfs[1])], "PDF"),
+            ([str(pdfs[0]), str(pdfs[2])], "PDF"),
+        ]
+    )
+    monkeypatch.setattr(
+        QFileDialog,
+        "getOpenFileNames",
+        lambda *_args, **_kwargs: next(dialog_results),
+    )
+
+    picker.add_button.click()
+    picker.add_button.click()
+
+    assert picker.paths() == [pdfs[1], pdfs[0], pdfs[2]]
+    assert picker.file_list.count() == 3
+    picker.file_list.setCurrentRow(1)
+    picker.move_up_button.click()
+    assert picker.paths() == [pdfs[0], pdfs[1], pdfs[2]]
+
+    picker.file_list.setCurrentRow(1)
+    picker.remove_button.click()
+    assert picker.paths() == [pdfs[0], pdfs[2]]
+    assert picker.file_list.item(0).text().startswith("1.")
+    assert picker.file_list.item(1).text().startswith("2.")
+
+
 def test_image_picker_accepts_images_and_rejects_pdf(
     qtbot,
     tmp_two_png_images: list[Path],

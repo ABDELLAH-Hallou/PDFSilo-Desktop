@@ -25,7 +25,6 @@ from safepdf.ui.pages.base_operation_page import (
 )
 from safepdf.ui.pages.registry import PageDefinition
 from safepdf.ui.widgets import (
-    FolderPicker,
     ImageFilePicker,
     OutputDirectoryPicker,
     OutputFilePicker,
@@ -127,12 +126,12 @@ class ToImagesPage(OperationPage):
 
 
 class ImagesToPdfPage(OperationPage):
-    """Build a PDF from all supported images in a folder."""
+    """Build a PDF from explicitly selected images in displayed order."""
 
     def __init__(self, definition: PageDefinition) -> None:
         super().__init__(definition)
         self.input_picker = self.add_picker(
-            FolderPicker(label="&Image folder", parent=self)
+            ImageFilePicker(label="&Images in page order", parent=self)
         )
         self.output_picker = self.add_picker(
             OutputFilePicker(label="&Output PDF", parent=self)
@@ -159,22 +158,22 @@ class ImagesToPdfPage(OperationPage):
         self.input_picker.pathChanged.connect(self._set_default_output)
         self.finish_setup()
 
-    def _set_default_output(self, folder: Path | None) -> None:
-        if folder is not None and self.output_picker.path() is None:
-            self.output_picker.set_path(folder.parent / f"{folder.name}.pdf")
+    def _set_default_output(self, image: Path | None) -> None:
+        if image is not None and self.output_picker.path() is None:
+            self.output_picker.set_path(image.parent / "images.pdf")
 
     def operation_invocation(self) -> OperationInvocation:
-        folder = self.input_picker.path()
         output = self.output_picker.path()
-        assert folder is not None and output is not None
+        assert output is not None
         return (
             images_to_pdf.execute,
-            (folder,),
+            (None,),
             {
                 "output_path": output,
                 "target_size": self.target_size_combo.currentText(),
                 "fit": self.fit_checkbox.isChecked(),
                 "margin": self.margin_spin.value(),
+                "image_paths": self.input_picker.paths(),
             },
         )
 

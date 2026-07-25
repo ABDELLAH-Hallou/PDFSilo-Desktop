@@ -56,21 +56,23 @@ log = logging.getLogger(__name__)
 
 
 def execute(
-    folder: Path,
+    folder: Path | None,
     output_path: Path | None = None,
     target_size: str = "A4",
     fit: bool = True,
     margin: float = 36.0,
     *,
+    image_paths: list[Path] | None = None,
     progress: ProgressCallback | None = None,
     is_cancelled: CancellationCheck | None = None,
 ) -> OperationResult:
-    """Merge every image in *folder* into a single PDF.
+    """Merge selected images, or every image in *folder*, into one PDF.
 
     Parameters
     ----------
     folder:
-        Directory containing image files.
+        Directory containing image files. May be ``None`` when explicit
+        ``image_paths`` are supplied by a presentation layer.
     output_path:
         Destination PDF (defaults to ``<folder_name>.pdf`` in the parent dir).
     target_size:
@@ -95,16 +97,42 @@ def execute(
     if not math.isfinite(margin) or margin < 0:
         raise InvalidInputError("Margin must be a non-negative finite number.")
 
-    folder_path = require_directory(folder)
-
-    image_files = [Path(path) for path in get_sorted_image_files(folder_path)]
+    folder_path: Path | None = None
+    if image_paths is None:
+        if folder is None:
+            raise InvalidInputError(
+                "Choose at least one image or an image folder."
+            )
+        folder_path = require_directory(folder)
+        image_files = [
+            Path(path) for path in get_sorted_image_files(folder_path)
+        ]
+    else:
+        image_files = [Path(path) for path in image_paths]
+        for image_path in image_files:
+            if not image_path.is_file():
+                raise InvalidInputError(
+                    f"Image file '{image_path}' was not found."
+                )
+            if image_path.suffix.lower() not in IMAGE_EXTENSIONS:
+                raise InvalidInputError(
+                    f"Unsupported image format: '{image_path.suffix}'."
+                )
     if not image_files:
+        location = f" in '{folder_path}'" if folder_path is not None else ""
         raise InvalidInputError(
-            f"No supported images found in '{folder_path}'. Supported formats: "
+            f"No supported images found{location}. Supported formats: "
             f"{', '.join(sorted(IMAGE_EXTENSIONS))}"
         )
 
-    out = output_path or folder_path.parent / f"{folder_path.name}.pdf"
+    if output_path is not None:
+        out = output_path
+    elif folder_path is not None:
+        out = folder_path.parent / f"{folder_path.name}.pdf"
+    else:
+        raise InvalidInputError(
+            "An output path is required for explicitly selected images."
+        )
 
     target_w, target_h = PAGE_SIZES[target_size]
     if fit and margin * 2 >= min(target_w, target_h):
@@ -180,8 +208,13 @@ def execute(
     except SafePdfError:
         raise
     except Exception as exc:
+        source_description = (
+            f"'{folder_path}'"
+            if folder_path is not None
+            else "the selected images"
+        )
         raise PdfProcessingError(
-            f"Could not create PDF from images in '{folder_path}': {exc}"
+            f"Could not create PDF from {source_description}: {exc}"
         ) from exc
 
     finally:

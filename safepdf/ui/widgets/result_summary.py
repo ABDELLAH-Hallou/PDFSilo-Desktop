@@ -106,6 +106,22 @@ class ResultSummary(QWidget):
         self.output_list.setVisible(bool(result.output_paths))
         self.show()
 
+    def show_review(
+        self,
+        result: OperationResult,
+        destination: Path,
+    ) -> None:
+        """Show a completed-but-not-yet-published result."""
+        self.show_result(result)
+        self._set_result_state("review")
+        self.status_label.setText("Ready to review")
+        self.message_label.setText(
+            "Processing is complete. Review the preview, then save the "
+            f"result to '{destination.name}'."
+        )
+        self.output_list.clear()
+        self.output_list.hide()
+
     def show_error(self, message: str) -> None:
         """Render an operation failure without exposing diagnostic internals."""
         self._set_result_state("error")

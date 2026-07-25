@@ -60,7 +60,9 @@ sidebar (`Ctrl+B`) keeps every operation within reach. On wide windows, files
 and options sit beside a dedicated document preview; at narrower sizes these
 cards stack automatically. Each screen provides validated input and output
 selection, operation-specific options, run/cancel controls, progress, status,
-structured results, and output-opening actions.
+structured results, and output-opening actions. Multi-file PDF and image
+workflows use ordered lists: files can be added over multiple selections,
+dragged into position, moved with keyboard-accessible buttons, or removed.
 
 SafePDF supports **System default**, **Light**, and **Dark** appearance modes.
 Choose one from **Tools → Appearance** or open Settings with `Ctrl+,`. System
@@ -70,8 +72,13 @@ paths, document contents, and passwords are never stored as theme settings.
 
 PDF work runs through a reusable thread-pool worker with GUI-thread signal
 delivery, cooperative cancellation, duplicate-start protection, and form-state
-restoration. PDF inputs have asynchronous low-resolution previews with
-file-aware thumbnail caching. The reorder screen provides thumbnail
+restoration. PDF inputs have asynchronous previews with file-aware caching.
+The document preview renders a crisp working
+image, supports fit and 50–300% zoom, and lets merge users switch among every
+input document. Page-size normalization is shown on the preview canvas.
+PDF-producing screens stage their result for review and publish it only after
+**Save result** is selected; **Discard result** removes the temporary output.
+The reorder screen provides thumbnail
 drag-and-drop plus selection, duplication, deletion, reversal, and reset
 without changing the source file before Run is confirmed.
 

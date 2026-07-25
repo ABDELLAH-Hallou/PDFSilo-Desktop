@@ -5,7 +5,7 @@ from pathlib import Path
 
 import fitz
 
-from safepdf.operations.images_to_pdf import run, cli_run
+from safepdf.operations.images_to_pdf import cli_run, execute, run
 from safepdf.utils import get_sorted_image_files, IMAGE_EXTENSIONS
 
 
@@ -107,6 +107,20 @@ class TestImagesToPdfRun:
             page = doc[0]
             # Landscape: width > height
             assert page.rect.width > page.rect.height
+
+    def test_explicit_image_order_is_preserved(
+        self,
+        tmp_image_folder: Path,
+        tmp_path: Path,
+    ):
+        images = sorted(tmp_image_folder.glob("*.png"), reverse=True)
+        out = tmp_path / "ordered.pdf"
+
+        result = execute(None, out, image_paths=images)
+
+        assert result.source_paths == images
+        assert result.processed_pages == len(images)
+        assert out.is_file()
 
 
 # ── run — error / edge cases ──────────────────────────────────────────────────
