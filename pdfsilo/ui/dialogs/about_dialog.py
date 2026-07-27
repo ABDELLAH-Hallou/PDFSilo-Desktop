@@ -155,18 +155,18 @@ class AboutDialog(QDialog):
         privacy_layout.addWidget(privacy_title)
         privacy_layout.addWidget(privacy_text)
 
-        details = QLabel(
-            f"PDFSilo {APPLICATION_VERSION}  ·  PyMuPDF "
-            f"{pymupdf.VersionBind}  ·  PySide6 {PYSIDE_VERSION}  ·  "
-            f"Python {platform.python_version()}  ·  {platform.system()} "
-            f"{platform.machine() or sys.platform}",
-            self,
-        )
-        details.setObjectName("aboutRuntimeDetails")
-        details.setWordWrap(True)
-        details.setTextInteractionFlags(
-            Qt.TextInteractionFlag.TextSelectableByMouse
-        )
+        # details = QLabel(
+        #     f"PDFSilo {APPLICATION_VERSION}  ·  PyMuPDF "
+        #     f"{pymupdf.VersionBind}  ·  PySide6 {PYSIDE_VERSION}  ·  "
+        #     f"Python {platform.python_version()}  ·  {platform.system()} "
+        #     f"{platform.machine() or sys.platform}",
+        #     self,
+        # )
+        # details.setObjectName("aboutRuntimeDetails")
+        # details.setWordWrap(True)
+        # details.setTextInteractionFlags(
+        #     Qt.TextInteractionFlag.TextSelectableByMouse
+        # )
 
         footer = QHBoxLayout()
         footer.setContentsMargins(0, 0, 0, 0)
@@ -201,7 +201,7 @@ class AboutDialog(QDialog):
         layout.addWidget(hero)
         layout.addLayout(features)
         layout.addWidget(privacy)
-        layout.addWidget(details)
+        # layout.addWidget(details)
         layout.addStretch(1)
         layout.addLayout(footer)
         self.set_dark_mode(False)

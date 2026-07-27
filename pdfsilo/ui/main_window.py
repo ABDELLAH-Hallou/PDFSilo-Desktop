@@ -419,9 +419,7 @@ class MainWindow(QMainWindow):
         self.brand_logo_label.setObjectName("brandLogoLabel")
         self.brand_logo_label.setAccessibleName("PDFSilo")
         self.brand_logo_label.setFixedSize(184, 58)
-        self.brand_logo_label.setAlignment(
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
-        )
+        self.brand_logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         subtitle = QLabel("Private PDF workspace", panel)
         subtitle.setObjectName("brandSubtitle")
@@ -442,9 +440,16 @@ class MainWindow(QMainWindow):
         if application is not None:
             application.setWindowIcon(icon)
         if hasattr(self, "brand_logo_label"):
+            self.brand_logo_label.setProperty("darkMode", dark)
             self.brand_logo_label.setPixmap(
-                brand_logo_pixmap(dark=dark)
+                brand_logo_pixmap(
+                    dark=dark,
+                    size=QSize(168, 48),
+                )
             )
+            style = self.brand_logo_label.style()
+            style.unpolish(self.brand_logo_label)
+            style.polish(self.brand_logo_label)
         if self._about_dialog is not None:
             self._about_dialog.set_dark_mode(dark)
 

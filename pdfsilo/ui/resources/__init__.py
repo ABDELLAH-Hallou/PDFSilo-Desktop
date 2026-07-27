@@ -2,24 +2,31 @@
 
 from pathlib import Path
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QRect, QSize, Qt
 from PySide6.QtGui import QIcon, QPixmap
 
 RESOURCE_DIRECTORY = Path(__file__).resolve().parent
-ICON_LIGHT_PATH = RESOURCE_DIRECTORY / "icon-light.svg"
-ICON_DARK_PATH = RESOURCE_DIRECTORY / "icon-dark.svg"
-ICON_INDIGO_PATH = RESOURCE_DIRECTORY / "icon-indigo.svg"
-LOGO_LIGHT_PATH = RESOURCE_DIRECTORY / "logo-light.svg"
-LOGO_DARK_PATH = RESOURCE_DIRECTORY / "logo-dark.svg"
-LOGO_INDIGO_PATH = RESOURCE_DIRECTORY / "logo-indigo.svg"
-APPLICATION_ICON_PATH = ICON_LIGHT_PATH
+ICON_PATH = RESOURCE_DIRECTORY / "icon.png"
+LOGO_PATH = RESOURCE_DIRECTORY / "logo.png"
+APPLICATION_ICON_PATH = ICON_PATH
 SIDEBAR_HIDE_ICON_PATH = RESOURCE_DIRECTORY / "sidebar_hide.svg"
 SIDEBAR_SHOW_ICON_PATH = RESOURCE_DIRECTORY / "sidebar_show.svg"
 
+# The uploaded PNG artwork sits on a large transparent promotional canvas.
+# Crop only that empty canvas at runtime; do not recolour or reshape the logo.
+_ICON_ARTWORK_RECT = QRect(500, 220, 540, 540)
+_LOGO_ARTWORK_RECT = QRect(190, 300, 1100, 360)
+
+
+def _artwork_pixmap(path: Path, rect: QRect) -> QPixmap:
+    pixmap = QPixmap(str(path))
+    return pixmap.copy(rect.intersected(pixmap.rect()))
+
 
 def application_icon(*, dark: bool = False) -> QIcon:
-    """Return the contrast-correct packaged PDFSilo application icon."""
-    return QIcon(str(ICON_DARK_PATH if dark else ICON_LIGHT_PATH))
+    """Return the uploaded PDFSilo raster application icon."""
+    del dark  # One official PNG identity is shared by all theme modes.
+    return QIcon(_artwork_pixmap(ICON_PATH, _ICON_ARTWORK_RECT))
 
 
 def brand_logo_pixmap(
@@ -27,9 +34,9 @@ def brand_logo_pixmap(
     dark: bool = False,
     size: QSize = QSize(184, 58),
 ) -> QPixmap:
-    """Render the appropriate transparent wordmark for a UI surface."""
-    path = LOGO_DARK_PATH if dark else LOGO_LIGHT_PATH
-    return QPixmap(str(path)).scaled(
+    """Render the uploaded transparent raster wordmark at UI scale."""
+    del dark  # One official PNG identity is shared by all theme modes.
+    return _artwork_pixmap(LOGO_PATH, _LOGO_ARTWORK_RECT).scaled(
         size,
         Qt.AspectRatioMode.KeepAspectRatio,
         Qt.TransformationMode.SmoothTransformation,
@@ -48,12 +55,8 @@ def sidebar_toggle_icon(sidebar_visible: bool) -> QIcon:
 
 __all__ = [
     "APPLICATION_ICON_PATH",
-    "ICON_DARK_PATH",
-    "ICON_INDIGO_PATH",
-    "ICON_LIGHT_PATH",
-    "LOGO_DARK_PATH",
-    "LOGO_INDIGO_PATH",
-    "LOGO_LIGHT_PATH",
+    "ICON_PATH",
+    "LOGO_PATH",
     "RESOURCE_DIRECTORY",
     "SIDEBAR_HIDE_ICON_PATH",
     "SIDEBAR_SHOW_ICON_PATH",

@@ -21,10 +21,8 @@ from pdfsilo.ui.dialogs import SettingsDialog
 from pdfsilo.ui.main_window import THEME_SETTING, MainWindow
 from pdfsilo.ui.pages.home_page import ToolCard
 from pdfsilo.ui.resources import (
-    ICON_DARK_PATH,
-    ICON_LIGHT_PATH,
-    LOGO_DARK_PATH,
-    LOGO_LIGHT_PATH,
+    ICON_PATH,
+    LOGO_PATH,
     SIDEBAR_HIDE_ICON_PATH,
     SIDEBAR_SHOW_ICON_PATH,
 )
@@ -123,7 +121,7 @@ def test_explicit_theme_modes_apply_and_persist(qtbot, ui_settings):
     assert application.styleSheet() == DARK_STYLESHEET
     assert (
         application.palette().color(QPalette.ColorRole.Window).name().upper()
-        == "#0D1224"
+        == "#181A1F"
     )
     assert ui_settings.value(THEME_SETTING) == ThemeMode.DARK.value
     assert window.theme_actions[ThemeMode.DARK].isChecked()
@@ -197,7 +195,7 @@ def test_spin_controls_use_visible_packaged_arrow_icons():
     assert "QSpinBox::down-button" in APPLICATION_STYLESHEET
 
 
-def test_theme_switches_brand_logo_and_application_icon(
+def test_uploaded_png_identity_is_stable_across_themes(
     qtbot,
     ui_settings,
 ):
@@ -212,15 +210,11 @@ def test_theme_switches_brand_logo_and_application_icon(
 
     window.set_theme_mode(ThemeMode.DARK)
 
-    assert brand.pixmap().toImage() != light_logo
-    assert window.windowIcon().pixmap(64, 64).toImage() != light_icon
-    assert all(
-        path.is_file()
-        for path in (
-            ICON_LIGHT_PATH,
-            ICON_DARK_PATH,
-            LOGO_LIGHT_PATH,
-            LOGO_DARK_PATH,
-        )
-    )
+    assert brand.pixmap().toImage() == light_logo
+    assert window.windowIcon().pixmap(64, 64).toImage() == light_icon
+    assert brand.property("darkMode") is True
+    assert ICON_PATH.name == "icon.png"
+    assert LOGO_PATH.name == "logo.png"
+    assert ICON_PATH.is_file()
+    assert LOGO_PATH.is_file()
     window.set_theme_mode(ThemeMode.SYSTEM)

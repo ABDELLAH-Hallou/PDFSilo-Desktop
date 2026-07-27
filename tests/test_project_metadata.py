@@ -65,6 +65,7 @@ def test_pyproject_packages_desktop_resources():
         setuptools = tomllib.load(file)["tool"]["setuptools"]
 
     assert "*.svg" in setuptools["package-data"]["pdfsilo.ui.resources"]
+    assert "*.png" in setuptools["package-data"]["pdfsilo.ui.resources"]
 
 
 def test_legacy_project_name_is_absent_from_public_source_and_docs():

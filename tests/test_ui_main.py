@@ -1,6 +1,5 @@
 """Smoke tests for the PySide6 application structure and main shell."""
 
-import xml.etree.ElementTree as ElementTree
 from pathlib import Path
 
 import pytest
@@ -252,9 +251,9 @@ def test_create_application_sets_metadata_and_theme(qapp):
     assert not application.windowIcon().isNull()
 
 
-def test_packaged_application_icon_is_valid_svg():
+def test_packaged_application_icon_uses_uploaded_png():
     assert APPLICATION_ICON_PATH.is_file()
-    assert ElementTree.parse(APPLICATION_ICON_PATH).getroot().tag.endswith("svg")
+    assert APPLICATION_ICON_PATH.name == "icon.png"
     assert not application_icon().isNull()
     assert not application_icon().pixmap(QSize(64, 64)).isNull()
 

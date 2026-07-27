@@ -61,4 +61,4 @@ include = ["pdfsilo*"]
 exclude = ["tests*"]
 
 [tool.setuptools.package-data]
-"pdfsilo.ui.resources" = ["*.svg"]
+"pdfsilo.ui.resources" = ["*.svg", "*.png"]

@@ -42,7 +42,7 @@ COLOR_PRIMARY_HOVER = BRAND_700
 COLOR_PRIMARY_PRESSED = BRAND_800
 COLOR_PRIMARY_SOFT = BRAND_50
 COLOR_ACCENT = ACCENT_500
-COLOR_ON_DARK = "#F4F6FB"
+COLOR_ON_DARK = "#F4F4F5"
 COLOR_ON_PRIMARY = "#FCFDFF"
 COLOR_TEXT = "#151A2D"
 COLOR_TEXT_MUTED = "#4D566B"
@@ -130,6 +130,12 @@ QFrame#brandPanel {{
 
 QLabel#brandLogoLabel {{
     background: transparent;
+}}
+
+QLabel#brandLogoLabel[darkMode="true"] {{
+    background-color: #F6F7FB;
+    border: 1px solid #D9DDE7;
+    border-radius: {BORDER_RADIUS}px;
 }}
 
 QLabel#applicationTitleLabel {{
@@ -880,36 +886,37 @@ QToolTip {{
 # A single-pass replacement prevents one mapped value from being replaced
 # again when it happens to match another source color.
 DARK_COLOR_REPLACEMENTS = {
-    "#F7F8FC": "#0D1224",
-    "#FFFFFF": "#171F38",
-    "#F8FAFC": "#1D2744",
-    "#F1F3FF": "#232E50",
-    "#F0F2F8": "#11182E",
-    "#4D566B": "#C1C7D6",
+    "#F7F8FC": "#181A1F",
+    "#FFFFFF": "#23262D",
+    "#F8FAFC": "#2A2E36",
+    "#F1F3FF": "#313640",
+    "#F0F2F8": "#1D2026",
+    "#4D566B": "#C7C9CF",
     "#4353C7": "#6879EA",
     "#3342A5": "#7F8DF0",
     "#27347F": "#5264D5",
-    "#EEF2FF": "#202A55",
-    "#E0E7FF": "#293665",
+    "#EEF2FF": "#343746",
+    "#E0E7FF": "#373B49",
     "#16B8AE": "#2DD4C7",
     "#FCFDFF": "#FFFFFF",
-    "#151A2D": "#F4F6FB",
-    "#747D91": "#929AAF",
-    "#D9DDE7": "#303A56",
-    "#B8BFCE": "#46516F",
+    "#151A2D": "#F4F4F5",
+    "#747D91": "#989CA6",
+    "#D9DDE7": "#3A3F48",
+    "#B8BFCE": "#515762",
     "#A52432": "#FF9AA5",
-    "#FFF0F1": "#3D171D",
+    "#FFF0F1": "#3D2328",
     "#187A3F": "#76E39C",
-    "#ECFDF3": "#123523",
+    "#ECFDF3": "#20342A",
     "#855B00": "#FFD36A",
-    "#FFF8E5": "#3A2C0D",
+    "#FFF8E5": "#393122",
     "#235F9D": "#86C7FF",
-    "#EEF6FF": "#142D48",
+    "#EEF6FF": "#252F3A",
     "#86E5AA": "#2D8A52",
-    "#E9ECF7": "#1D2744",
-    "#E1E5ED": "#252E47",
+    "#E9ECF7": "#2D3139",
+    "#E1E5ED": "#30343B",
     "#F3A2AA": "#B24754",
-    "#929AAF": "#46516F",
+    "#929AAF": "#555B65",
+    "#1B2559": "#252832",
 }
 
 
@@ -942,24 +949,24 @@ def _application_palette(mode: ThemeMode) -> QPalette:
     """Build a native Qt palette matching the active QSS theme."""
     dark = mode is ThemeMode.DARK
     colors = {
-        "window": "#0D1224" if dark else "#F7F8FC",
-        "surface": "#171F38" if dark else "#FFFFFF",
-        "alternate": "#1D2744" if dark else "#F8FAFC",
-        "text": "#F4F6FB" if dark else "#151A2D",
-        "muted": "#929AAF" if dark else "#747D91",
+        "window": "#181A1F" if dark else "#F7F8FC",
+        "surface": "#23262D" if dark else "#FFFFFF",
+        "alternate": "#2A2E36" if dark else "#F8FAFC",
+        "text": "#F4F4F5" if dark else "#151A2D",
+        "muted": "#989CA6" if dark else "#747D91",
         "disabled": "#666F85" if dark else "#A3A9B7",
         "primary": "#6879EA" if dark else "#4353C7",
         "primary_hover": "#7F8DF0" if dark else "#3342A5",
         "primary_pressed": "#5264D5" if dark else "#27347F",
-        "primary_soft": "#202A55" if dark else "#EEF2FF",
+        "primary_soft": "#343746" if dark else "#EEF2FF",
         "on_primary": "#FFFFFF",
-        "surface_hover": "#232E50" if dark else "#F1F3FF",
-        "border": "#303A56" if dark else "#D9DDE7",
-        "border_strong": "#46516F" if dark else "#B8BFCE",
+        "surface_hover": "#313640" if dark else "#F1F3FF",
+        "border": "#3A3F48" if dark else "#D9DDE7",
+        "border_strong": "#515762" if dark else "#B8BFCE",
         "danger": "#FF9AA5" if dark else "#A52432",
         "accent": "#2DD4C7" if dark else "#16B8AE",
-        "sidebar": "#11182E" if dark else "#F0F2F8",
-        "tooltip": "#11182E" if dark else "#1B2559",
+        "sidebar": "#1D2026" if dark else "#F0F2F8",
+        "tooltip": "#252832" if dark else "#1B2559",
     }
     palette = QPalette()
     palette.setColor(QPalette.ColorRole.Window, QColor(colors["window"]))
