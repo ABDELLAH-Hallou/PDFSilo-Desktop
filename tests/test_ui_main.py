@@ -44,12 +44,15 @@ from pdfsilo.ui.resources import APPLICATION_ICON_PATH, application_icon
 from pdfsilo.ui.pages import PAGE_DEFINITIONS
 from pdfsilo.ui.theme import (
     APPLICATION_STYLESHEET,
+    DARK_STYLESHEET,
     FONT_SIZE_BODY,
     SPACE_LG,
     SPACE_MD,
     SPACE_SM,
     SPACE_XL,
+    ThemeMode,
     apply_theme,
+    theme_manager,
 )
 
 
@@ -71,7 +74,11 @@ def test_create_main_window(qtbot, ui_settings):
     assert window.windowTitle() == "PDFSilo"
     assert window.size() == QSize(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT)
     assert isinstance(window.centralWidget(), QWidget)
-    assert window.findChild(QLabel, "applicationTitleLabel").text() == "PDFSilo"
+    brand_logo = window.findChild(QLabel, "brandLogoLabel")
+    assert brand_logo is not None
+    assert brand_logo.accessibleName() == "PDFSilo"
+    assert brand_logo.pixmap() is not None
+    assert not brand_logo.pixmap().isNull()
     assert window.statusBar().currentMessage() == "Ready"
     assert not window.windowIcon().isNull()
 
@@ -234,7 +241,13 @@ def test_create_application_sets_metadata_and_theme(qapp):
     assert QApplication.organizationName() == ORGANIZATION_NAME
     assert QApplication.organizationDomain() == ORGANIZATION_DOMAIN
     assert QApplication.desktopFileName() == APPLICATION_ID
-    assert application.styleSheet() == APPLICATION_STYLESHEET
+    manager = theme_manager(application)
+    expected_stylesheet = (
+        DARK_STYLESHEET
+        if manager.effective_mode is ThemeMode.DARK
+        else APPLICATION_STYLESHEET
+    )
+    assert application.styleSheet() == expected_stylesheet
     assert application.font().pointSize() == FONT_SIZE_BODY
     assert not application.windowIcon().isNull()
 

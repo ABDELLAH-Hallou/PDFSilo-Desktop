@@ -18,7 +18,7 @@ from pdfsilo.ui.metadata import (
     ORGANIZATION_NAME,
 )
 from pdfsilo.ui.resources import application_icon
-from pdfsilo.ui.theme import apply_theme
+from pdfsilo.ui.theme import ThemeMode, apply_theme
 
 
 def create_application(arguments: Sequence[str] | None = None) -> QApplication:
@@ -37,8 +37,12 @@ def create_application(arguments: Sequence[str] | None = None) -> QApplication:
     application.setOrganizationName(ORGANIZATION_NAME)
     application.setOrganizationDomain(ORGANIZATION_DOMAIN)
     application.setDesktopFileName(APPLICATION_ID)
-    application.setWindowIcon(application_icon())
-    apply_theme(application)
+    manager = apply_theme(application)
+    application.setWindowIcon(
+        application_icon(
+            dark=manager.effective_mode is ThemeMode.DARK,
+        )
+    )
     return application
 
 

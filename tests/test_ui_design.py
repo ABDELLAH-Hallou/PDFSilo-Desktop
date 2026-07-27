@@ -21,6 +21,10 @@ from pdfsilo.ui.dialogs import SettingsDialog
 from pdfsilo.ui.main_window import THEME_SETTING, MainWindow
 from pdfsilo.ui.pages.home_page import ToolCard
 from pdfsilo.ui.resources import (
+    ICON_DARK_PATH,
+    ICON_LIGHT_PATH,
+    LOGO_DARK_PATH,
+    LOGO_LIGHT_PATH,
     SIDEBAR_HIDE_ICON_PATH,
     SIDEBAR_SHOW_ICON_PATH,
 )
@@ -119,7 +123,7 @@ def test_explicit_theme_modes_apply_and_persist(qtbot, ui_settings):
     assert application.styleSheet() == DARK_STYLESHEET
     assert (
         application.palette().color(QPalette.ColorRole.Window).name().upper()
-        == "#0B1220"
+        == "#0D1224"
     )
     assert ui_settings.value(THEME_SETTING) == ThemeMode.DARK.value
     assert window.theme_actions[ThemeMode.DARK].isChecked()
@@ -133,7 +137,7 @@ def test_explicit_theme_modes_apply_and_persist(qtbot, ui_settings):
     assert application.styleSheet() == APPLICATION_STYLESHEET
     assert (
         application.palette().color(QPalette.ColorRole.Window).name().upper()
-        == "#F5F7FB"
+        == "#F7F8FC"
     )
     assert ui_settings.value(THEME_SETTING) == ThemeMode.LIGHT.value
     assert window.theme_actions[ThemeMode.LIGHT].isChecked()
@@ -191,3 +195,32 @@ def test_spin_controls_use_visible_packaged_arrow_icons():
     assert f'url("{SPIN_DOWN_ICON}")' in APPLICATION_STYLESHEET
     assert "QSpinBox::up-button" in APPLICATION_STYLESHEET
     assert "QSpinBox::down-button" in APPLICATION_STYLESHEET
+
+
+def test_theme_switches_brand_logo_and_application_icon(
+    qtbot,
+    ui_settings,
+):
+    window = MainWindow(ui_settings)
+    qtbot.addWidget(window)
+    brand = window.findChild(QLabel, "brandLogoLabel")
+    assert brand is not None
+
+    window.set_theme_mode(ThemeMode.LIGHT)
+    light_logo = brand.pixmap().toImage()
+    light_icon = window.windowIcon().pixmap(64, 64).toImage()
+
+    window.set_theme_mode(ThemeMode.DARK)
+
+    assert brand.pixmap().toImage() != light_logo
+    assert window.windowIcon().pixmap(64, 64).toImage() != light_icon
+    assert all(
+        path.is_file()
+        for path in (
+            ICON_LIGHT_PATH,
+            ICON_DARK_PATH,
+            LOGO_LIGHT_PATH,
+            LOGO_DARK_PATH,
+        )
+    )
+    window.set_theme_mode(ThemeMode.SYSTEM)

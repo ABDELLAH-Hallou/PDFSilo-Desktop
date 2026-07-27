@@ -11,31 +11,52 @@ from PySide6.QtWidgets import QApplication
 
 from pdfsilo.ui.resources import RESOURCE_DIRECTORY
 
-# A calm, high-contrast palette suited to document work.
-COLOR_CANVAS = "#F5F7FB"
+# Official PDFSilo indigo and teal brand scale.
+BRAND_50 = "#EEF2FF"
+BRAND_100 = "#E0E7FF"
+BRAND_200 = "#C7D2FE"
+BRAND_300 = "#A5B4FC"
+BRAND_400 = "#818CF8"
+BRAND_500 = "#5B6EE1"
+BRAND_600 = "#4353C7"
+BRAND_700 = "#3342A5"
+BRAND_800 = "#27347F"
+BRAND_900 = "#1B2559"
+BRAND_950 = "#111936"
+
+ACCENT_300 = "#5DE5DC"
+ACCENT_400 = "#2DD4C7"
+ACCENT_500 = "#16B8AE"
+ACCENT_600 = "#0E918A"
+
+# Light-mode semantic aliases used by the palette-backed stylesheet.
+COLOR_CANVAS = "#F7F8FC"
 COLOR_BACKGROUND = COLOR_CANVAS
 COLOR_SURFACE = "#FFFFFF"
-COLOR_SURFACE_MUTED = "#F0F3F8"
-COLOR_SURFACE_HOVER = "#E8EDF5"
-COLOR_SIDEBAR = "#101827"
-COLOR_SIDEBAR_MUTED = "#96A3B7"
-COLOR_PRIMARY = "#2563EB"
-COLOR_PRIMARY_HOVER = "#1D4ED8"
-COLOR_PRIMARY_PRESSED = "#1E40AF"
-COLOR_PRIMARY_SOFT = "#EAF1FF"
-COLOR_ACCENT = "#0F9F8F"
-COLOR_ON_DARK = "#FDFEFF"
+COLOR_SURFACE_MUTED = "#F8FAFC"
+COLOR_SURFACE_HOVER = "#F1F3FF"
+COLOR_SIDEBAR = "#F0F2F8"
+COLOR_SIDEBAR_MUTED = "#4D566B"
+COLOR_PRIMARY = BRAND_600
+COLOR_PRIMARY_HOVER = BRAND_700
+COLOR_PRIMARY_PRESSED = BRAND_800
+COLOR_PRIMARY_SOFT = BRAND_50
+COLOR_ACCENT = ACCENT_500
+COLOR_ON_DARK = "#F4F6FB"
 COLOR_ON_PRIMARY = "#FCFDFF"
-COLOR_TEXT = "#172033"
-COLOR_TEXT_MUTED = "#667085"
-COLOR_TEXT_SUBTLE = "#98A2B3"
-COLOR_BORDER = "#D9E0EA"
-COLOR_BORDER_STRONG = "#C4CEDB"
-COLOR_DANGER = "#C4320A"
-COLOR_DANGER_SOFT = "#FFF1ED"
-COLOR_SUCCESS = "#067647"
+COLOR_TEXT = "#151A2D"
+COLOR_TEXT_MUTED = "#4D566B"
+COLOR_TEXT_SUBTLE = "#747D91"
+COLOR_BORDER = "#D9DDE7"
+COLOR_BORDER_STRONG = "#B8BFCE"
+COLOR_DANGER = "#A52432"
+COLOR_DANGER_SOFT = "#FFF0F1"
+COLOR_SUCCESS = "#187A3F"
 COLOR_SUCCESS_SOFT = "#ECFDF3"
-COLOR_WARNING = "#B54708"
+COLOR_WARNING = "#855B00"
+COLOR_WARNING_SOFT = "#FFF8E5"
+COLOR_INFO = "#235F9D"
+COLOR_INFO_SOFT = "#EEF6FF"
 
 # Spacing scale, in device-independent Qt pixels.
 SPACE_XXS = 4
@@ -104,18 +125,15 @@ QFrame#applicationHeader {{
 QFrame#brandPanel {{
     background-color: {COLOR_SIDEBAR};
     border: 0;
+    border-bottom: 1px solid {COLOR_BORDER};
 }}
 
-QLabel#brandMark {{
-    color: {COLOR_ON_PRIMARY};
-    background-color: {COLOR_PRIMARY};
-    border-radius: 9px;
-    font-size: 14pt;
-    font-weight: {FONT_WEIGHT_BOLD};
+QLabel#brandLogoLabel {{
+    background: transparent;
 }}
 
 QLabel#applicationTitleLabel {{
-    color: {COLOR_ON_DARK};
+    color: {COLOR_TEXT};
     background: transparent;
     font-size: {FONT_SIZE_SECTION}pt;
     font-weight: {FONT_WEIGHT_BOLD};
@@ -154,7 +172,7 @@ QLabel#headerDescriptionLabel {{
 QLabel#localBadge {{
     color: {COLOR_SUCCESS};
     background-color: {COLOR_SUCCESS_SOFT};
-    border: 1px solid #ABEFC6;
+    border: 1px solid #86E5AA;
     border-radius: 14px;
     padding: 5px 10px;
     font-size: {FONT_SIZE_CAPTION}pt;
@@ -268,12 +286,12 @@ QFrame#settingRow:hover {{
 }}
 
 QFrame#aboutHero {{
-    border-color: #A9BFEF;
+    border-color: {BRAND_300};
     background-color: {COLOR_PRIMARY_SOFT};
 }}
 
 QFrame#aboutPrivacyCard, QFrame#settingsPrivacyCard {{
-    border: 1px solid #ABEFC6;
+    border: 1px solid #86E5AA;
     border-radius: {CARD_RADIUS}px;
     background-color: {COLOR_SUCCESS_SOFT};
 }}
@@ -294,7 +312,7 @@ QWidget#sidebar {{
 }}
 
 QListWidget#navigationList {{
-    color: #D8E0EC;
+    color: {COLOR_TEXT_MUTED};
     background-color: {COLOR_SIDEBAR};
     border: 0;
     outline: 0;
@@ -303,24 +321,27 @@ QListWidget#navigationList {{
 
 QListWidget#navigationList::item {{
     min-height: 40px;
-    padding: 0 {SPACE_SM}px;
+    padding: 0 {SPACE_SM}px 0 9px;
     margin: 2px 0;
     border: 0;
+    border-left: 3px solid transparent;
     border-radius: {BORDER_RADIUS}px;
 }}
 
 QListWidget#navigationList::item:hover {{
-    color: {COLOR_ON_DARK};
-    background-color: #1D2939;
+    color: {COLOR_TEXT};
+    background-color: #E9ECF7;
 }}
 
 QListWidget#navigationList::item:selected {{
-    color: {COLOR_ON_PRIMARY};
-    background-color: {COLOR_PRIMARY};
+    color: {COLOR_TEXT};
+    background-color: {BRAND_100};
+    border-left: 3px solid {COLOR_PRIMARY};
+    font-weight: {FONT_WEIGHT_SEMIBOLD};
 }}
 
 QListWidget#navigationList::item:disabled {{
-    color: #667085;
+    color: {COLOR_TEXT_SUBTLE};
 }}
 
 QStackedWidget#pageStack, QScrollArea#operationPageScrollArea,
@@ -330,13 +351,13 @@ QWidget#operationPageContent {{
 }}
 
 QFrame#homeHero {{
-    background-color: {COLOR_SIDEBAR};
+    background-color: {BRAND_900};
     border: 0;
     border-radius: {CARD_RADIUS}px;
 }}
 
 QFrame#homeHero QLabel#pageEyebrowLabel {{
-    color: #93C5FD;
+    color: {BRAND_300};
 }}
 
 QFrame#homeHero QLabel#pageTitleLabel {{
@@ -345,11 +366,11 @@ QFrame#homeHero QLabel#pageTitleLabel {{
 }}
 
 QFrame#homeHero QLabel#pageDescriptionLabel {{
-    color: #C5CFDD;
+    color: {BRAND_200};
 }}
 
 QLabel#heroPrivacyLabel {{
-    color: #A7F3D0;
+    color: {ACCENT_300};
     background: transparent;
     font-weight: {FONT_WEIGHT_MEDIUM};
 }}
@@ -361,8 +382,8 @@ QFrame#toolCard {{
 }}
 
 QFrame#toolCard:hover {{
-    background-color: #FAFCFF;
-    border-color: #A9BFEF;
+    background-color: {COLOR_SURFACE_MUTED};
+    border-color: {BRAND_300};
 }}
 
 QLabel#toolIconLabel {{
@@ -569,7 +590,7 @@ QTextEdit, QPlainTextEdit {{
 
 QLineEdit:hover, QTextEdit:hover, QPlainTextEdit:hover, QComboBox:hover,
 QSpinBox:hover, QDoubleSpinBox:hover {{
-    border-color: #98A6B8;
+    border-color: {COLOR_BORDER_STRONG};
 }}
 
 QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, QComboBox:focus,
@@ -589,7 +610,7 @@ QLineEdit[validationState="invalid"] {{
 }}
 
 QLineEdit[validationState="valid"] {{
-    border-color: #6CE9A6;
+    border-color: #86E5AA;
 }}
 
 QComboBox::drop-down {{
@@ -635,7 +656,7 @@ QWidget#pdfPreview, QWidget#pageReorderEditor {{
 QScrollArea#pdfPreviewScrollArea {{
     border: 1px solid {COLOR_BORDER};
     border-radius: {BORDER_RADIUS}px;
-    background-color: #DDE3EC;
+    background-color: #E1E5ED;
 }}
 
 QLabel#pdfPreviewImage {{
@@ -701,12 +722,12 @@ QWidget#dropZone:hover, QWidget#dropZone:focus {{
 }}
 
 QWidget#dropZone[validationState="valid"] {{
-    border-color: #6CE9A6;
+    border-color: #86E5AA;
     background-color: {COLOR_SUCCESS_SOFT};
 }}
 
 QWidget#dropZone[validationState="invalid"] {{
-    border-color: #FDA29B;
+    border-color: #F3A2AA;
     background-color: {COLOR_DANGER_SOFT};
 }}
 
@@ -718,17 +739,17 @@ QWidget#resultSummary {{
 }}
 
 QWidget#resultSummary[resultState="success"] {{
-    border-color: #ABEFC6;
+    border-color: #86E5AA;
     background-color: {COLOR_SUCCESS_SOFT};
 }}
 
 QWidget#resultSummary[resultState="review"] {{
-    border-color: #B2CCFF;
+    border-color: {BRAND_200};
     background-color: {COLOR_PRIMARY_SOFT};
 }}
 
 QWidget#resultSummary[resultState="error"] {{
-    border-color: #FECDCA;
+    border-color: #F3A2AA;
     background-color: {COLOR_DANGER_SOFT};
 }}
 
@@ -778,7 +799,7 @@ QPushButton:hover {{
 }}
 
 QPushButton:pressed {{
-    background-color: #DCE7FF;
+    background-color: {BRAND_100};
 }}
 
 QPushButton:focus {{
@@ -834,11 +855,11 @@ QScrollBar:vertical {{
 QScrollBar::handle:vertical {{
     min-height: 32px;
     border-radius: 4px;
-    background: #C8D0DC;
+    background: #B8BFCE;
 }}
 
 QScrollBar::handle:vertical:hover {{
-    background: #AEB8C6;
+    background: #929AAF;
 }}
 
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
@@ -849,8 +870,8 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
 
 QToolTip {{
     color: {COLOR_ON_DARK};
-    background-color: {COLOR_SIDEBAR};
-    border: 1px solid #344054;
+    background-color: {BRAND_900};
+    border: 1px solid {BRAND_800};
     padding: 6px;
 }}
 """
@@ -859,44 +880,36 @@ QToolTip {{
 # A single-pass replacement prevents one mapped value from being replaced
 # again when it happens to match another source color.
 DARK_COLOR_REPLACEMENTS = {
-    "#F5F7FB": "#0B1220",
-    "#FFFFFF": "#111C2E",
-    "#F0F3F8": "#182438",
-    "#E8EDF5": "#22314A",
-    "#101827": "#080E18",
-    "#96A3B7": "#9AA8BC",
-    "#2563EB": "#5B8DEF",
-    "#1D4ED8": "#77A2FF",
-    "#1E40AF": "#3F6FD6",
-    "#EAF1FF": "#172B50",
-    "#0F9F8F": "#36C8B7",
-    "#FCFDFF": "#0B1220",
-    "#172033": "#F3F6FB",
-    "#667085": "#A7B2C3",
-    "#98A2B3": "#7F8DA3",
-    "#D9E0EA": "#26354B",
-    "#C4CEDB": "#3A4A62",
-    "#C4320A": "#FF8A70",
-    "#FFF1ED": "#3A1D1B",
-    "#067647": "#54D6A0",
-    "#ECFDF3": "#123427",
-    "#B54708": "#FDBA74",
-    "#93C5FD": "#9CC8FF",
-    "#C5CFDD": "#B8C4D6",
-    "#A7F3D0": "#78E7B9",
-    "#FAFCFF": "#162238",
-    "#A9BFEF": "#507AC9",
-    "#D8E0EC": "#D5DEEB",
-    "#1D2939": "#1B2B44",
-    "#344054": "#40516A",
-    "#ABEFC6": "#276749",
-    "#98A6B8": "#607089",
-    "#6CE9A6": "#35B983",
-    "#FDA29B": "#C75C52",
-    "#FECDCA": "#7A3935",
-    "#DCE7FF": "#213963",
-    "#C8D0DC": "#41516A",
-    "#AEB8C6": "#5A6A80",
+    "#F7F8FC": "#0D1224",
+    "#FFFFFF": "#171F38",
+    "#F8FAFC": "#1D2744",
+    "#F1F3FF": "#232E50",
+    "#F0F2F8": "#11182E",
+    "#4D566B": "#C1C7D6",
+    "#4353C7": "#6879EA",
+    "#3342A5": "#7F8DF0",
+    "#27347F": "#5264D5",
+    "#EEF2FF": "#202A55",
+    "#E0E7FF": "#293665",
+    "#16B8AE": "#2DD4C7",
+    "#FCFDFF": "#FFFFFF",
+    "#151A2D": "#F4F6FB",
+    "#747D91": "#929AAF",
+    "#D9DDE7": "#303A56",
+    "#B8BFCE": "#46516F",
+    "#A52432": "#FF9AA5",
+    "#FFF0F1": "#3D171D",
+    "#187A3F": "#76E39C",
+    "#ECFDF3": "#123523",
+    "#855B00": "#FFD36A",
+    "#FFF8E5": "#3A2C0D",
+    "#235F9D": "#86C7FF",
+    "#EEF6FF": "#142D48",
+    "#86E5AA": "#2D8A52",
+    "#E9ECF7": "#1D2744",
+    "#E1E5ED": "#252E47",
+    "#F3A2AA": "#B24754",
+    "#929AAF": "#46516F",
 }
 
 
@@ -921,76 +934,32 @@ DARK_STYLESHEET = _replace_theme_colors(
     APPLICATION_STYLESHEET,
     DARK_COLOR_REPLACEMENTS,
 )
-
-# The runtime stylesheet uses QPalette roles instead of fixed theme colors.
-# It is parsed only once; switching appearance then requires only a palette
-# update, which is substantially faster for an application with many pages.
-PALETTE_COLOR_REPLACEMENTS = {
-    "#F5F7FB": "palette(window)",
-    "#FFFFFF": "palette(base)",
-    "#F0F3F8": "palette(alternate-base)",
-    "#E8EDF5": "palette(midlight)",
-    "#101827": "palette(shadow)",
-    "#2563EB": "palette(highlight)",
-    "#1D4ED8": "palette(link)",
-    "#1E40AF": "palette(link-visited)",
-    "#EAF1FF": "palette(light)",
-    "#0F9F8F": "palette(accent)",
-    "#FCFDFF": "palette(highlighted-text)",
-    "#FDFEFF": "palette(tooltip-text)",
-    "#172033": "palette(text)",
-    "#667085": "palette(placeholder-text)",
-    "#D9E0EA": "palette(mid)",
-    "#C4CEDB": "palette(dark)",
-    "#C4320A": "palette(bright-text)",
-    "#FFF1ED": "palette(alternate-base)",
-    "#067647": "palette(accent)",
-    "#ECFDF3": "palette(button)",
-    "#FAFCFF": "palette(base)",
-    "#A9BFEF": "palette(link)",
-    "#344054": "palette(dark)",
-    "#ABEFC6": "palette(accent)",
-    "#98A6B8": "palette(dark)",
-    "#6CE9A6": "palette(accent)",
-    "#FDA29B": "palette(bright-text)",
-    "#FECDCA": "palette(bright-text)",
-    "#DCE7FF": "palette(light)",
-    "#C8D0DC": "palette(mid)",
-    "#AEB8C6": "palette(dark)",
-}
-
 LIGHT_STYLESHEET = APPLICATION_STYLESHEET
 STATIC_DARK_STYLESHEET = DARK_STYLESHEET
-APPLICATION_STYLESHEET = _replace_theme_colors(
-    LIGHT_STYLESHEET,
-    PALETTE_COLOR_REPLACEMENTS,
-)
-# Theme variants intentionally share one palette-aware runtime stylesheet.
-DARK_STYLESHEET = APPLICATION_STYLESHEET
 
 
 def _application_palette(mode: ThemeMode) -> QPalette:
     """Build a native Qt palette matching the active QSS theme."""
     dark = mode is ThemeMode.DARK
     colors = {
-        "window": "#0B1220" if dark else "#F5F7FB",
-        "surface": "#111C2E" if dark else "#FFFFFF",
-        "alternate": "#182438" if dark else "#F0F3F8",
-        "text": "#F3F6FB" if dark else "#172033",
-        "muted": "#A7B2C3" if dark else "#667085",
-        "disabled": "#7F8DA3" if dark else "#98A2B3",
-        "primary": "#5B8DEF" if dark else "#2563EB",
-        "primary_hover": "#77A2FF" if dark else "#1D4ED8",
-        "primary_pressed": "#3F6FD6" if dark else "#1E40AF",
-        "primary_soft": "#172B50" if dark else "#EAF1FF",
-        "on_primary": "#0B1220" if dark else "#FCFDFF",
-        "surface_hover": "#22314A" if dark else "#E8EDF5",
-        "border": "#26354B" if dark else "#D9E0EA",
-        "border_strong": "#3A4A62" if dark else "#C4CEDB",
-        "danger": "#FF8A70" if dark else "#C4320A",
-        "success": "#54D6A0" if dark else "#067647",
-        "success_soft": "#123427" if dark else "#ECFDF3",
-        "tooltip": "#080E18" if dark else "#101827",
+        "window": "#0D1224" if dark else "#F7F8FC",
+        "surface": "#171F38" if dark else "#FFFFFF",
+        "alternate": "#1D2744" if dark else "#F8FAFC",
+        "text": "#F4F6FB" if dark else "#151A2D",
+        "muted": "#929AAF" if dark else "#747D91",
+        "disabled": "#666F85" if dark else "#A3A9B7",
+        "primary": "#6879EA" if dark else "#4353C7",
+        "primary_hover": "#7F8DF0" if dark else "#3342A5",
+        "primary_pressed": "#5264D5" if dark else "#27347F",
+        "primary_soft": "#202A55" if dark else "#EEF2FF",
+        "on_primary": "#FFFFFF",
+        "surface_hover": "#232E50" if dark else "#F1F3FF",
+        "border": "#303A56" if dark else "#D9DDE7",
+        "border_strong": "#46516F" if dark else "#B8BFCE",
+        "danger": "#FF9AA5" if dark else "#A52432",
+        "accent": "#2DD4C7" if dark else "#16B8AE",
+        "sidebar": "#11182E" if dark else "#F0F2F8",
+        "tooltip": "#11182E" if dark else "#1B2559",
     }
     palette = QPalette()
     palette.setColor(QPalette.ColorRole.Window, QColor(colors["window"]))
@@ -1027,7 +996,7 @@ def _application_palette(mode: ThemeMode) -> QPalette:
         QPalette.ColorRole.Dark,
         QColor(colors["border_strong"]),
     )
-    palette.setColor(QPalette.ColorRole.Shadow, QColor(colors["tooltip"]))
+    palette.setColor(QPalette.ColorRole.Shadow, QColor(colors["sidebar"]))
     palette.setColor(
         QPalette.ColorRole.Light,
         QColor(colors["primary_soft"]),
@@ -1042,11 +1011,7 @@ def _application_palette(mode: ThemeMode) -> QPalette:
     )
     palette.setColor(
         QPalette.ColorRole.Accent,
-        QColor(colors["success"]),
-    )
-    palette.setColor(
-        QPalette.ColorRole.Button,
-        QColor(colors["success_soft"]),
+        QColor(colors["accent"]),
     )
     for role in (
         QPalette.ColorRole.WindowText,
@@ -1133,12 +1098,16 @@ class ThemeManager(QObject):
         effective_mode = self._resolved_mode()
         self._effective_mode = effective_mode
         self.application.setPalette(_application_palette(effective_mode))
-        if self.application.styleSheet() != APPLICATION_STYLESHEET:
-            self.application.setStyleSheet(APPLICATION_STYLESHEET)
+        stylesheet = (
+            DARK_STYLESHEET
+            if effective_mode is ThemeMode.DARK
+            else LIGHT_STYLESHEET
+        )
+        if self.application.styleSheet() != stylesheet:
+            self.application.setStyleSheet(stylesheet)
         else:
-            # Palette-backed QSS brushes are cached by Qt. Re-polishing the
-            # application refreshes them without reparsing the stylesheet or
-            # walking every operation page in Python.
+            # Re-polish native controls when the system re-emits its current
+            # colour scheme without requiring a new stylesheet parse.
             style = self.application.style()
             style.unpolish(self.application)
             style.polish(self.application)

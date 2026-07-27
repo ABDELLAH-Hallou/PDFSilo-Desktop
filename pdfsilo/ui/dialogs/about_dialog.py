@@ -78,11 +78,10 @@ class AboutDialog(QDialog):
         )
         hero_layout.setSpacing(SPACE_MD)
 
-        icon_label = QLabel(hero)
-        icon_label.setObjectName("aboutIcon")
-        icon_label.setPixmap(application_icon().pixmap(64, 64))
-        icon_label.setFixedSize(72, 72)
-        icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.icon_label = QLabel(hero)
+        self.icon_label.setObjectName("aboutIcon")
+        self.icon_label.setFixedSize(72, 72)
+        self.icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         identity = QWidget(hero)
         identity_layout = QVBoxLayout(identity)
@@ -101,7 +100,7 @@ class AboutDialog(QDialog):
         identity_layout.addWidget(version)
         identity_layout.addWidget(tagline)
 
-        hero_layout.addWidget(icon_label)
+        hero_layout.addWidget(self.icon_label)
         hero_layout.addWidget(identity, 1)
 
         features = QGridLayout()
@@ -205,6 +204,13 @@ class AboutDialog(QDialog):
         layout.addWidget(details)
         layout.addStretch(1)
         layout.addLayout(footer)
+        self.set_dark_mode(False)
+
+    def set_dark_mode(self, dark: bool) -> None:
+        """Update theme-sensitive identity assets."""
+        icon = application_icon(dark=dark)
+        self.setWindowIcon(icon)
+        self.icon_label.setPixmap(icon.pixmap(64, 64))
 
 
 __all__ = ["AboutDialog", "HOMEPAGE_URL", "ISSUES_URL"]

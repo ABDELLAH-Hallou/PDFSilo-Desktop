@@ -2,17 +2,38 @@
 
 from pathlib import Path
 
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QIcon, QPixmap
 
 RESOURCE_DIRECTORY = Path(__file__).resolve().parent
-APPLICATION_ICON_PATH = RESOURCE_DIRECTORY / "app_icon.svg"
+ICON_LIGHT_PATH = RESOURCE_DIRECTORY / "icon-light.svg"
+ICON_DARK_PATH = RESOURCE_DIRECTORY / "icon-dark.svg"
+ICON_INDIGO_PATH = RESOURCE_DIRECTORY / "icon-indigo.svg"
+LOGO_LIGHT_PATH = RESOURCE_DIRECTORY / "logo-light.svg"
+LOGO_DARK_PATH = RESOURCE_DIRECTORY / "logo-dark.svg"
+LOGO_INDIGO_PATH = RESOURCE_DIRECTORY / "logo-indigo.svg"
+APPLICATION_ICON_PATH = ICON_LIGHT_PATH
 SIDEBAR_HIDE_ICON_PATH = RESOURCE_DIRECTORY / "sidebar_hide.svg"
 SIDEBAR_SHOW_ICON_PATH = RESOURCE_DIRECTORY / "sidebar_show.svg"
 
 
-def application_icon() -> QIcon:
-    """Return the packaged PDFSilo application icon."""
-    return QIcon(str(APPLICATION_ICON_PATH))
+def application_icon(*, dark: bool = False) -> QIcon:
+    """Return the contrast-correct packaged PDFSilo application icon."""
+    return QIcon(str(ICON_DARK_PATH if dark else ICON_LIGHT_PATH))
+
+
+def brand_logo_pixmap(
+    *,
+    dark: bool = False,
+    size: QSize = QSize(184, 58),
+) -> QPixmap:
+    """Render the appropriate transparent wordmark for a UI surface."""
+    path = LOGO_DARK_PATH if dark else LOGO_LIGHT_PATH
+    return QPixmap(str(path)).scaled(
+        size,
+        Qt.AspectRatioMode.KeepAspectRatio,
+        Qt.TransformationMode.SmoothTransformation,
+    )
 
 
 def sidebar_toggle_icon(sidebar_visible: bool) -> QIcon:
@@ -27,9 +48,16 @@ def sidebar_toggle_icon(sidebar_visible: bool) -> QIcon:
 
 __all__ = [
     "APPLICATION_ICON_PATH",
+    "ICON_DARK_PATH",
+    "ICON_INDIGO_PATH",
+    "ICON_LIGHT_PATH",
+    "LOGO_DARK_PATH",
+    "LOGO_INDIGO_PATH",
+    "LOGO_LIGHT_PATH",
     "RESOURCE_DIRECTORY",
     "SIDEBAR_HIDE_ICON_PATH",
     "SIDEBAR_SHOW_ICON_PATH",
     "application_icon",
+    "brand_logo_pixmap",
     "sidebar_toggle_icon",
 ]

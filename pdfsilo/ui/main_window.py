@@ -37,7 +37,11 @@ from pdfsilo.ui.pages import (
     PAGE_DEFINITIONS,
     PAGE_INDEX_BY_KEY,
 )
-from pdfsilo.ui.resources import application_icon, sidebar_toggle_icon
+from pdfsilo.ui.resources import (
+    application_icon,
+    brand_logo_pixmap,
+    sidebar_toggle_icon,
+)
 from pdfsilo.ui.preferences import (
     PREFERENCE_SETTING_KEYS,
     UiPreferences,
@@ -122,6 +126,13 @@ class MainWindow(QMainWindow):
         self._create_menus()
         self._create_content()
         self._create_status_bar()
+        self._theme_manager.themeChanged.connect(
+            self._theme_assets_changed
+        )
+        self._theme_assets_changed(
+            self._theme_mode.value,
+            self._theme_manager.effective_mode.value,
+        )
         self._restore_settings()
 
     def _create_actions(self) -> None:
@@ -400,31 +411,42 @@ class MainWindow(QMainWindow):
         """Create the persistent product identity in the sidebar."""
         panel = QFrame(parent)
         panel.setObjectName("brandPanel")
-        layout = QHBoxLayout(panel)
-        layout.setContentsMargins(SPACE_LG, SPACE_LG, SPACE_MD, SPACE_MD)
-        layout.setSpacing(SPACE_SM)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(SPACE_LG, SPACE_MD, SPACE_LG, SPACE_MD)
+        layout.setSpacing(2)
 
-        mark = QLabel("P", panel)
-        mark.setObjectName("brandMark")
-        mark.setFixedSize(38, 38)
-        mark.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.brand_logo_label = QLabel(panel)
+        self.brand_logo_label.setObjectName("brandLogoLabel")
+        self.brand_logo_label.setAccessibleName("PDFSilo")
+        self.brand_logo_label.setFixedSize(184, 58)
+        self.brand_logo_label.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
 
-        labels = QWidget(panel)
-        labels.setObjectName("brandLabels")
-        labels_layout = QVBoxLayout(labels)
-        labels_layout.setContentsMargins(0, 0, 0, 0)
-        labels_layout.setSpacing(0)
-
-        title = QLabel("PDFSilo", labels)
-        title.setObjectName("applicationTitleLabel")
-        subtitle = QLabel("Local PDF workspace", labels)
+        subtitle = QLabel("Private PDF workspace", panel)
         subtitle.setObjectName("brandSubtitle")
-        labels_layout.addWidget(title)
-        labels_layout.addWidget(subtitle)
-
-        layout.addWidget(mark)
-        layout.addWidget(labels, 1)
+        layout.addWidget(self.brand_logo_label)
+        layout.addWidget(subtitle)
         return panel
+
+    def _theme_assets_changed(
+        self,
+        _requested_mode: str,
+        effective_mode: str,
+    ) -> None:
+        """Keep identity assets legible when the effective theme changes."""
+        dark = effective_mode == ThemeMode.DARK.value
+        icon = application_icon(dark=dark)
+        self.setWindowIcon(icon)
+        application = QApplication.instance()
+        if application is not None:
+            application.setWindowIcon(icon)
+        if hasattr(self, "brand_logo_label"):
+            self.brand_logo_label.setPixmap(
+                brand_logo_pixmap(dark=dark)
+            )
+        if self._about_dialog is not None:
+            self._about_dialog.set_dark_mode(dark)
 
     def _set_sidebar_visible(self, visible: bool) -> None:
         """Expose more workspace without changing persisted preferences."""
@@ -674,6 +696,9 @@ class MainWindow(QMainWindow):
         """Display useful product, privacy, and runtime information."""
         if self._about_dialog is None:
             self._about_dialog = AboutDialog(self)
+        self._about_dialog.set_dark_mode(
+            self._theme_manager.effective_mode is ThemeMode.DARK
+        )
         self._about_dialog.show()
         self._about_dialog.raise_()
         self._about_dialog.activateWindow()
