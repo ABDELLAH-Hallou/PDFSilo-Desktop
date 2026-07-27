@@ -1,6 +1,21 @@
 # PDFSilo PySide6 Migration Plan
 
-_Created: 24 July 2026_
+_Created: 24 July 2026 · Updated: 27 July 2026_
+
+## Current status
+
+Phases 1–12 are implemented. The CLI and desktop UI share the structured core,
+all 13 workflows are available in the GUI, and the application now includes
+responsive previews, staged review, secure password handling, system/light/
+charcoal-dark themes, privacy-safe settings, and the approved PNG identity.
+An opt-in update checker now provides manual/background release checks,
+non-blocking notifications, and checksum-verified downloads without weakening
+the local document-processing boundary.
+
+Phase 13 native application packaging and Phase 14 continuous integration
+remain open. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the current
+component map and [`docs/adr/README.md`](docs/adr/README.md) for accepted
+architecture decisions.
 
 ## Objective
 
@@ -60,7 +75,8 @@ important backend issues identified in
 - [x] Use temporary files and atomic replacement where practical.
 - [x] Resolve the license label and license-text mismatch.
 - [x] Add regression tests for each corrected behavior.
-- [x] Keep all existing tests passing (287 tests as of 24 July 2026).
+- [x] Keep all existing tests passing (current validation is recorded in
+      [`CODEBASE_ANALYSIS.md`](CODEBASE_ANALYSIS.md)).
 
 ## Phase 2: Add project packaging
 
@@ -319,13 +335,14 @@ Phase 5 implementation and Windows validation completed on 24 July 2026:
   dialogs, pages, widgets, and workers.
 - `create_application()` configures application name, display name, version,
   organization, domain, desktop identifier, icon, system font, and stylesheet.
-- A scalable SVG application icon is applied to both the application and main
-  window.
+- The supplied `icon.png` is applied to the application and main window; the
+  supplied `logo.png` is used as the sidebar wordmark.
 - Color, spacing, typography, control-height, and border-radius constants are
   centralized in `pdfsilo.ui.theme`.
 - The window was constructed and passed through a real Qt start/stop event loop
   using the offscreen Windows platform.
-- The wheel was rebuilt and inspected; the UI modules and SVG icon are present.
+- The wheel was rebuilt and inspected; UI modules plus PNG and functional SVG
+  resources are present.
 - The complete suite passed with 252 tests.
 
 The startup smoke test is platform-neutral and ready for Linux and macOS CI,
@@ -385,9 +402,12 @@ Phase 6 validation completed on 24 July 2026:
 - File, Navigate, Tools, and Help menus provide Open, Exit, page navigation,
   Settings, and About actions with keyboard shortcuts.
 - The Open action uses a PDF-filtered `QFileDialog`.
-- `QSettings` persists only `window/geometry`, `window/state`, and
-  `navigation/current_index`. Input paths, output paths, document contents, and
-  passwords are not persisted.
+- `QSettings` persists only explicit non-sensitive preferences: theme, preview
+  visibility, overwrite confirmation, post-save folder opening, window
+  restoration, and last-tool reopening. Geometry/state and navigation are
+  stored only when their respective restoration preferences are enabled.
+  Input paths, output paths, recent documents, document contents, and passwords
+  are not persisted.
 - Window size, valid on-screen position, and selected navigation page restore
   successfully.
 - An offscreen visual render confirmed the header, sidebar, content, and status
@@ -654,8 +674,10 @@ Phase 11 validation completed on 25 July 2026:
   user password.
 - Encryption and decryption clear every password and confirmation field after
   success, failure, or cancellation.
-- The strict `QSettings` allowlist remains limited to window geometry, window
-  state, and navigation index. Password fields have no persistence path.
+- The strict `QSettings` allowlist includes only theme, six non-sensitive
+  workflow/startup choices, update-check throttle/skip metadata, and the
+  optional window/navigation state enabled by those choices. Password fields
+  have no persistence path.
 - Password values are absent from operation messages, warnings, progress,
   expected errors, and logs.
 - CLI `-p/--password` options are now optional. Omitted secrets are collected
@@ -724,7 +746,37 @@ Phase 12 validation completed on 25 July 2026:
   result presentation.
 - Existing real-PyMuPDF tests were retained as a separate integration layer;
   core behavior remains independently testable without constructing Qt.
-- The complete suite passed with 338 tests.
+- The complete suite passed with 338 tests at the Phase 12 checkpoint. Later
+  UI, preferences, branding, and regression work expanded the suite; the
+  current result is recorded in
+  [`CODEBASE_ANALYSIS.md`](CODEBASE_ANALYSIS.md).
+
+## Post-migration UI and product polish
+
+The migration phases were followed by a focused usability and identity pass on
+26–27 July 2026:
+
+- [x] Make the application shell responsive and the sidebar collapsible.
+- [x] Add incrementally editable, ordered PDF and image input lists.
+- [x] Improve preview resolution and add fit plus 50–300% zoom controls.
+- [x] Preview every merge input and visualize A4/Letter normalization.
+- [x] Add staged preview, Save result, and Discard result behavior.
+- [x] Add theme-compatible sidebar and spin-control icons.
+- [x] Support System default, Light, and Dark appearance modes.
+- [x] Use a neutral charcoal dark workspace instead of blue/navy surfaces.
+- [x] Add workflow and startup/privacy settings with conservative defaults.
+- [x] Add a richer About dialog with product, capability, privacy, license,
+      homepage, and issue-reporting content.
+- [x] Replace the incorrect identity SVGs at runtime with the supplied
+      `logo.png` and `icon.png`.
+- [x] Package PNG and functional SVG resources in the wheel.
+- [x] Add regression coverage for themes, settings, privacy, identity assets,
+      responsive layout, ordered inputs, previews, and staged output.
+
+The final theme and identity choice is recorded in
+[`ADR 0005`](docs/adr/0005-theme-system-and-png-identity.md). The persistence
+boundary is recorded in
+[`ADR 0004`](docs/adr/0004-allowlisted-non-sensitive-settings.md).
 
 ## Phase 13: Package the desktop application
 
@@ -747,6 +799,25 @@ Official documentation:
 - [ ] Create an installer using Inno Setup, WiX, or MSIX.
 - [ ] Code-sign the executable and installer before public distribution.
 
+### Update notification and assisted delivery
+
+- [x] Record the network/privacy decision in ADR 0006.
+- [x] Add the Qt-free `pdfsilo.updater` package.
+- [x] Parse the fixed GitHub Releases feed and compare semantic versions.
+- [x] Add opt-in, once-per-day automatic checks and a manual Help action.
+- [x] Add a non-blocking update banner, release notes, skip-version behavior,
+      and a verified-download dialog.
+- [x] Download to a per-user cache and delete SHA-256 mismatches.
+- [x] Add `pdfsilo update --check` CLI parity.
+- [ ] Publish signed native installer artifacts with each release.
+- [ ] Verify the platform code signature in addition to SHA-256.
+- [ ] Enable **Install and restart** only after both integrity and authenticity
+      verification succeed.
+
+The current implementation never executes downloaded code. This is deliberate:
+checksum verification detects corruption, while the pending code-signature
+work establishes publisher authenticity.
+
 Build and test separately on each supported operating system. Do not assume a
 Windows build can be repackaged for macOS or Linux.
 
@@ -761,6 +832,8 @@ Create CI workflows that:
 - [ ] Build application artifacts for supported platforms.
 - [ ] Preserve installers or build directories as CI artifacts.
 - [ ] Run release builds only from tagged versions.
+- [ ] Publish platform assets plus checksum/signature metadata to GitHub
+      Releases.
 
 ## Delivery milestones
 
@@ -804,7 +877,7 @@ Deliverables:
 
 - UI screens for all existing CLI commands
 - Secure password dialogs
-- Settings and recent locations
+- Privacy-safe appearance, workflow, and startup settings
 - PDF preview and thumbnails
 - UI and integration tests
 
@@ -835,15 +908,15 @@ Exit criteria:
 
 The migration is complete when:
 
-- [ ] The CLI and PySide6 UI use the same core operation layer.
-- [ ] All existing PDF capabilities are accessible from the GUI.
-- [ ] Long-running work never blocks the main UI thread.
-- [ ] Progress, cancellation, and detailed errors are supported.
-- [ ] Password handling does not expose or persist secrets.
-- [ ] Automated core, UI, and integration tests pass.
+- [x] The CLI and PySide6 UI use the same core operation layer.
+- [x] All existing PDF capabilities are accessible from the GUI.
+- [x] Long-running work never blocks the main UI thread.
+- [x] Progress, cancellation, and detailed errors are supported.
+- [x] Password handling does not expose or persist secrets.
+- [x] Automated core, UI, and integration tests pass.
 - [ ] Application packages run on clean target systems.
-- [ ] Licensing and project metadata are correct.
-- [ ] User and developer documentation describe both interfaces.
+- [x] Licensing and project metadata are correct.
+- [x] User and developer documentation describe both interfaces.
 
 ## Guiding principle
 

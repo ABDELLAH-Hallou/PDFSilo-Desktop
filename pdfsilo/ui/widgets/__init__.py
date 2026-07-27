@@ -25,6 +25,7 @@ from pdfsilo.ui.widgets.path_picker import PathPicker, PickerMode
 from pdfsilo.ui.widgets.password_field import PasswordField
 from pdfsilo.ui.widgets.pdf_preview import PdfPreview
 from pdfsilo.ui.widgets.result_summary import ResultSummary
+from pdfsilo.ui.widgets.update_banner import UpdateBanner
 
 __all__ = [
     "DropZone",
@@ -45,4 +46,5 @@ __all__ = [
     "ProgressDisplay",
     "ResultSummary",
     "SinglePdfPicker",
+    "UpdateBanner",
 ]

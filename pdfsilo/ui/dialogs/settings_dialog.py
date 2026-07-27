@@ -92,6 +92,8 @@ class SettingsDialog(QDialog):
         self.tabs.addTab(self._create_appearance_tab(), "Appearance")
         self.tabs.addTab(self._create_workflow_tab(), "Workflow")
         self.tabs.addTab(self._create_startup_tab(), "Startup and privacy")
+        self._last_update_check = ""
+        self._skipped_update_version = ""
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Close,
@@ -296,6 +298,26 @@ class SettingsDialog(QDialog):
             )
         )
 
+        self.check_updates_automatically_check = QCheckBox(
+            "Automatically check for PDFSilo updates",
+            tab,
+        )
+        self.check_updates_automatically_check.setObjectName(
+            "checkUpdatesAutomaticallyCheck"
+        )
+        self.check_updates_automatically_check.setAccessibleName(
+            "Automatically check for PDFSilo updates"
+        )
+        layout.addWidget(
+            _preference_row(
+                self.check_updates_automatically_check,
+                "When enabled, PDFSilo contacts GitHub at most once per day "
+                "to read the latest version number. No document data, file "
+                "paths, credentials, or telemetry are sent.",
+                tab,
+            )
+        )
+
         privacy = QFrame(tab)
         privacy.setObjectName("settingsPrivacyCard")
         privacy_layout = QVBoxLayout(privacy)
@@ -310,8 +332,10 @@ class SettingsDialog(QDialog):
         privacy_title.setObjectName("settingsPrivacyTitle")
         privacy_text = QLabel(
             "Only the choices shown here, the last tool index, and optional "
-            "window geometry. Document paths, document contents, and "
-            "passwords are never stored in application settings.",
+            "window geometry are remembered. Update checks store only the "
+            "last check time and a skipped version. Document paths, document "
+            "contents, and passwords are never stored in application "
+            "settings.",
             privacy,
         )
         privacy_text.setObjectName("settingsPrivacyText")
@@ -329,6 +353,7 @@ class SettingsDialog(QDialog):
             self.show_input_previews_check,
             self.confirm_overwrite_check,
             self.open_output_folder_check,
+            self.check_updates_automatically_check,
         )
 
     def preferences(self) -> UiPreferences:
@@ -339,10 +364,17 @@ class SettingsDialog(QDialog):
             show_input_previews=self.show_input_previews_check.isChecked(),
             confirm_overwrite=self.confirm_overwrite_check.isChecked(),
             open_output_folder=self.open_output_folder_check.isChecked(),
+            check_updates_automatically=(
+                self.check_updates_automatically_check.isChecked()
+            ),
+            last_update_check=self._last_update_check,
+            skipped_update_version=self._skipped_update_version,
         )
 
     def set_preferences(self, preferences: UiPreferences) -> None:
         """Synchronize controls without emitting a user change."""
+        self._last_update_check = preferences.last_update_check
+        self._skipped_update_version = preferences.skipped_update_version
         values = (
             (self.restore_window_check, preferences.restore_window),
             (self.reopen_last_tool_check, preferences.reopen_last_tool),
@@ -357,6 +389,10 @@ class SettingsDialog(QDialog):
             (
                 self.open_output_folder_check,
                 preferences.open_output_folder,
+            ),
+            (
+                self.check_updates_automatically_check,
+                preferences.check_updates_automatically,
             ),
         )
         for checkbox, checked in values:

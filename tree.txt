@@ -1,21 +1,93 @@
-pdfsilo/
-├── README.md
-├── requirements.txt
-├── pdfsilo/
-│   ├── __init__.py
-│   ├── __main__.py           # enables `python -m pdfsilo`
-│   ├── cli.py                # unified argument parser, routes to operations
-│   ├── utils.py              # shared helpers (logging, validation, sorting)
-│   └── operations/
-│       ├── __init__.py
-│       ├── concat.py         # merge folder of PDFs → one normalized PDF
-│       ├── split.py          # one file per page
-│       ├── rotate.py         # rotate all or specific pages
-│       ├── extract_range.py  # pull out a page range
-│       ├── compress.py       # reduce file size
-│       ├── encrypt.py        # AES-256 password protection + permissions
-│       ├── decrypt.py        # remove password
-│       ├── watermark.py      # stamp text on every page
-│       ├── extract_images.py # pull embedded images as PNG/JPEG
-│       ├── to_images.py      # render pages as raster images at given DPI
-│       └── reorder.py        # rearrange, duplicate, or drop pages
+PDFSilo/
+|-- README.md
+|-- CODEBASE_ANALYSIS.md
+|-- PYSIDE6_MIGRATION_PLAN.md
+|-- LICENSE
+|-- pyproject.toml
+|-- requirements.txt
+|-- Fixes/
+|   `-- Things.to.fix.md and supporting review images
+|-- New Features/
+|   `-- UPDATE_NOTIFICATION_AND_AUTOUPDATE_PLAN.md
+|-- docs/
+|   |-- ARCHITECTURE.md
+|   `-- adr/
+|       |-- README.md
+|       |-- 0001-shared-core-for-cli-and-gui.md
+|       |-- 0002-background-work-and-cooperative-cancellation.md
+|       |-- 0003-staged-and-atomic-output-publication.md
+|       |-- 0004-allowlisted-non-sensitive-settings.md
+|       |-- 0005-theme-system-and-png-identity.md
+|       `-- 0006-opt-in-update-checks-and-user-initiated-install.md
+|-- pdfsilo/
+|   |-- __init__.py
+|   |-- __main__.py
+|   |-- cli.py
+|   |-- presentation.py
+|   |-- utils.py
+|   |-- core/
+|   |   |-- errors.py
+|   |   |-- models.py
+|   |   |-- output.py
+|   |   |-- progress.py
+|   |   `-- validation.py
+|   |-- operations/
+|   |   |-- add_images.py
+|   |   |-- compress.py
+|   |   |-- concat.py
+|   |   |-- decrypt.py
+|   |   |-- encrypt.py
+|   |   |-- extract_images.py
+|   |   |-- extract_range.py
+|   |   |-- images_to_pdf.py
+|   |   |-- reorder.py
+|   |   |-- rotate.py
+|   |   |-- split.py
+|   |   |-- to_images.py
+|   |   `-- watermark.py
+|   |-- updater/
+|   |   |-- errors.py
+|   |   |-- models.py
+|   |   `-- service.py
+|   `-- ui/
+|       |-- main.py
+|       |-- main_window.py
+|       |-- metadata.py
+|       |-- preferences.py
+|       |-- theme.py
+|       |-- thumbnails.py
+|       |-- workers.py
+|       |-- dialogs/
+|       |   |-- about_dialog.py
+|       |   |-- settings_dialog.py
+|       |   `-- update_dialog.py
+|       |-- pages/
+|       |   |-- base_operation_page.py
+|       |   |-- document_pages.py
+|       |   |-- home_page.py
+|       |   |-- image_pages.py
+|       |   |-- registry.py
+|       |   `-- transform_pages.py
+|       |-- resources/
+|       |   |-- icon.png
+|       |   |-- logo.png
+|       |   |-- sidebar_hide.svg
+|       |   |-- sidebar_show.svg
+|       |   |-- spin_down.svg
+|       |   `-- spin_up.svg
+|       `-- widgets/
+|           |-- drop_zone.py
+|           |-- file_picker.py
+|           |-- folder_picker.py
+|           |-- operation_panel.py
+|           |-- output_actions.py
+|           |-- output_picker.py
+|           |-- page_list.py
+|           |-- password_field.py
+|           |-- path_picker.py
+|           |-- pdf_preview.py
+|           |-- result_summary.py
+|           `-- update_banner.py
+`-- tests/
+    `-- core, CLI, operation, worker, widget, theme, settings, security,
+        updater, contract, and real-PDF integration tests

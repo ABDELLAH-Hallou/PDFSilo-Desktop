@@ -21,6 +21,7 @@ from pdfsilo.core import (
     OperationResult,
     PdfSiloError,
 )
+from pdfsilo.updater import UpdaterError
 from pdfsilo.ui.widgets.operation_panel import OperationPanel
 
 log = logging.getLogger(__name__)
@@ -206,6 +207,122 @@ class OperationRunner(QObject):
         self.finished.emit()
 
 
+class UpdateWorker(QRunnable):
+    """Run a framework-independent updater task outside the UI thread."""
+
+    def __init__(
+        self,
+        task: Callable[..., object],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__()
+        if "progress" in kwargs or "is_cancelled" in kwargs:
+            raise ValueError(
+                "Worker callbacks are managed internally; do not pass "
+                "'progress' or 'is_cancelled'."
+            )
+        self.task = task
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
+        self.cancellation = CancellationToken()
+        self.setAutoDelete(True)
+
+    def cancel(self) -> None:
+        self.cancellation.cancel()
+
+    def _report_progress(
+        self,
+        current: int,
+        total: int,
+        message: str,
+    ) -> None:
+        self.signals.progress.emit(current, total, message)
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            result = self.task(
+                *self.args,
+                progress=self._report_progress,
+                is_cancelled=self.cancellation.is_cancelled,
+                **self.kwargs,
+            )
+        except UpdaterError as exc:
+            self.signals.failed.emit(str(exc))
+        except Exception as exc:
+            log.exception("Unexpected background updater failure.")
+            detail = str(exc).strip() or type(exc).__name__
+            self.signals.failed.emit(f"Unexpected updater failure: {detail}")
+        else:
+            self.signals.succeeded.emit(result)
+        finally:
+            self.signals.finished.emit()
+
+
+class UpdateRunner(QObject):
+    """Own one updater worker and forward its signals on the GUI thread."""
+
+    started = Signal()
+    progress = Signal(int, int, str)
+    succeeded = Signal(object)
+    failed = Signal(str)
+    finished = Signal()
+    runningChanged = Signal(bool)
+
+    def __init__(
+        self,
+        thread_pool: QThreadPool | None = None,
+        parent: QObject | None = None,
+    ) -> None:
+        super().__init__(parent)
+        self.thread_pool = thread_pool or QThreadPool.globalInstance()
+        self._worker: UpdateWorker | None = None
+
+    def is_running(self) -> bool:
+        return self._worker is not None
+
+    def start(
+        self,
+        task: Callable[..., object],
+        *args: Any,
+        **kwargs: Any,
+    ) -> bool:
+        if self._worker is not None:
+            return False
+        worker = UpdateWorker(task, *args, **kwargs)
+        worker.signals.progress.connect(self.progress.emit)
+        worker.signals.succeeded.connect(self.succeeded.emit)
+        worker.signals.failed.connect(self.failed.emit)
+        worker.signals.finished.connect(self._worker_finished)
+        self._worker = worker
+        self.runningChanged.emit(True)
+        self.started.emit()
+        try:
+            self.thread_pool.start(worker)
+        except Exception as exc:
+            self._worker = None
+            self.runningChanged.emit(False)
+            detail = str(exc).strip() or type(exc).__name__
+            self.failed.emit(f"Could not start updater task: {detail}")
+            self.finished.emit()
+            return False
+        return True
+
+    def cancel(self) -> bool:
+        if self._worker is None:
+            return False
+        self._worker.cancel()
+        return True
+
+    @Slot()
+    def _worker_finished(self) -> None:
+        self._worker = None
+        self.runningChanged.emit(False)
+        self.finished.emit()
+
+
 class OperationController(QObject):
     """Bind an ``OperationRunner`` to shared widgets and form controls."""
 
@@ -267,6 +384,7 @@ __all__ = [
     "OperationController",
     "OperationRunner",
     "OperationWorker",
+    "UpdateRunner",
+    "UpdateWorker",
     "WorkerSignals",
 ]
-

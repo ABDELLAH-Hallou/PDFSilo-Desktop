@@ -112,7 +112,7 @@ QWidget {{
 
 QMainWindow, QWidget#applicationContent, QWidget#applicationBody,
 QWidget#homeContent, QScrollArea#homeScrollArea, QDialog#settingsDialog,
-QDialog#aboutDialog {{
+QDialog#aboutDialog, QDialog#updateDialog {{
     background-color: {COLOR_CANVAS};
 }}
 
@@ -183,6 +183,37 @@ QLabel#localBadge {{
     padding: 5px 10px;
     font-size: {FONT_SIZE_CAPTION}pt;
     font-weight: {FONT_WEIGHT_SEMIBOLD};
+}}
+
+QFrame#updateBanner {{
+    background-color: {COLOR_INFO_SOFT};
+    border: 0;
+    border-bottom: 1px solid {COLOR_INFO};
+}}
+
+QLabel#updateBannerMessage {{
+    color: {COLOR_TEXT};
+    background: transparent;
+    font-weight: {FONT_WEIGHT_SEMIBOLD};
+}}
+
+QToolButton#dismissUpdateButton {{
+    border: 0;
+    background: transparent;
+    color: {COLOR_TEXT_MUTED};
+    font-size: {FONT_SIZE_SECTION}pt;
+    min-width: 28px;
+    min-height: 28px;
+}}
+
+QLabel#updateDialogTitle {{
+    color: {COLOR_TEXT};
+    font-size: {FONT_SIZE_TITLE}pt;
+    font-weight: {FONT_WEIGHT_BOLD};
+}}
+
+QLabel#updateDialogDescription, QLabel#updateDialogStatus {{
+    color: {COLOR_TEXT_MUTED};
 }}
 
 QLabel#pageTitleLabel {{

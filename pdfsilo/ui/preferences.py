@@ -11,6 +11,9 @@ REOPEN_LAST_TOOL_SETTING = "startup/reopen_last_tool"
 SHOW_INPUT_PREVIEWS_SETTING = "workflow/show_input_previews"
 CONFIRM_OVERWRITE_SETTING = "workflow/confirm_overwrite"
 OPEN_OUTPUT_FOLDER_SETTING = "workflow/open_output_folder"
+CHECK_UPDATES_AUTOMATICALLY_SETTING = "updates/check_automatically"
+LAST_UPDATE_CHECK_SETTING = "updates/last_check_timestamp"
+SKIPPED_UPDATE_VERSION_SETTING = "updates/skipped_version"
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,6 +25,9 @@ class UiPreferences:
     show_input_previews: bool = True
     confirm_overwrite: bool = True
     open_output_folder: bool = False
+    check_updates_automatically: bool = False
+    last_update_check: str = ""
+    skipped_update_version: str = ""
 
     @classmethod
     def from_settings(cls, settings: QSettings) -> "UiPreferences":
@@ -53,6 +59,25 @@ class UiPreferences:
                 defaults.open_output_folder,
                 type=bool,
             ),
+            check_updates_automatically=settings.value(
+                CHECK_UPDATES_AUTOMATICALLY_SETTING,
+                defaults.check_updates_automatically,
+                type=bool,
+            ),
+            last_update_check=str(
+                settings.value(
+                    LAST_UPDATE_CHECK_SETTING,
+                    defaults.last_update_check,
+                )
+                or ""
+            ),
+            skipped_update_version=str(
+                settings.value(
+                    SKIPPED_UPDATE_VERSION_SETTING,
+                    defaults.skipped_update_version,
+                )
+                or ""
+            ),
         )
 
     def save(self, settings: QSettings) -> None:
@@ -71,6 +96,24 @@ class UiPreferences:
             OPEN_OUTPUT_FOLDER_SETTING,
             self.open_output_folder,
         )
+        settings.setValue(
+            CHECK_UPDATES_AUTOMATICALLY_SETTING,
+            self.check_updates_automatically,
+        )
+        if self.last_update_check:
+            settings.setValue(
+                LAST_UPDATE_CHECK_SETTING,
+                self.last_update_check,
+            )
+        else:
+            settings.remove(LAST_UPDATE_CHECK_SETTING)
+        if self.skipped_update_version:
+            settings.setValue(
+                SKIPPED_UPDATE_VERSION_SETTING,
+                self.skipped_update_version,
+            )
+        else:
+            settings.remove(SKIPPED_UPDATE_VERSION_SETTING)
 
 
 PREFERENCE_SETTING_KEYS = frozenset(
@@ -80,15 +123,21 @@ PREFERENCE_SETTING_KEYS = frozenset(
         SHOW_INPUT_PREVIEWS_SETTING,
         CONFIRM_OVERWRITE_SETTING,
         OPEN_OUTPUT_FOLDER_SETTING,
+        CHECK_UPDATES_AUTOMATICALLY_SETTING,
+        LAST_UPDATE_CHECK_SETTING,
+        SKIPPED_UPDATE_VERSION_SETTING,
     }
 )
 
 __all__ = [
+    "CHECK_UPDATES_AUTOMATICALLY_SETTING",
     "CONFIRM_OVERWRITE_SETTING",
+    "LAST_UPDATE_CHECK_SETTING",
     "OPEN_OUTPUT_FOLDER_SETTING",
     "PREFERENCE_SETTING_KEYS",
     "REOPEN_LAST_TOOL_SETTING",
     "RESTORE_WINDOW_SETTING",
     "SHOW_INPUT_PREVIEWS_SETTING",
+    "SKIPPED_UPDATE_VERSION_SETTING",
     "UiPreferences",
 ]

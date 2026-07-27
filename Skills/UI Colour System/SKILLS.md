@@ -10,7 +10,9 @@ PDFSilo is a privacy-focused local PDF processing application. Its visual identi
 - Calm, efficient workflows
 - Clear distinction between safe, destructive, warning, and informational actions
 
-The palette is based on the PDFSilo logo: deep indigo/cobalt blue with a teal accent.
+The palette is based on the PDFSilo logo: indigo/cobalt blue with a teal
+accent. Large application surfaces remain neutral so the brand colors identify
+actions and state instead of tinting the entire workspace.
 
 ---
 
@@ -72,7 +74,7 @@ Teal active:       #16B8AE
 | `light-bg-surface` | `#FFFFFF` | Cards, dialogs, panels |
 | `light-bg-surface-alt` | `#F8FAFC` | Secondary surface |
 | `light-bg-hover` | `#F1F3FF` | Neutral or brand hover |
-| `light-bg-selected` | `#E8ECFF` | Selected navigation or list item |
+| `light-bg-selected` | `#E0E7FF` | Selected navigation or list item |
 | `light-bg-disabled` | `#EEF0F4` | Disabled components |
 | `light-bg-overlay` | `#FFFFFFE6` | Modal overlays over content |
 
@@ -115,28 +117,30 @@ Teal active:       #16B8AE
 
 ## 3. Dark mode
 
-The dark theme should use deep navy rather than pure black. This preserves the identity of the logo and reduces visual harshness during long PDF workflows.
+The dark theme uses neutral charcoal rather than blue/navy or pure black.
+Indigo and teal remain visible as deliberate interaction accents without making
+the document workspace feel blue.
 
 ### Backgrounds and surfaces
 
 | Token | Hex | Usage |
 |---|---:|---|
-| `dark-bg-app` | `#0D1224` | Main application background |
-| `dark-bg-sidebar` | `#11182E` | Sidebar background |
-| `dark-bg-surface` | `#171F38` | Cards, dialogs, panels |
-| `dark-bg-surface-alt` | `#1D2744` | Raised or alternate surface |
-| `dark-bg-hover` | `#232E50` | Hovered neutral item |
-| `dark-bg-selected` | `#293665` | Selected navigation or list item |
-| `dark-bg-disabled` | `#20283B` | Disabled components |
-| `dark-bg-overlay` | `#080C18E6` | Modal overlay |
+| `dark-bg-app` | `#181A1F` | Main application background |
+| `dark-bg-sidebar` | `#1D2026` | Sidebar background |
+| `dark-bg-surface` | `#23262D` | Cards, dialogs, panels |
+| `dark-bg-surface-alt` | `#2A2E36` | Raised or alternate surface |
+| `dark-bg-hover` | `#313640` | Hovered neutral item |
+| `dark-bg-selected` | `#373B49` | Selected navigation or list item |
+| `dark-bg-disabled` | `#2A2E36` | Disabled components |
+| `dark-bg-overlay` | `#111317E6` | Modal overlay |
 
 ### Text
 
 | Token | Hex | Usage |
 |---|---:|---|
-| `dark-text-primary` | `#F4F6FB` | Main text |
-| `dark-text-secondary` | `#C1C7D6` | Supporting text |
-| `dark-text-muted` | `#929AAF` | Captions, metadata |
+| `dark-text-primary` | `#F4F4F5` | Main text |
+| `dark-text-secondary` | `#C7C9CF` | Supporting text |
+| `dark-text-muted` | `#989CA6` | Captions, metadata |
 | `dark-text-disabled` | `#666F85` | Disabled labels |
 | `dark-text-on-brand` | `#FFFFFF` | Text on primary buttons |
 | `dark-text-link` | `#A5B4FC` | Links |
@@ -146,9 +150,9 @@ The dark theme should use deep navy rather than pure black. This preserves the i
 
 | Token | Hex | Usage |
 |---|---:|---|
-| `dark-border-default` | `#303A56` | Standard border |
-| `dark-border-subtle` | `#252E47` | Light divider |
-| `dark-border-strong` | `#46516F` | Strong field border |
+| `dark-border-default` | `#3A3F48` | Standard border |
+| `dark-border-subtle` | `#30343B` | Light divider |
+| `dark-border-strong` | `#515762` | Strong field border |
 | `dark-border-focus` | `#818CF8` | Keyboard and input focus |
 | `dark-border-selected` | `#A5B4FC` | Selected cards or list items |
 
@@ -159,8 +163,8 @@ The dark theme should use deep navy rather than pure black. This preserves the i
 | `dark-primary` | `#6879EA` | Primary button |
 | `dark-primary-hover` | `#7F8DF0` | Primary button hover |
 | `dark-primary-pressed` | `#5264D5` | Primary button pressed |
-| `dark-primary-subtle` | `#202A55` | Brand-tinted background |
-| `dark-primary-disabled` | `#3F486F` | Disabled primary button |
+| `dark-primary-subtle` | `#343746` | Brand-tinted background |
+| `dark-primary-disabled` | `#464B61` | Disabled primary button |
 | `dark-accent` | `#2DD4C7` | Accent action or progress |
 | `dark-accent-hover` | `#5DE5DC` | Accent hover |
 | `dark-focus-ring` | `#A5B4FC66` | Focus ring with transparency |
@@ -177,7 +181,7 @@ Semantic colours should be consistent in both themes. Background, border, and te
 Light background: #ECFDF3
 Light border:     #86E5AA
 Light text:       #187A3F
-Dark background:  #123523
+Dark background:  #20342A
 Dark border:      #2D8A52
 Dark text:        #76E39C
 Solid action:     #218A4A
@@ -196,7 +200,7 @@ Use for:
 Light background: #FFF8E5
 Light border:     #F4CE73
 Light text:       #855B00
-Dark background:  #3A2C0D
+Dark background:  #393122
 Dark border:      #A87918
 Dark text:        #FFD36A
 Solid action:     #C48713
@@ -215,7 +219,7 @@ Use for:
 Light background: #FFF0F1
 Light border:     #F3A2AA
 Light text:       #A52432
-Dark background:  #3D171D
+Dark background:  #3D2328
 Dark border:      #B24754
 Dark text:        #FF9AA5
 Solid action:     #C83C4A
@@ -237,7 +241,7 @@ Red must not be used as a general PDF brand colour. Reserve it for error and des
 Light background: #EEF6FF
 Light border:     #91C5F9
 Light text:       #235F9D
-Dark background:  #142D48
+Dark background:  #252F3A
 Dark border:      #397DB9
 Dark text:        #86C7FF
 Solid action:     #347FBE
@@ -299,10 +303,10 @@ Hover:      #F1F3FF
 Dark mode:
 
 ```text
-Background: #1D2744
-Border:     #46516F
-Text:       #F4F6FB
-Hover:      #293665
+Background: #2A2E36
+Border:     #515762
+Text:       #F4F4F5
+Hover:      #313640
 ```
 
 ### Teal accent button
@@ -358,14 +362,14 @@ Disabled:   #EEF0F4
 Dark mode:
 
 ```text
-Background: #171F38
-Border:     #303A56
-Text:       #F4F6FB
-Placeholder:#778198
-Hover:      #46516F
+Background: #23262D
+Border:     #3A3F48
+Text:       #F4F4F5
+Placeholder:#989CA6
+Hover:      #515762
 Focus:      #818CF8
-Invalid:    #FF6F7B
-Disabled:   #20283B
+Invalid:    #FF9AA5
+Disabled:   #2A2E36
 ```
 
 ### Sidebar navigation
@@ -384,10 +388,10 @@ Selected indicator:  #4353C7
 Dark mode:
 
 ```text
-Sidebar background: #11182E
-Item text:           #C1C7D6
-Hover background:    #1D2744
-Selected background: #293665
+Sidebar background: #1D2026
+Item text:           #C7C9CF
+Hover background:    #2D3139
+Selected background: #373B49
 Selected text:       #FFFFFF
 Selected indicator:  #2DD4C7
 ```
@@ -405,7 +409,7 @@ Complete fill: #16B8AE
 Dark mode:
 
 ```text
-Track: #252E47
+Track: #30343B
 Fill:  #6879EA
 Complete fill: #2DD4C7
 ```
@@ -423,8 +427,8 @@ Shadow:     rgba(20, 28, 55, 0.08)
 Dark mode:
 
 ```text
-Background: #171F38
-Border:     #303A56
+Background: #23262D
+Border:     #3A3F48
 Shadow:     rgba(0, 0, 0, 0.28)
 ```
 
@@ -451,59 +455,50 @@ These colours may be used for small icons, badges, or category indicators. Do no
 
 ## 7. Logo usage
 
-### On light backgrounds
+### Authoritative assets
 
-Use:
+The supplied raster artwork is the approved product identity:
 
-- Indigo wordmark: `#27347F` or `#3342A5`
-- Indigo icon: `#3342A5`
-- Teal lock/accent: `#2DD4C7`
+- `pdfsilo/ui/resources/logo.png` for the sidebar wordmark
+- `pdfsilo/ui/resources/icon.png` for the application, windows, task switcher,
+  and About dialog
 
-Recommended background:
+Use these same files in System, Light, and Dark modes. Do not select or generate
+a theme-specific identity variant. The earlier identity SVG variants are not
+runtime assets.
 
-```text
-#FFFFFF
-#F7F8FC
-#EEF2FF
-```
+The source PNGs contain large transparent promotional margins. The resource
+loader may crop only that empty canvas and scale the remaining artwork with
+smooth transformation. It must not recolour, trace, distort, or redesign it.
 
-### On dark backgrounds
+### Placement
 
-Use:
+On light surfaces, place the transparent wordmark directly on `#FFFFFF`,
+`#F7F8FC`, or `#F0F2F8`.
 
-- Light indigo wordmark: `#A5B4FC` or `#F4F6FB`
-- Light indigo icon: `#818CF8`
-- Teal lock/accent: `#5DE5DC`
-
-Recommended background:
+On charcoal surfaces, preserve the supplied colors by placing the wordmark on
+a compact neutral light plate:
 
 ```text
-#0D1224
-#11182E
-#171F38
+Plate background: #F6F7FB
+Plate border:     #D9DDE7
 ```
 
-### Monochrome logo
-
-For one-colour printing or small interface placements:
-
-```text
-Light surfaces: #1B2559
-Dark surfaces:  #FFFFFF
-```
+Keep the plate close to the artwork bounds. It is a contrast treatment, not a
+large white sidebar panel. The application icon can be used directly because
+its own composition provides the necessary visual boundary.
 
 ### Logo restrictions
 
 Do not:
 
-- Recolour the main logo red
+- Recolour the supplied logo or icon for a theme
 - Apply a strong neon glow inside the application
-- Place the dark logo on a dark background
-- Use teal for the entire wordmark
-- Add gradients to small app icons
-- Use more than two brand colours in the primary logo
+- Use the incorrect identity SVG variants at runtime
+- Add gradients or effects to the app icon
 - Stretch or distort the logo
 - Add an outline around the wordmark
+- Include the transparent promotional canvas as visible empty UI space
 
 ---
 
@@ -547,7 +542,7 @@ ACCENT_600 = "#0E918A"
 LIGHT_BG_APP = "#F7F8FC"
 LIGHT_BG_SIDEBAR = "#F0F2F8"
 LIGHT_BG_SURFACE = "#FFFFFF"
-LIGHT_BG_SELECTED = "#E8ECFF"
+LIGHT_BG_SELECTED = "#E0E7FF"
 LIGHT_TEXT_PRIMARY = "#151A2D"
 LIGHT_TEXT_SECONDARY = "#4D566B"
 LIGHT_TEXT_MUTED = "#747D91"
@@ -557,15 +552,15 @@ LIGHT_PRIMARY_HOVER = "#3342A5"
 LIGHT_ACCENT = "#16B8AE"
 
 # Dark theme
-DARK_BG_APP = "#0D1224"
-DARK_BG_SIDEBAR = "#11182E"
-DARK_BG_SURFACE = "#171F38"
-DARK_BG_SURFACE_ALT = "#1D2744"
-DARK_BG_SELECTED = "#293665"
-DARK_TEXT_PRIMARY = "#F4F6FB"
-DARK_TEXT_SECONDARY = "#C1C7D6"
-DARK_TEXT_MUTED = "#929AAF"
-DARK_BORDER = "#303A56"
+DARK_BG_APP = "#181A1F"
+DARK_BG_SIDEBAR = "#1D2026"
+DARK_BG_SURFACE = "#23262D"
+DARK_BG_SURFACE_ALT = "#2A2E36"
+DARK_BG_SELECTED = "#373B49"
+DARK_TEXT_PRIMARY = "#F4F4F5"
+DARK_TEXT_SECONDARY = "#C7C9CF"
+DARK_TEXT_MUTED = "#989CA6"
+DARK_BORDER = "#3A3F48"
 DARK_PRIMARY = "#6879EA"
 DARK_PRIMARY_HOVER = "#7F8DF0"
 DARK_ACCENT = "#2DD4C7"
@@ -593,7 +588,7 @@ INFO = "#347FBE"
   --bg-sidebar: #F0F2F8;
   --bg-surface: #FFFFFF;
   --bg-surface-alt: #F8FAFC;
-  --bg-selected: #E8ECFF;
+  --bg-selected: #E0E7FF;
 
   --text-primary: #151A2D;
   --text-secondary: #4D566B;
@@ -615,17 +610,17 @@ INFO = "#347FBE"
   --brand-accent: #2DD4C7;
   --brand-accent-bright: #5DE5DC;
 
-  --bg-app: #0D1224;
-  --bg-sidebar: #11182E;
-  --bg-surface: #171F38;
-  --bg-surface-alt: #1D2744;
-  --bg-selected: #293665;
+  --bg-app: #181A1F;
+  --bg-sidebar: #1D2026;
+  --bg-surface: #23262D;
+  --bg-surface-alt: #2A2E36;
+  --bg-selected: #373B49;
 
-  --text-primary: #F4F6FB;
-  --text-secondary: #C1C7D6;
-  --text-muted: #929AAF;
+  --text-primary: #F4F4F5;
+  --text-secondary: #C7C9CF;
+  --text-muted: #989CA6;
 
-  --border-default: #303A56;
+  --border-default: #3A3F48;
   --border-focus: #818CF8;
 
   --success: #76E39C;
@@ -639,7 +634,9 @@ INFO = "#347FBE"
 
 ## 11. Final design direction
 
-PDFSilo should look like a trustworthy desktop utility rather than a generic cybersecurity dashboard.
+PDFSilo should look like a trustworthy desktop utility rather than a generic
+cybersecurity dashboard. Neutral document surfaces should dominate both
+themes; dark mode must read as charcoal, not blue.
 
 The visual balance should be:
 

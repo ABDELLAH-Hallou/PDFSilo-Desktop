@@ -18,6 +18,7 @@ Commands:
     reorder         Rearrange pages in a custom order
     add-images      Insert images into a PDF
     images-to-pdf   Merge a folder of images into a single PDF
+    update           Check the public release feed for a newer version
 
 Run `python -m pdfsilo <command> --help` for command-specific options.
 """
@@ -27,6 +28,8 @@ import getpass
 import sys
 from collections.abc import Callable
 
+from pdfsilo import __version__
+from pdfsilo.updater import UpdaterError, check_for_update
 from pdfsilo.utils import setup_logging, PAGE_SIZES
 from pdfsilo.operations import (
     concat, split, rotate, extract_range,
@@ -189,7 +192,36 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--margin", type=float, default=36.0,
                    help="Margin in points around the image (default: 36)")
 
+    # ── update ────────────────────────────────────────────────────────────────
+    p = sub.add_parser(
+        "update",
+        help="Check GitHub for a newer PDFSilo release",
+    )
+    p.add_argument(
+        "--check",
+        action="store_true",
+        help="Check for an update without downloading anything",
+    )
+
     return parser
+
+
+def _check_for_cli_update(_args: argparse.Namespace) -> bool:
+    """Present the updater core through the command-line interface."""
+    try:
+        info = check_for_update()
+    except UpdaterError as exc:
+        print(str(exc), file=sys.stderr)
+        return False
+    if info is None:
+        print(f"PDFSilo {__version__} is up to date.")
+        return True
+    print(
+        f"PDFSilo {info.version} is available "
+        f"(current: {__version__})."
+    )
+    print(f"Release notes: {info.release_notes_url}")
+    return True
 
 
 COMMAND_MAP = {
@@ -206,6 +238,7 @@ COMMAND_MAP = {
     "reorder":        reorder.cli_run,
     "add-images":     add_images.cli_run,
     "images-to-pdf":  images_to_pdf.cli_run,
+    "update":          _check_for_cli_update,
 }
 
 

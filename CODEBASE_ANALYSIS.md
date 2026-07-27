@@ -1,6 +1,6 @@
 # PDFSilo Codebase Analysis
 
-_Analysis date: 24 July 2026_
+_Initial analysis: 24 July 2026 · Updated: 27 July 2026_
 
 ## Executive summary
 
@@ -19,10 +19,11 @@ The codebase contains 13 PDF operations implemented with PyMuPDF:
 - Insert images and build PDFs from image folders
 
 The overall design is straightforward and maintainable. Each operation lives in
-its own module and now exposes a structured `execute(...) -> OperationResult`
-core API. The original `run(...) -> bool` interface and `cli_run(args)` adapter
-remain as compatibility presentation layers. The automated test suite is broad
-and currently passes. Phase 1 remediation added behavioral coverage for
+its own module and exposes a structured `execute(...) -> OperationResult` core
+API. The original `run(...) -> bool` interface and `cli_run(args)` adapter
+remain as compatibility presentation layers. The automated test suite covers
+core, CLI, Qt widgets, workers, themes, settings, security, page contracts, and
+real-PDF integration. Phase 1 remediation added behavioral coverage for
 compression quality, image formats, permission restrictions, numeric
 validation, atomic output, and licensing.
 
@@ -39,8 +40,10 @@ The following findings were resolved on 24 July 2026:
 | Partial file replacement | Outputs are staged beside their destinations and atomically replaced. |
 | License mismatch | README and the standalone `LICENSE` file now consistently use BSD 2-Clause. |
 
-Command-line password exposure, image-DPI interpretation, and complete
-folder-level transactionality remain future work.
+Explicit command-line password arguments remain available for automation and
+are documented as less secure; interactive use now defaults to hidden prompts.
+Image-DPI interpretation and complete folder-level transactionality remain
+future work.
 
 ## Phase 2 packaging status
 
@@ -97,8 +100,9 @@ The PySide6 application structure was created on 24 July 2026:
   widgets.
 - Cross-platform color, spacing, typography, and control constants are
   centralized in `pdfsilo.ui.theme`.
-- A scalable SVG icon is packaged in the wheel and assigned at application and
-  window level.
+- The approved `icon.png` is packaged and assigned at application and window
+  level, while `logo.png` supplies the sidebar wordmark. Runtime cropping
+  removes only the transparent promotional canvas around the supplied artwork.
 - Package locations now exist for future dialogs, pages, reusable widgets, and
   worker infrastructure.
 
@@ -118,10 +122,14 @@ The main application shell was implemented on 24 July 2026:
 - File, navigation, tools, and help menus expose keyboard-accessible actions.
 - A PDF-filtered `QFileDialog` supports initial file selection without
   persisting the selected path.
-- Window geometry, window state, and selected navigation page are restored
-  through `QSettings`.
-- Settings persistence uses an explicit three-key allowlist. Passwords, input
-  paths, output paths, and document data are never written to `QSettings`.
+- The Settings dialog exposes Appearance, Workflow, and Startup and privacy
+  tabs, including theme, preview, overwrite, post-save, window restoration,
+  last-tool, and opt-in update-check preferences plus Restore defaults.
+- Window geometry/state and the selected navigation page are restored only
+  when their corresponding preferences are enabled.
+- Settings persistence uses an explicit non-sensitive allowlist, including
+  update-check throttle/skip metadata. Passwords, recent files, input paths,
+  output paths, and document data are never written to `QSettings`.
 
 ## Phase 7 reusable widget status
 
@@ -212,7 +220,8 @@ Password handling was hardened on 25 July 2026:
 - Decryption accepts either password role through the same masked field.
 - All password and confirmation fields are cleared after every operation
   completion path.
-- The `QSettings` three-key allowlist excludes all form values and secrets.
+- The `QSettings` allowlist excludes all form values, document paths, recent
+  files, and secrets.
 - Security regression tests verify that passwords never appear in operation
   results, warnings, progress messages, expected errors, or logs.
 - CLI password arguments are optional. Missing values use hidden
@@ -238,23 +247,79 @@ The UI-specific coverage audit was completed on 25 July 2026:
 - Real-PDF and image tests remain a separate integration layer. A unified CLI
   smoke test also parses and executes a real operation through `cli.main()`.
 
+## UI, settings, and identity refinement status
+
+A focused product pass was completed on 26–27 July 2026:
+
+- The application shell is responsive, with a collapsible sidebar and
+  operation workspaces that move from side-by-side to stacked layouts.
+- Ordered PDF and image inputs support incremental selection, drag/drop,
+  accessible move controls, removal, and clearing.
+- Previews render at higher working resolution, support fit and 50–300% zoom,
+  include every merge source, and show target page normalization.
+- PDF-producing screens stage successful output for review before Save result
+  publishes it; Discard result removes the staged output.
+- The settings surface now includes Appearance, Workflow, and Startup and
+  privacy tabs with conservative defaults and a Restore defaults action.
+- System default, Light, and Dark modes are supported. Dark mode uses neutral
+  charcoal canvas and surfaces instead of blue/navy backgrounds, while indigo
+  and teal remain accents.
+- The supplied `logo.png` and `icon.png` are the only runtime identity assets.
+  They are used consistently in both themes; functional sidebar and spin
+  controls continue to use packaged SVG icons.
+- The About dialog explains product capabilities, local-only privacy,
+  licensing, and project support links.
+
+The current component boundaries are documented in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Significant choices are tracked
+in [`docs/adr/`](docs/adr/README.md).
+
+## Update notification status
+
+The opt-in update notification boundary was implemented on 27 July 2026:
+
+- ADR 0006 records why update checks are the sole optional network capability.
+- `pdfsilo.updater` contains semantic-version comparison, GitHub Releases
+  parsing, platform asset selection, staged downloads, SHA-256 verification,
+  and typed failures without importing Qt.
+- Automatic checks are off by default, limited to once per 24 hours, and run
+  through `QThreadPool` only after explicit opt-in.
+- Manual checks are available through **Help → Check for Updates…** and
+  `pdfsilo update --check`.
+- New releases use a non-blocking banner with Update, Release notes, Skip this
+  version, and dismiss actions.
+- The update dialog downloads to a per-user cache, verifies the published
+  checksum, deletes mismatches, and can open the containing folder.
+- No downloaded program is executed. Install/restart remains blocked until
+  Phase 13 supplies signed native artifacts and platform signature
+  verification.
+- Update traffic contains no PDF content, document paths, credentials,
+  telemetry, or machine identifier.
+
 ## Repository profile
 
 | Area | Result |
 |---|---:|
-| Python source files | 54 |
-| Application source lines | Approximately 7,572 |
-| Test files | 26 |
-| Test lines | Approximately 4,240 |
-| CLI commands | 13 |
+| Python source files | 63 |
+| Application source lines | Approximately 11,830 |
+| Test files | 31 |
+| Test lines | Approximately 5,380 |
+| CLI commands | 14 |
 | Runtime dependencies | PyMuPDF and PySide6 |
-| Test result | 338 passed |
-| Test runtime | 36.12 seconds |
+| Test result | 377 passed |
+| Test runtime | 75.11 seconds |
 | Python version used for validation | 3.14.2 |
 
 A local virtual environment of approximately 85 MiB and generated bytecode
-caches are present in the directory. They are covered by `.gitignore`, but this
-directory was not a Git working tree at the time of analysis.
+caches may be present in development checkouts and are covered by `.gitignore`.
+The repository is tracked with Git.
+
+### Current validation
+
+The full suite was run on 27 July 2026 with Python 3.14.2, PySide6/Qt 6.11.1,
+pytest 9.0.3, and pytest-qt 4.5.0. All 377 collected tests passed in
+75.11 seconds. This includes the original PDF operations, CLI and UI coverage,
+the restored About runtime contract, and the new network-free updater tests.
 
 ## Architecture
 
@@ -300,16 +365,33 @@ The important components are:
   logging setup, and atomic-path helpers.
 - [`pdfsilo/operations/`](pdfsilo/operations/) contains one module per PDF
   operation.
+- [`pdfsilo/updater/`](pdfsilo/updater/) contains the non-Qt, opt-in release
+  check and verified-download boundary.
 - [`pdfsilo/ui/workers.py`](pdfsilo/ui/workers.py) contains cancellation,
   worker, runner, and UI-controller infrastructure.
+- [`pdfsilo/ui/main_window.py`](pdfsilo/ui/main_window.py) owns navigation,
+  application status, settings integration, and the responsive shell.
+- [`pdfsilo/ui/pages/`](pdfsilo/ui/pages/) contains Home and the 13 concrete
+  operation screens.
 - [`pdfsilo/ui/widgets/`](pdfsilo/ui/widgets/) contains reusable operation-form
   and lifecycle widgets.
+- [`pdfsilo/ui/theme.py`](pdfsilo/ui/theme.py) and
+  [`pdfsilo/ui/preferences.py`](pdfsilo/ui/preferences.py) define the visual
+  system and allowlisted persistence contract.
+- [`pdfsilo/ui/resources/`](pdfsilo/ui/resources/) packages the approved PNG
+  identity and functional SVG control icons.
 - [`tests/`](tests/) contains unit and integration-style tests using real,
   temporary PyMuPDF documents.
 
-No networking, telemetry, account integration, or cloud processing was found.
-The privacy claim that operations run locally is consistent with the
-implementation.
+The maintained architecture overview is
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), with decisions recorded under
+[`docs/adr/`](docs/adr/README.md).
+
+No PDF operation, preview, telemetry, account integration, or cloud processing
+uses the network. The only network-capable package is the separately governed
+`pdfsilo.updater`: it contacts the fixed public GitHub Releases endpoint after
+a manual request or explicit automatic-check opt-in. The privacy claim that
+documents remain local is consistent with the implementation.
 
 ## Strengths
 
@@ -340,7 +422,8 @@ The implementation validates several important inputs, including:
 ### Strong automated test breadth
 
 The suite combines mocked UI service contracts with real PDFs and images rather
-than relying entirely on either approach. All 338 tests passed after Phase 12.
+than relying entirely on either approach. The Phase 12 checkpoint passed 338
+tests, and later UI and identity work added further regression coverage.
 
 ### Resource management
 
@@ -591,8 +674,7 @@ Recommended action:
 
 - Pin or lock the tested dependency set for reproducible builds.
 - Add a CI workflow that runs the suite on the supported Python versions.
-- Regenerate or remove the stale `tree.txt`, which does not list all current
-  modules.
+- Keep `tree.txt` synchronized when package boundaries or key resources change.
 
 ## Test assessment
 
@@ -638,7 +720,8 @@ Phase 5 added assertions for:
 - Main-window construction and expected placeholder content.
 - Application identity and desktop metadata.
 - Theme application and idempotence.
-- SVG validity, Qt rendering, and package-data configuration.
+- Identity PNG loading, functional SVG validity, Qt rendering, and package-data
+  configuration.
 - Entry-point startup, window display, and clean event-loop shutdown.
 
 Phase 6 added assertions for:
@@ -715,6 +798,33 @@ Phase 12 added assertions for:
 - Focus-driven keyboard navigation and stack synchronization.
 - Unified CLI parsing, dispatch, exit status, and valid real output.
 
+The subsequent UI refinement added assertions for:
+
+- Responsive operation layouts and collapsible sidebar behavior.
+- Incremental ordered inputs and visible move controls.
+- Higher-resolution preview, zoom, multi-document selection, and target canvas.
+- Staged Save result and Discard result publication.
+- System/light/dark switching and neutral charcoal dark palette roles.
+- Appearance, workflow, and startup/privacy settings plus restoration defaults.
+- Settings allowlisting and removal of disabled restoration state.
+- About-dialog product, privacy, license, and support content.
+- Runtime use and wheel inclusion of `logo.png` and `icon.png`.
+
+The update feature added assertions for:
+
+- Semantic-version ordering and GitHub release parsing without live network
+  access.
+- Fixed metadata endpoint use and platform-specific asset selection.
+- Up-to-date, available, malformed, and offline check outcomes.
+- Companion checksum retrieval, successful verification, and deletion after a
+  mismatch.
+- Opt-in defaults, allowlisted update settings, throttling, skip persistence,
+  and Restore defaults.
+- The guarantee that disabled automatic checks make no network call.
+- Updater worker execution off the GUI thread and GUI-thread result delivery.
+- Banner and verified-download dialog behavior.
+- `pdfsilo update --check` parsing, success output, and failure exit behavior.
+
 Important missing assertions still include:
 
 - Compression output-size and perceptual-quality comparisons on image-heavy
@@ -751,5 +861,11 @@ thumbnail-based page reordering. Phase 11 added confirmed GUI passwords and
 secure interactive CLI prompting without breaking explicit-argument
 automation. Phase 12 completed the pytest-qt coverage matrix and added mocked
 contracts for every operation page alongside the real-PDF integration suite.
-Native Linux and macOS startup validation and the remaining architectural
-improvements should be addressed as the PySide6 migration progresses.
+The subsequent product pass improved responsive layouts, ordered inputs,
+preview/review workflows, privacy-safe preferences, About content, theme
+support, and PNG-based identity. The opt-in updater adds privacy-limited release
+notification and checksum-verified delivery without executing unsigned code.
+The application migration is functionally complete; signed native distribution
+builds, install/restart integration, Linux/macOS validation, continuous
+integration, and the remaining architectural improvements are the next release
+work.

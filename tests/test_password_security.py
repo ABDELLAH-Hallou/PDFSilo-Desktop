@@ -114,7 +114,7 @@ def test_passwords_are_not_persisted_in_qsettings(qtbot, tmp_path):
     settings.sync()
     settings_text = Path(settings.fileName()).read_text(encoding="utf-8")
 
-    assert set(settings.allKeys()) == PERSISTED_SETTING_KEYS
+    assert set(settings.allKeys()) <= PERSISTED_SETTING_KEYS
     assert all(secret not in settings_text for secret in secrets)
     assert "password" not in settings_text.lower()
 

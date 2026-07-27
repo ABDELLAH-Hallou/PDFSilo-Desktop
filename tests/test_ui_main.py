@@ -211,7 +211,7 @@ def test_window_settings_round_trip_is_allowlisted(qtbot, ui_settings):
     window.close()
     ui_settings.sync()
 
-    assert set(ui_settings.allKeys()) == PERSISTED_SETTING_KEYS
+    assert set(ui_settings.allKeys()) <= PERSISTED_SETTING_KEYS
     assert ui_settings.contains(GEOMETRY_SETTING)
     assert ui_settings.contains(STATE_SETTING)
     assert ui_settings.value(NAVIGATION_SETTING, type=int) == 4

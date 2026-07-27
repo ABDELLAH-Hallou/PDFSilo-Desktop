@@ -1,8 +1,11 @@
 """Top-level PDFSilo desktop application shell."""
 
+import logging
+from dataclasses import replace
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from PySide6.QtCore import QByteArray, QSize, QSettings, Qt, QUrl
+from PySide6.QtCore import QByteArray, QSize, QSettings, Qt, QTimer, QUrl
 from PySide6.QtGui import (
     QAction,
     QActionGroup,
@@ -20,6 +23,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QMainWindow,
     QMenu,
+    QMessageBox,
     QProgressBar,
     QStackedWidget,
     QStyle,
@@ -28,7 +32,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from pdfsilo.ui.dialogs import AboutDialog, SettingsDialog
+from pdfsilo.ui.dialogs import AboutDialog, SettingsDialog, UpdateDialog
 from pdfsilo.ui.metadata import WINDOW_TITLE
 from pdfsilo.ui.pages import (
     HomePage,
@@ -55,6 +59,11 @@ from pdfsilo.ui.theme import (
     normalize_theme_mode,
     theme_manager,
 )
+from pdfsilo.ui.widgets import UpdateBanner
+from pdfsilo.ui.workers import UpdateRunner
+from pdfsilo.updater import UpdateInfo, check_for_update
+
+log = logging.getLogger(__name__)
 
 DEFAULT_WINDOW_WIDTH = 1240
 DEFAULT_WINDOW_HEIGHT = 800
@@ -105,6 +114,8 @@ class MainWindow(QMainWindow):
         self._running_pages: set[OperationPage] = set()
         self._settings_dialog: SettingsDialog | None = None
         self._about_dialog: AboutDialog | None = None
+        self._update_dialog: UpdateDialog | None = None
+        self._update_check_manual = False
         self._preferences = UiPreferences.from_settings(self.settings)
         self._theme_mode = normalize_theme_mode(
             self.settings.value(
@@ -126,6 +137,13 @@ class MainWindow(QMainWindow):
         self._create_menus()
         self._create_content()
         self._create_status_bar()
+        self._update_runner = UpdateRunner(parent=self)
+        self._update_runner.succeeded.connect(self._update_check_succeeded)
+        self._update_runner.failed.connect(self._update_check_failed)
+        self._update_runner.finished.connect(self._update_check_finished)
+        self._update_runner.runningChanged.connect(
+            self.check_updates_action.setDisabled
+        )
         self._theme_manager.themeChanged.connect(
             self._theme_assets_changed
         )
@@ -134,6 +152,7 @@ class MainWindow(QMainWindow):
             self._theme_manager.effective_mode.value,
         )
         self._restore_settings()
+        QTimer.singleShot(0, self._maybe_check_automatically)
 
     def _create_actions(self) -> None:
         self.open_action = QAction("Open PDF…", self)
@@ -208,6 +227,15 @@ class MainWindow(QMainWindow):
         self.about_action.setStatusTip("About PDFSilo")
         self.about_action.triggered.connect(self.show_about_dialog)
 
+        self.check_updates_action = QAction("Check for Updates…", self)
+        self.check_updates_action.setObjectName("checkUpdatesAction")
+        self.check_updates_action.setStatusTip(
+            "Check GitHub for a newer PDFSilo release"
+        )
+        self.check_updates_action.triggered.connect(
+            lambda: self.start_update_check(manual=True)
+        )
+
     def _create_menus(self) -> None:
         file_menu = self.menuBar().addMenu("&File")
         file_menu.setObjectName("fileMenu")
@@ -232,6 +260,8 @@ class MainWindow(QMainWindow):
 
         help_menu = self.menuBar().addMenu("&Help")
         help_menu.setObjectName("helpMenu")
+        help_menu.addAction(self.check_updates_action)
+        help_menu.addSeparator()
         help_menu.addAction(self.about_action)
 
     def _create_content(self) -> None:
@@ -242,6 +272,13 @@ class MainWindow(QMainWindow):
         root_layout.setSpacing(0)
 
         root_layout.addWidget(self._create_header())
+        self.update_banner = UpdateBanner(root)
+        self.update_banner.updateRequested.connect(self.show_update_dialog)
+        self.update_banner.releaseNotesRequested.connect(
+            self.open_update_release_notes
+        )
+        self.update_banner.skipRequested.connect(self.skip_update_version)
+        root_layout.addWidget(self.update_banner)
 
         body = QWidget(root)
         body.setObjectName("applicationBody")
@@ -675,6 +712,9 @@ class MainWindow(QMainWindow):
         """Apply and persist safe workflow and startup preferences."""
         if not isinstance(preferences, UiPreferences):
             return
+        automatic_checks_were_enabled = (
+            self._preferences.check_updates_automatically
+        )
         self._preferences = preferences
         self._preferences.save(self.settings)
         if not preferences.restore_window:
@@ -696,6 +736,120 @@ class MainWindow(QMainWindow):
         if self._settings_dialog is not None:
             self._settings_dialog.set_preferences(preferences)
         self.set_status("Settings updated.", 3_000)
+        if (
+            preferences.check_updates_automatically
+            and not automatic_checks_were_enabled
+        ):
+            QTimer.singleShot(0, self._maybe_check_automatically)
+
+    def _automatic_update_check_due(self) -> bool:
+        if not self._preferences.check_updates_automatically:
+            return False
+        raw_timestamp = self._preferences.last_update_check
+        if not raw_timestamp:
+            return True
+        try:
+            checked_at = datetime.fromisoformat(
+                raw_timestamp.replace("Z", "+00:00")
+            )
+            if checked_at.tzinfo is None:
+                checked_at = checked_at.replace(tzinfo=UTC)
+        except ValueError:
+            return True
+        return datetime.now(UTC) - checked_at >= timedelta(hours=24)
+
+    def _maybe_check_automatically(self) -> None:
+        if self._automatic_update_check_due():
+            self.start_update_check(manual=False)
+
+    def start_update_check(self, *, manual: bool = True) -> bool:
+        """Start one explicit or opt-in update check in the background."""
+        if self._update_runner.is_running():
+            if manual:
+                self.set_status("An update check is already running.", 3_000)
+            return False
+        self._update_check_manual = manual
+        if manual:
+            self.set_status("Checking for PDFSilo updates…")
+        return self._update_runner.start(check_for_update)
+
+    def _record_update_check(self) -> None:
+        self._preferences = replace(
+            self._preferences,
+            last_update_check=datetime.now(UTC).isoformat(),
+        )
+        self._preferences.save(self.settings)
+        self.settings.sync()
+        if self._settings_dialog is not None:
+            self._settings_dialog.set_preferences(self._preferences)
+
+    def _update_check_succeeded(self, result: object) -> None:
+        self._record_update_check()
+        if result is None:
+            if self._update_check_manual:
+                QMessageBox.information(
+                    self,
+                    "PDFSilo Updates",
+                    "You already have the latest PDFSilo version.",
+                )
+            return
+        if not isinstance(result, UpdateInfo):
+            self._update_check_failed(
+                "The update service returned an invalid response."
+            )
+            return
+        if (
+            not self._update_check_manual
+            and result.version == self._preferences.skipped_update_version
+        ):
+            return
+        if self._update_check_manual:
+            self.show_update_dialog(result)
+        else:
+            self.update_banner.show_update(result)
+            self.set_status(f"PDFSilo {result.version} is available.", 5_000)
+
+    def _update_check_failed(self, message: str) -> None:
+        self._record_update_check()
+        if self._update_check_manual:
+            QMessageBox.warning(
+                self,
+                "Could Not Check for Updates",
+                message,
+            )
+        else:
+            log.info("Automatic update check failed: %s", message)
+
+    def _update_check_finished(self) -> None:
+        if self._update_check_manual:
+            self.set_status("Update check finished.", 3_000)
+        self._update_check_manual = False
+
+    def show_update_dialog(self, info: object) -> None:
+        if not isinstance(info, UpdateInfo):
+            return
+        if self._update_dialog is not None:
+            self._update_dialog.close()
+        self._update_dialog = UpdateDialog(info, self)
+        self._update_dialog.show()
+        self._update_dialog.raise_()
+        self._update_dialog.activateWindow()
+
+    def open_update_release_notes(self, info: object) -> bool:
+        if not isinstance(info, UpdateInfo):
+            return False
+        return QDesktopServices.openUrl(QUrl(info.release_notes_url))
+
+    def skip_update_version(self, version: str) -> None:
+        self._preferences = replace(
+            self._preferences,
+            skipped_update_version=version,
+        )
+        self._preferences.save(self.settings)
+        self.settings.sync()
+        if self._settings_dialog is not None:
+            self._settings_dialog.set_preferences(self._preferences)
+        self.set_status(f"PDFSilo {version} will be skipped.", 4_000)
 
     def show_about_dialog(self) -> None:
         """Display useful product, privacy, and runtime information."""
@@ -710,5 +864,8 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Persist allowlisted UI state before the window closes."""
+        self._update_runner.cancel()
+        if self._update_dialog is not None:
+            self._update_dialog.runner.cancel()
         self._save_settings()
         super().closeEvent(event)

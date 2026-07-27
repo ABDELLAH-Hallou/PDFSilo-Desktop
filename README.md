@@ -1,8 +1,12 @@
 # PDFSilo
 
-**A privacy-first, open-source toolkit — all PDF operations run locally on your machine. No uploads, no accounts, no third parties.**
+**A privacy-first, open-source toolkit — all PDF operations run locally on your
+machine. No document uploads, no accounts, and no telemetry.**
 
-PDFSilo is a command-line toolkit for working with PDF and image files — split, merge, rotate, compress, encrypt, watermark, extract, reorder, and insert images — all with consistent page-size normalization. Your sensitive documents never leave your computer.
+PDFSilo is a desktop and command-line toolkit for working with PDF and image
+files — split, merge, rotate, compress, encrypt, watermark, extract, reorder,
+and insert images — all with consistent page-size normalization. Your
+sensitive documents never leave your computer.
 
 ---
 
@@ -43,6 +47,23 @@ and a separate real-PDF integration layer for end-to-end validation.
 
 ---
 
+## Documentation
+
+- [Codebase analysis](CODEBASE_ANALYSIS.md) — current architecture, quality
+  assessment, resolved findings, and remaining risks.
+- [PySide6 migration plan](PYSIDE6_MIGRATION_PLAN.md) — completed migration
+  phases and pending packaging/CI work.
+- [Architecture overview](docs/ARCHITECTURE.md) — runtime boundaries, data
+  flow, UI structure, persistence, and resources.
+- [Architecture decisions](docs/adr/README.md) — accepted design decisions and
+  their consequences.
+- [Resolved UI issues](Fixes/Things.to.fix.md) — visual review findings and their
+  implementation status.
+- [Update feature plan](New%20Features/UPDATE_NOTIFICATION_AND_AUTOUPDATE_PLAN.md)
+  — implemented notification/download boundary and deferred signed installation.
+
+---
+
 ## Usage
 
 ```bash
@@ -67,8 +88,51 @@ dragged into position, moved with keyboard-accessible buttons, or removed.
 PDFSilo supports **System default**, **Light**, and **Dark** appearance modes.
 Choose one from **Tools → Appearance** or open Settings with `Ctrl+,`. System
 default follows the operating-system color scheme and updates while the
-application is running. Only the selected appearance mode is persisted; file
-paths, document contents, and passwords are never stored as theme settings.
+application is running. The light workspace uses the PDFSilo indigo and teal
+brand system; dark mode uses neutral charcoal surfaces with indigo and teal
+reserved for actions and status.
+
+Settings are grouped into **Appearance**, **Workflow**, and **Startup and
+privacy**:
+
+| Setting | Default | Effect |
+|---|---:|---|
+| Theme | System default | Follow the OS or force light/dark mode |
+| Show input document previews | On | Render PDF previews beside forms |
+| Ask before replacing an output | On | Keep results staged until replacement is confirmed |
+| Open containing folder after saving | Off | Open the system file manager after publication |
+| Restore window size and position | On | Restore optional window geometry and state |
+| Reopen the last-used tool | On | Return to the previous operation screen |
+| Automatically check for updates | Off | Contact GitHub at most once per day for release metadata |
+
+**Restore defaults** returns these preferences to their conservative defaults.
+Only the choices above, the optional window state, the last tool index, the
+last update-check time, and an optionally skipped version are stored. PDFSilo
+never stores document paths, document contents, recent files, or passwords in
+`QSettings`.
+
+### Updates and network privacy
+
+PDF processing never uses the network. Update checking is the sole optional
+network feature:
+
+- Automatic checks are off by default and can be enabled under **Settings →
+  Startup and privacy**.
+- **Help → Check for Updates…** performs an explicit manual check at any time.
+- A check sends one unauthenticated HTTPS GET to PDFSilo's public GitHub
+  Releases endpoint. It sends no document data, paths, credentials, telemetry,
+  or machine identifier.
+- Available releases appear in a non-blocking banner. A version can be skipped.
+- PDFSilo can download an artifact to a per-user cache and verify its published
+  SHA-256 checksum.
+- Downloaded programs are not executed automatically. Install/restart remains
+  deferred until signed native installers and signature verification are
+  available.
+
+The desktop identity uses the packaged `logo.png` wordmark in the sidebar and
+`icon.png` for the application, windows, and About dialog. The same artwork is
+used in both themes; dark mode gives the wordmark a small neutral contrast
+plate instead of recolouring it.
 
 PDF work runs through a reusable thread-pool worker with GUI-thread signal
 delivery, cooperative cancellation, duplicate-start protection, and form-state
@@ -131,6 +195,10 @@ result = execute(
 
 The PySide6 worker layer connects these callbacks to Qt signals and a
 thread-safe cancellation flag without importing Qt into PDF operations.
+
+For a fuller component map and the decisions behind these boundaries, see
+[Architecture](docs/ARCHITECTURE.md) and the
+[ADR index](docs/adr/README.md).
 
 ---
 
@@ -449,6 +517,21 @@ python -m pdfsilo images-to-pdf ./photos/ -s Letter --margin 20 -o album.pdf
 # Embed at natural resolution, centred (no scaling)
 python -m pdfsilo images-to-pdf ./artwork/ --no-fit -o gallery.pdf
 ```
+
+---
+
+### `update` — Check for a newer release
+
+Checks PDFSilo's public GitHub Releases feed without downloading or installing
+anything.
+
+```bash
+pdfsilo update --check
+python -m pdfsilo update --check
+```
+
+The command prints the current/latest version and release-notes URL. It uses
+the same framework-independent updater as the desktop interface.
 
 ## Typical workflows
 
