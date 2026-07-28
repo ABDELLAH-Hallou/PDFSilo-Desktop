@@ -95,11 +95,7 @@ class ThumbnailCache:
             self._items.clear()
             return
         normalized_path = str(path.expanduser().resolve())
-        for key in [
-            key
-            for key in self._items
-            if key.path == normalized_path
-        ]:
+        for key in [key for key in self._items if key.path == normalized_path]:
             self._items.pop(key, None)
 
     def __len__(self) -> int:
@@ -135,14 +131,10 @@ class _RenderTask(QRunnable):
                 return
             with fitz.open(self.key.path) as document:
                 if document.needs_pass:
-                    raise PermissionError(
-                        "Preview unavailable: this PDF is encrypted."
-                    )
+                    raise PermissionError("Preview unavailable: this PDF is encrypted.")
                 page_count = document.page_count
                 if not 0 <= self.key.page_index < page_count:
-                    raise IndexError(
-                        f"Page {self.key.page_index + 1} does not exist."
-                    )
+                    raise IndexError(f"Page {self.key.page_index + 1} does not exist.")
                 page = document.load_page(self.key.page_index)
                 pixmap = page.get_pixmap(
                     matrix=fitz.Matrix(self.key.scale, self.key.scale),

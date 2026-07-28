@@ -1,11 +1,10 @@
 """tests/test_rotate.py — Unit tests for pdfsilo.operations.rotate"""
 
-import pytest
 from pathlib import Path
 
 import fitz
 
-from pdfsilo.operations.rotate import run, cli_run, parse_pages
+from pdfsilo.operations.rotate import cli_run, parse_pages, run
 
 
 class TestParsePages:
@@ -14,6 +13,7 @@ class TestParsePages:
 
     def test_out_of_range_skipped(self, caplog):
         import logging
+
         with caplog.at_level(logging.WARNING):
             result = parse_pages("0,1,10", total=5)
         assert result == [0]
@@ -21,6 +21,7 @@ class TestParsePages:
 
     def test_invalid_string_skipped(self, caplog):
         import logging
+
         with caplog.at_level(logging.WARNING):
             result = parse_pages("1,abc,3", total=5)
         assert result == [0, 2]

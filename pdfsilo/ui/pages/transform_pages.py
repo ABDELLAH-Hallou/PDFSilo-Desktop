@@ -125,8 +125,7 @@ class WatermarkPage(OperationPage):
             return "Enter watermark text."
         try:
             components = [
-                float(part.strip())
-                for part in self.color_edit.text().split(",")
+                float(part.strip()) for part in self.color_edit.text().split(",")
             ]
         except ValueError:
             return "Color must be three numbers separated by commas."
@@ -283,10 +282,7 @@ class EncryptPage(OperationPage):
         return checkbox
 
     def _restrictions_requested(self) -> bool:
-        return not all(
-            checkbox.isChecked()
-            for checkbox in self._permission_checkboxes
-        )
+        return not all(checkbox.isChecked() for checkbox in self._permission_checkboxes)
 
     def specific_validation_error(self) -> str:
         user_password = self.user_password_edit.text()
@@ -299,18 +295,13 @@ class EncryptPage(OperationPage):
             return "User password confirmation does not match."
         if self._restrictions_requested() and not owner_password:
             return (
-                "A distinct owner password is required when permissions "
-                "are restricted."
+                "A distinct owner password is required when permissions are restricted."
             )
         if owner_password != owner_confirmation:
             return "Owner password confirmation does not match."
-        if (
-            self._restrictions_requested()
-            and owner_password == user_password
-        ):
+        if self._restrictions_requested() and owner_password == user_password:
             return (
-                "Owner and user passwords must differ when permissions "
-                "are restricted."
+                "Owner and user passwords must differ when permissions are restricted."
             )
         return ""
 

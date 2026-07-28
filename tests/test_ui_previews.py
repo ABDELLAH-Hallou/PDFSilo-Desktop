@@ -1,6 +1,5 @@
 """Tests for Phase 10 preview rendering and page-list editing."""
 
-from pathlib import Path
 from threading import get_ident
 
 import pytest
@@ -108,10 +107,7 @@ def test_thumbnail_service_limits_its_dedicated_pool():
 
 
 def test_operation_pages_integrate_preview_or_page_editor(qtbot):
-    definitions = {
-        definition.key: definition
-        for definition in PAGE_DEFINITIONS
-    }
+    definitions = {definition.key: definition for definition in PAGE_DEFINITIONS}
     standard_preview_keys = {
         "merge",
         "split",

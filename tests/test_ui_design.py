@@ -101,14 +101,10 @@ def test_operation_workspace_stacks_at_minimum_window_width(
         "operationSplitter",
     )
     window.resize(1240, 800)
-    qtbot.waitUntil(
-        lambda: splitter.orientation() == Qt.Orientation.Horizontal
-    )
+    qtbot.waitUntil(lambda: splitter.orientation() == Qt.Orientation.Horizontal)
 
     window.resize(800, 620)
-    qtbot.waitUntil(
-        lambda: splitter.orientation() == Qt.Orientation.Vertical
-    )
+    qtbot.waitUntil(lambda: splitter.orientation() == Qt.Orientation.Vertical)
 
 
 def test_explicit_theme_modes_apply_and_persist(qtbot, ui_settings):
@@ -156,10 +152,7 @@ def test_settings_dialog_changes_theme_without_sensitive_values(
     combo.setCurrentIndex(combo.findData(ThemeMode.DARK.value))
 
     assert ui_settings.value(THEME_SETTING) == ThemeMode.DARK.value
-    assert all(
-        "password" not in key.lower()
-        for key in ui_settings.allKeys()
-    )
+    assert all("password" not in key.lower() for key in ui_settings.allKeys())
     window.set_theme_mode(ThemeMode.SYSTEM)
 
 

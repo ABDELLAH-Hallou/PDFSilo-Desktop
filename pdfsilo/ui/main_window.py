@@ -5,7 +5,7 @@ from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from PySide6.QtCore import QByteArray, QSize, QSettings, Qt, QTimer, QUrl
+from PySide6.QtCore import QByteArray, QSettings, QSize, Qt, QTimer, QUrl
 from PySide6.QtGui import (
     QAction,
     QActionGroup,
@@ -22,7 +22,6 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QMainWindow,
-    QMenu,
     QMessageBox,
     QProgressBar,
     QStackedWidget,
@@ -35,20 +34,20 @@ from PySide6.QtWidgets import (
 from pdfsilo.ui.dialogs import AboutDialog, SettingsDialog, UpdateDialog
 from pdfsilo.ui.metadata import WINDOW_TITLE
 from pdfsilo.ui.pages import (
-    HomePage,
     OPERATION_PAGE_FACTORIES,
-    OperationPage,
     PAGE_DEFINITIONS,
     PAGE_INDEX_BY_KEY,
+    HomePage,
+    OperationPage,
+)
+from pdfsilo.ui.preferences import (
+    PREFERENCE_SETTING_KEYS,
+    UiPreferences,
 )
 from pdfsilo.ui.resources import (
     application_icon,
     brand_logo_pixmap,
     sidebar_toggle_icon,
-)
-from pdfsilo.ui.preferences import (
-    PREFERENCE_SETTING_KEYS,
-    UiPreferences,
 )
 from pdfsilo.ui.theme import (
     SPACE_LG,
@@ -144,9 +143,7 @@ class MainWindow(QMainWindow):
         self._update_runner.runningChanged.connect(
             self.check_updates_action.setDisabled
         )
-        self._theme_manager.themeChanged.connect(
-            self._theme_assets_changed
-        )
+        self._theme_manager.themeChanged.connect(self._theme_assets_changed)
         self._theme_assets_changed(
             self._theme_mode.value,
             self._theme_manager.effective_mode.value,
@@ -189,9 +186,7 @@ class MainWindow(QMainWindow):
         self.toggle_sidebar_action.setCheckable(True)
         self.toggle_sidebar_action.setChecked(True)
         self.toggle_sidebar_action.setIcon(sidebar_toggle_icon(True))
-        self.toggle_sidebar_action.setStatusTip(
-            "Show or hide the operation sidebar"
-        )
+        self.toggle_sidebar_action.setStatusTip("Show or hide the operation sidebar")
         self.toggle_sidebar_action.toggled.connect(self._set_sidebar_visible)
 
         self.settings_action = QAction("Settings", self)
@@ -215,9 +210,7 @@ class MainWindow(QMainWindow):
             action.setChecked(mode is self._theme_mode)
             action.setData(mode.value)
             action.triggered.connect(
-                lambda _checked=False, selected=mode: (
-                    self.set_theme_mode(selected)
-                )
+                lambda _checked=False, selected=mode: self.set_theme_mode(selected)
             )
             self.theme_actions[mode] = action
 
@@ -274,9 +267,7 @@ class MainWindow(QMainWindow):
         root_layout.addWidget(self._create_header())
         self.update_banner = UpdateBanner(root)
         self.update_banner.updateRequested.connect(self.show_update_dialog)
-        self.update_banner.releaseNotesRequested.connect(
-            self.open_update_release_notes
-        )
+        self.update_banner.releaseNotesRequested.connect(self.open_update_release_notes)
         self.update_banner.skipRequested.connect(self.skip_update_version)
         root_layout.addWidget(self.update_banner)
 
@@ -340,9 +331,7 @@ class MainWindow(QMainWindow):
                 self._connect_operation_page(page)
             self.page_stack.addWidget(page)
 
-        self.navigation.currentRowChanged.connect(
-            self._on_navigation_changed
-        )
+        self.navigation.currentRowChanged.connect(self._on_navigation_changed)
 
         sidebar_layout.addWidget(self.navigation, 1)
         body_layout.addWidget(self.sidebar)
@@ -352,9 +341,7 @@ class MainWindow(QMainWindow):
 
     def _connect_operation_page(self, page: OperationPage) -> None:
         """Connect one operation screen to application-wide shell state."""
-        page.set_input_previews_enabled(
-            self._preferences.show_input_previews
-        )
+        page.set_input_previews_enabled(self._preferences.show_input_previews)
         page.set_confirm_overwrite(self._preferences.confirm_overwrite)
         page.statusChanged.connect(self.set_status)
         page.progressChanged.connect(self.set_progress)
@@ -395,9 +382,7 @@ class MainWindow(QMainWindow):
         sidebar_button = QToolButton(header)
         sidebar_button.setObjectName("sidebarButton")
         sidebar_button.setDefaultAction(self.toggle_sidebar_action)
-        sidebar_button.setToolButtonStyle(
-            Qt.ToolButtonStyle.ToolButtonIconOnly
-        )
+        sidebar_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         sidebar_button.setAccessibleName("Show or hide sidebar")
         layout.addWidget(sidebar_button)
 
@@ -428,9 +413,7 @@ class MainWindow(QMainWindow):
         settings_button = QToolButton(header)
         settings_button.setObjectName("settingsButton")
         settings_button.setDefaultAction(self.settings_action)
-        settings_button.setToolButtonStyle(
-            Qt.ToolButtonStyle.ToolButtonTextOnly
-        )
+        settings_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
         settings_button.setAutoRaise(True)
 
         help_button = QToolButton(header)
@@ -499,9 +482,7 @@ class MainWindow(QMainWindow):
             "Hide Sidebar" if visible else "Show Sidebar"
         )
         self.toggle_sidebar_action.setStatusTip(
-            "Hide the operation sidebar"
-            if visible
-            else "Show the operation sidebar"
+            "Hide the operation sidebar" if visible else "Show the operation sidebar"
         )
 
     def _create_status_bar(self) -> None:
@@ -595,9 +576,7 @@ class MainWindow(QMainWindow):
 
     def select_previous_page(self) -> None:
         """Move to the previous navigation item."""
-        self.navigation.setCurrentRow(
-            max(0, self.navigation.currentRow() - 1)
-        )
+        self.navigation.setCurrentRow(max(0, self.navigation.currentRow() - 1))
 
     def select_next_page(self) -> None:
         """Move to the next navigation item."""
@@ -695,12 +674,8 @@ class MainWindow(QMainWindow):
                 self,
                 self._preferences,
             )
-            self._settings_dialog.themeModeChanged.connect(
-                self.set_theme_mode
-            )
-            self._settings_dialog.preferencesChanged.connect(
-                self.set_ui_preferences
-            )
+            self._settings_dialog.themeModeChanged.connect(self.set_theme_mode)
+            self._settings_dialog.preferencesChanged.connect(self.set_ui_preferences)
         else:
             self._settings_dialog.set_theme_mode(self._theme_mode)
             self._settings_dialog.set_preferences(self._preferences)
@@ -712,9 +687,7 @@ class MainWindow(QMainWindow):
         """Apply and persist safe workflow and startup preferences."""
         if not isinstance(preferences, UiPreferences):
             return
-        automatic_checks_were_enabled = (
-            self._preferences.check_updates_automatically
-        )
+        automatic_checks_were_enabled = self._preferences.check_updates_automatically
         self._preferences = preferences
         self._preferences.save(self.settings)
         if not preferences.restore_window:
@@ -727,12 +700,8 @@ class MainWindow(QMainWindow):
         for index in range(self.page_stack.count()):
             page = self.page_stack.widget(index)
             if isinstance(page, OperationPage):
-                page.set_input_previews_enabled(
-                    preferences.show_input_previews
-                )
-                page.set_confirm_overwrite(
-                    preferences.confirm_overwrite
-                )
+                page.set_input_previews_enabled(preferences.show_input_previews)
+                page.set_confirm_overwrite(preferences.confirm_overwrite)
         if self._settings_dialog is not None:
             self._settings_dialog.set_preferences(preferences)
         self.set_status("Settings updated.", 3_000)
@@ -749,9 +718,7 @@ class MainWindow(QMainWindow):
         if not raw_timestamp:
             return True
         try:
-            checked_at = datetime.fromisoformat(
-                raw_timestamp.replace("Z", "+00:00")
-            )
+            checked_at = datetime.fromisoformat(raw_timestamp.replace("Z", "+00:00"))
             if checked_at.tzinfo is None:
                 checked_at = checked_at.replace(tzinfo=UTC)
         except ValueError:

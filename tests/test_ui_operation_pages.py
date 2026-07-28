@@ -1,7 +1,6 @@
 """End-to-end tests for Phase 9 operation screens."""
 
 from dataclasses import replace
-from pathlib import Path
 from threading import Event
 from time import sleep
 
@@ -33,10 +32,7 @@ from pdfsilo.ui.pages import (
 )
 from pdfsilo.ui.widgets import OperationPanel
 
-DEFINITIONS = {
-    definition.key: definition
-    for definition in PAGE_DEFINITIONS
-}
+DEFINITIONS = {definition.key: definition for definition in PAGE_DEFINITIONS}
 
 
 def _page(qtbot, page_type, key: str):
@@ -89,9 +85,7 @@ def _run_successfully(qtbot, page: OperationPage, timeout: int = 10_000):
 
 def test_registry_has_a_concrete_screen_for_every_operation(qtbot):
     assert set(OPERATION_PAGE_FACTORIES) == {
-        definition.key
-        for definition in PAGE_DEFINITIONS
-        if definition.key != "home"
+        definition.key for definition in PAGE_DEFINITIONS if definition.key != "home"
     }
 
     for key, factory in OPERATION_PAGE_FACTORIES.items():
@@ -270,9 +264,7 @@ def test_images_to_pdf_screen_runs_in_background(
     tmp_path,
 ):
     page = _page(qtbot, ImagesToPdfPage, "images_to_pdf")
-    page.input_picker.set_paths(
-        sorted(tmp_image_folder.glob("*.png"), reverse=True)
-    )
+    page.input_picker.set_paths(sorted(tmp_image_folder.glob("*.png"), reverse=True))
     output = tmp_path / "images-output.pdf"
     page.output_picker.set_path(output)
 

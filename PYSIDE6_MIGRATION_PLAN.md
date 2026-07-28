@@ -799,6 +799,25 @@ Official documentation:
 - [ ] Create an installer using Inno Setup, WiX, or MSIX.
 - [ ] Code-sign the executable and installer before public distribution.
 
+Phase 13 implementation status on 28 July 2026:
+
+- The root `pysidedeploy.spec`, deterministic PNG-to-ICO generator, standalone
+  build/test scripts, Inno Setup definition, Authenticode signing helper, and
+  frozen-workflow self-test are implemented.
+- The checked-in contract tests and full project suite pass (382 tests).
+- A local standalone build was attempted with Python 3.12, Nuitka 4.1.3,
+  PySide6 6.11.1, and PyMuPDF 1.27.2.2. Nuitka completed analysis and most C
+  compilation, but MinGW exhausted the available memory while compiling
+  PyMuPDF's very large generated `module.pymupdf.mupdf.c`, even with one
+  compiler job, low-memory mode, and LTO disabled. No executable or installer
+  was produced by that attempt.
+- The unchecked items above remain acceptance gates. Retry the standalone
+  build on a machine with more memory or with MSVC Build Tools, then run
+  `scripts/test_windows_package.ps1` before checking the resource, path,
+  large/encrypted-PDF, and embedded-metadata items.
+- Inno Setup compilation, a clean Windows VM run, and trusted Authenticode
+  signing require the corresponding external tools and release environment.
+
 ### Update notification and assisted delivery
 
 - [x] Record the network/privacy decision in ADR 0006.
@@ -825,15 +844,37 @@ Windows build can be repackaged for macOS or Linux.
 
 Create CI workflows that:
 
-- [ ] Install the package from `pyproject.toml`.
-- [ ] Run core tests.
-- [ ] Run headless-compatible UI tests.
-- [ ] Check formatting and static analysis.
-- [ ] Build application artifacts for supported platforms.
-- [ ] Preserve installers or build directories as CI artifacts.
-- [ ] Run release builds only from tagged versions.
-- [ ] Publish platform assets plus checksum/signature metadata to GitHub
+- [x] Install the package from `pyproject.toml`.
+- [x] Run core tests.
+- [x] Run headless-compatible UI tests.
+- [x] Check formatting and static analysis.
+- [x] Build application artifacts for supported platforms.
+- [x] Preserve installers or build directories as CI artifacts.
+- [x] Run release builds only from tagged versions.
+- [x] Publish platform assets plus checksum/signature metadata to GitHub
       Releases.
+
+Phase 14 implementation was added on 28 July 2026:
+
+- `.github/workflows/ci.yml` runs Ruff, builds the Python distributions, tests
+  the core on Python 3.10 through 3.14, and runs the headless UI suite on
+  Ubuntu, Windows, and Intel macOS.
+- `.github/workflows/release.yml` has no manual or branch trigger. It accepts
+  stable `vMAJOR.MINOR.PATCH` tags only after checking that all checked-in
+  versions agree.
+- Windows x64 is the only native release platform currently supported by
+  Phase 13. The release workflow builds and frozen-tests the standalone
+  directory, requires Authenticode secrets, signs and verifies the executable
+  and installer, retains the build, and publishes the installer/ZIP with
+  SHA-256 and signature metadata.
+- Missing signing secrets fail closed. Configure the protected GitHub
+  `release` environment before creating a version tag.
+- Linux and macOS are CI test platforms, not native release targets yet.
+  Their artifact jobs remain pending on platform-specific Phase 13 packaging
+  and signing decisions.
+
+The policy and trust boundaries are recorded in
+[`ADR 0008`](docs/adr/0008-ci-matrix-and-tag-gated-signed-releases.md).
 
 ## Delivery milestones
 

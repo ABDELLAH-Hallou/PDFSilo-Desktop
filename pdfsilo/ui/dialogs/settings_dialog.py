@@ -104,9 +104,7 @@ class SettingsDialog(QDialog):
             "Restore defaults",
             buttons,
         )
-        self.restore_defaults_button.setObjectName(
-            "restoreSettingsDefaultsButton"
-        )
+        self.restore_defaults_button.setObjectName("restoreSettingsDefaultsButton")
         buttons.addButton(
             self.restore_defaults_button,
             QDialogButtonBox.ButtonRole.ResetRole,
@@ -141,8 +139,7 @@ class SettingsDialog(QDialog):
         heading = QLabel("Application appearance", tab)
         heading.setObjectName("settingsSectionTitle")
         intro = _description(
-            "Choose a theme that stays readable during long document "
-            "sessions.",
+            "Choose a theme that stays readable during long document sessions.",
             tab,
         )
 
@@ -196,12 +193,8 @@ class SettingsDialog(QDialog):
             "Show input document previews",
             tab,
         )
-        self.show_input_previews_check.setObjectName(
-            "showInputPreviewsCheck"
-        )
-        self.show_input_previews_check.setAccessibleName(
-            "Show input document previews"
-        )
+        self.show_input_previews_check.setObjectName("showInputPreviewsCheck")
+        self.show_input_previews_check.setAccessibleName("Show input document previews")
         layout.addWidget(
             _preference_row(
                 self.show_input_previews_check,
@@ -232,9 +225,7 @@ class SettingsDialog(QDialog):
             "Open the containing folder after saving",
             tab,
         )
-        self.open_output_folder_check.setObjectName(
-            "openOutputFolderCheck"
-        )
+        self.open_output_folder_check.setObjectName("openOutputFolderCheck")
         self.open_output_folder_check.setAccessibleName(
             "Open output folder after saving"
         )

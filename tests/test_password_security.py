@@ -13,14 +13,11 @@ from PySide6.QtWidgets import QLabel, QLineEdit
 
 from pdfsilo import cli
 from pdfsilo.operations import decrypt, encrypt
-from pdfsilo.ui.main_window import MainWindow, PERSISTED_SETTING_KEYS
+from pdfsilo.ui.main_window import PERSISTED_SETTING_KEYS, MainWindow
 from pdfsilo.ui.pages import PAGE_DEFINITIONS, DecryptPage, EncryptPage
 from pdfsilo.ui.widgets import PasswordField
 
-DEFINITIONS = {
-    definition.key: definition
-    for definition in PAGE_DEFINITIONS
-}
+DEFINITIONS = {definition.key: definition for definition in PAGE_DEFINITIONS}
 
 
 def test_password_field_masks_toggles_and_clears_securely(qtbot):
@@ -54,8 +51,7 @@ def test_encrypt_page_explains_roles_and_requires_confirmations(
     qtbot.addWidget(page)
     page.input_picker.set_path(tmp_pdf)
     role_text = " ".join(
-        label.text()
-        for label in page.findChildren(QLabel, "passwordRoleLabel")
+        label.text() for label in page.findChildren(QLabel, "passwordRoleLabel")
     )
 
     assert "opens the PDF" in role_text
@@ -257,18 +253,19 @@ def test_passwords_do_not_appear_in_results_progress_or_logs(
         tmp_pdf,
         secret,
         output_path=tmp_path / "secure.pdf",
-        progress=lambda _current, _total, message: progress_messages.append(
-            message
-        ),
+        progress=lambda _current, _total, message: progress_messages.append(message),
     )
 
     encrypted_path, _correct_password = encrypted_pdf
     with caplog.at_level(logging.ERROR):
-        assert decrypt.run(
-            str(encrypted_path),
-            secret,
-            str(tmp_path / "failed-decrypt.pdf"),
-        ) is False
+        assert (
+            decrypt.run(
+                str(encrypted_path),
+                secret,
+                str(tmp_path / "failed-decrypt.pdf"),
+            )
+            is False
+        )
 
     visible_text = " ".join(
         [result.message, *result.warnings, *progress_messages, caplog.text]

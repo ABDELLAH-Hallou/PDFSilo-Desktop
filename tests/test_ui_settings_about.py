@@ -108,10 +108,13 @@ def test_settings_apply_and_persist_safe_workflow_choices(
 
     assert page.preview_card.isHidden()
     assert page._confirm_overwrite is False
-    assert ui_settings.value(
-        SHOW_INPUT_PREVIEWS_SETTING,
-        type=bool,
-    ) is False
+    assert (
+        ui_settings.value(
+            SHOW_INPUT_PREVIEWS_SETTING,
+            type=bool,
+        )
+        is False
+    )
     assert ui_settings.value(CONFIRM_OVERWRITE_SETTING, type=bool) is False
     assert ui_settings.value(OPEN_OUTPUT_FOLDER_SETTING, type=bool) is True
     assert all(
@@ -236,9 +239,7 @@ def test_open_output_folder_preference_uses_system_file_manager(
         "openUrl",
         lambda url: opened.append(url.toLocalFile()) or True,
     )
-    window.set_ui_preferences(
-        UiPreferences(open_output_folder=True)
-    )
+    window.set_ui_preferences(UiPreferences(open_output_folder=True))
     output = tmp_path / "result.pdf"
     output.write_bytes(b"pdf")
 
@@ -259,10 +260,13 @@ def test_about_dialog_explains_capabilities_privacy_and_runtime(
     assert dialog is not None
     assert dialog.windowTitle() == "About PDFSilo"
     assert len(dialog.findChildren(QFrame, "aboutFeatureCard")) == 3
-    assert "PDFSilo" in dialog.findChild(
-        QLabel,
-        "aboutProductName",
-    ).text()
+    assert (
+        "PDFSilo"
+        in dialog.findChild(
+            QLabel,
+            "aboutProductName",
+        ).text()
+    )
     privacy = dialog.findChild(QLabel, "aboutPrivacyText").text()
     assert "no uploads, accounts, or telemetry" in privacy
     assert "never written to application settings" in privacy

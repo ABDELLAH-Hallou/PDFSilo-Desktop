@@ -87,9 +87,7 @@ class UpdateDialog(QDialog):
             parent=self,
         )
         buttons.rejected.connect(self.close)
-        self.close_button = buttons.button(
-            QDialogButtonBox.StandardButton.Close
-        )
+        self.close_button = buttons.button(QDialogButtonBox.StandardButton.Close)
 
         layout.addWidget(title)
         layout.addWidget(explanation)

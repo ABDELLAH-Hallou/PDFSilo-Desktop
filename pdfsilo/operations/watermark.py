@@ -31,8 +31,8 @@ from pdfsilo.core import (
     InvalidInputError,
     OperationResult,
     PdfProcessingError,
-    ProgressCallback,
     PdfSiloError,
+    ProgressCallback,
 )
 from pdfsilo.core.output import save_document
 from pdfsilo.core.progress import check_cancelled, report_progress
@@ -45,8 +45,12 @@ log = logging.getLogger(__name__)
 def parse_color(color_str: str) -> tuple[float, float, float]:
     parts = [float(c.strip()) for c in color_str.split(",")]
     if len(parts) != 3:
-        raise ValueError("Color must be three comma-separated floats, e.g. '0.5,0.5,0.5'")
-    if not all(math.isfinite(component) and 0.0 <= component <= 1.0 for component in parts):
+        raise ValueError(
+            "Color must be three comma-separated floats, e.g. '0.5,0.5,0.5'"
+        )
+    if not all(
+        math.isfinite(component) and 0.0 <= component <= 1.0 for component in parts
+    ):
         raise ValueError("Color components must be finite values between 0.0 and 1.0")
     return tuple(parts)
 
@@ -68,9 +72,7 @@ def execute(
     if not text:
         raise InvalidInputError("Watermark text cannot be empty.")
     if not math.isfinite(opacity) or not 0.0 <= opacity <= 1.0:
-        raise InvalidInputError(
-            "Opacity must be a finite value between 0.0 and 1.0."
-        )
+        raise InvalidInputError("Opacity must be a finite value between 0.0 and 1.0.")
     if not math.isfinite(angle):
         raise InvalidInputError("Angle must be a finite number.")
     if not math.isfinite(font_size) or font_size <= 0:
@@ -115,9 +117,7 @@ def execute(
     except PdfSiloError:
         raise
     except Exception as exc:
-        raise PdfProcessingError(
-            f"Could not watermark PDF '{path}': {exc}"
-        ) from exc
+        raise PdfProcessingError(f"Could not watermark PDF '{path}': {exc}") from exc
 
     return OperationResult(
         output_paths=[out_path],

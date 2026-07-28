@@ -103,9 +103,7 @@ class HomePage(QWidget):
         scroll.setObjectName("homeScrollArea")
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-        )
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         content = QWidget(scroll)
         content.setObjectName("homeContent")
@@ -160,9 +158,7 @@ class HomePage(QWidget):
         quick_start.setProperty("primary", True)
         quick_start.setMinimumWidth(142)
         quick_start.setAccessibleName("Open Merge PDFs")
-        quick_start.clicked.connect(
-            lambda: self.operationRequested.emit("merge")
-        )
+        quick_start.clicked.connect(lambda: self.operationRequested.emit("merge"))
 
         hero_layout.addWidget(copy, 1)
         hero_layout.addWidget(
@@ -190,9 +186,7 @@ class HomePage(QWidget):
         self.card_grid.setHorizontalSpacing(SPACE_MD)
         self.card_grid.setVerticalSpacing(SPACE_MD)
 
-        definitions = {
-            definition.key: definition for definition in PAGE_DEFINITIONS
-        }
+        definitions = {definition.key: definition for definition in PAGE_DEFINITIONS}
         for key in POPULAR_TOOL_KEYS:
             definition = definitions[key]
             card = ToolCard(

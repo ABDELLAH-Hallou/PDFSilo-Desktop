@@ -174,9 +174,7 @@ def test_runner_rejects_duplicate_starts(qtbot):
     operation_started = Event()
     release_operation = Event()
     duplicate_rejections = []
-    runner.duplicateStartRejected.connect(
-        lambda: duplicate_rejections.append(True)
-    )
+    runner.duplicateStartRejected.connect(lambda: duplicate_rejections.append(True))
 
     def blocking_operation(*, progress, is_cancelled):
         operation_started.set()
@@ -276,4 +274,3 @@ def test_controller_cancel_button_restores_controls(qtbot):
     assert not panel.buttons.is_running()
     assert panel.result.property("resultState") == "cancelled"
     assert panel.result.status_label.text() == "Cancelled"
-

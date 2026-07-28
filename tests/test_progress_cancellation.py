@@ -16,7 +16,6 @@ from pdfsilo.operations.rotate import execute as rotate_pdf
 from pdfsilo.operations.split import execute as split_pdf
 from pdfsilo.operations.to_images import execute as render_pages
 
-
 OPERATION_MODULES = [
     "add_images",
     "compress",

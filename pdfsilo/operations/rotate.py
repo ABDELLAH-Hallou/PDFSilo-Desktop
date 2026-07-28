@@ -29,8 +29,8 @@ from pdfsilo.core import (
     InvalidInputError,
     OperationResult,
     PdfProcessingError,
-    ProgressCallback,
     PdfSiloError,
+    ProgressCallback,
 )
 from pdfsilo.core.output import save_document
 from pdfsilo.core.progress import check_cancelled, report_progress
@@ -61,9 +61,7 @@ def _parse_pages(pages_str: str, total: int) -> tuple[list[int], list[str]]:
             if 1 <= n <= total:
                 result.append(n - 1)
             else:
-                warnings.append(
-                    f"Page {n} out of range (1–{total}). Skipping."
-                )
+                warnings.append(f"Page {n} out of range (1–{total}). Skipping.")
         except ValueError:
             warnings.append(f"Invalid page number '{part}'. Skipping.")
     return result, warnings
@@ -113,9 +111,7 @@ def execute(
     except PdfSiloError:
         raise
     except Exception as exc:
-        raise PdfProcessingError(
-            f"Could not rotate PDF '{path}': {exc}"
-        ) from exc
+        raise PdfProcessingError(f"Could not rotate PDF '{path}': {exc}") from exc
 
     return OperationResult(
         output_paths=[out_path],

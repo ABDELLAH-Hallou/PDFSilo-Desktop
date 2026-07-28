@@ -21,8 +21,8 @@ from pdfsilo.core import (
     OperationResult,
     PdfSiloError,
 )
-from pdfsilo.updater import UpdaterError
 from pdfsilo.ui.widgets.operation_panel import OperationPanel
+from pdfsilo.updater import UpdaterError
 
 log = logging.getLogger(__name__)
 
@@ -367,8 +367,7 @@ class OperationController(QObject):
     def _set_running(self, running: bool) -> None:
         if running:
             self._enabled_before_run = {
-                control: control.isEnabled()
-                for control in self.form_controls
+                control: control.isEnabled() for control in self.form_controls
             }
             for control in self.form_controls:
                 control.setEnabled(False)

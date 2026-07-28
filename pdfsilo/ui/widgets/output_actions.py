@@ -48,9 +48,7 @@ class OutputActions(QWidget):
 
     def set_output_path(self, output_path: Path | str | None) -> None:
         """Set the output used by both actions."""
-        self._output_path = (
-            Path(output_path) if output_path is not None else None
-        )
+        self._output_path = Path(output_path) if output_path is not None else None
         enabled = self._output_path is not None
         self.open_output_button.setEnabled(enabled)
         self.open_folder_button.setEnabled(enabled)
@@ -82,4 +80,3 @@ class OutputActions(QWidget):
         if not opened:
             self.openFailed.emit(f"Could not open '{folder}'.")
         return opened
-

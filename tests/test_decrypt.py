@@ -1,21 +1,24 @@
 """tests/test_decrypt.py — Unit tests for pdfsilo.operations.decrypt"""
 
-import pytest
 from pathlib import Path
 
 import fitz
 
-from pdfsilo.operations.decrypt import run, cli_run
+from pdfsilo.operations.decrypt import cli_run, run
 
 
 class TestDecryptRun:
-    def test_decrypts_successfully(self, encrypted_pdf: tuple[Path, str], tmp_path: Path):
+    def test_decrypts_successfully(
+        self, encrypted_pdf: tuple[Path, str], tmp_path: Path
+    ):
         enc_path, pw = encrypted_pdf
         out = tmp_path / "decrypted.pdf"
         assert run(str(enc_path), pw, str(out)) is True
         assert out.exists()
 
-    def test_output_is_not_encrypted(self, encrypted_pdf: tuple[Path, str], tmp_path: Path):
+    def test_output_is_not_encrypted(
+        self, encrypted_pdf: tuple[Path, str], tmp_path: Path
+    ):
         enc_path, pw = encrypted_pdf
         out = tmp_path / "decrypted.pdf"
         run(str(enc_path), pw, str(out))
@@ -23,7 +26,9 @@ class TestDecryptRun:
         assert not doc.is_encrypted
         doc.close()
 
-    def test_wrong_password_returns_false(self, encrypted_pdf: tuple[Path, str], tmp_path: Path):
+    def test_wrong_password_returns_false(
+        self, encrypted_pdf: tuple[Path, str], tmp_path: Path
+    ):
         enc_path, _ = encrypted_pdf
         out = tmp_path / "out.pdf"
         assert run(str(enc_path), "wrongpassword", str(out)) is False

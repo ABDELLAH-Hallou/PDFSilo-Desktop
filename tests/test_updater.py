@@ -26,9 +26,7 @@ from pdfsilo.updater.service import RELEASE_API_URL
 class FakeResponse(io.BytesIO):
     def __init__(self, content: bytes, *, length: bool = True) -> None:
         super().__init__(content)
-        self.headers = (
-            {"Content-Length": str(len(content))} if length else {}
-        )
+        self.headers = {"Content-Length": str(len(content))} if length else {}
 
 
 def _asset_name(version: str = "0.2.0") -> str:
@@ -69,8 +67,7 @@ def _release_payload(
     return {
         "tag_name": f"v{version}",
         "html_url": (
-            f"https://github.com/ABDELLAH-Hallou/PDFSilo/"
-            f"releases/tag/v{version}"
+            f"https://github.com/ABDELLAH-Hallou/PDFSilo/releases/tag/v{version}"
         ),
         "published_at": "2026-07-27T12:00:00Z",
         "assets": assets,
@@ -107,9 +104,7 @@ def test_check_returns_none_when_running_version_is_current() -> None:
     def opener(_request, **_kwargs):
         return FakeResponse(json.dumps(_release_payload()).encode())
 
-    assert (
-        check_for_update(current_version="0.2.0", opener=opener) is None
-    )
+    assert check_for_update(current_version="0.2.0", opener=opener) is None
 
 
 def test_check_wraps_network_errors_without_sensitive_context() -> None:

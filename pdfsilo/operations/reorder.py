@@ -32,8 +32,8 @@ from pdfsilo.core import (
     InvalidInputError,
     OperationResult,
     PdfProcessingError,
-    ProgressCallback,
     PdfSiloError,
+    ProgressCallback,
 )
 from pdfsilo.core.output import save_document
 from pdfsilo.core.progress import check_cancelled, report_progress
@@ -62,9 +62,7 @@ def _parse_order(order_str: str, total: int) -> list[int]:
             if 1 <= n <= total:
                 result.append(n - 1)  # convert to 0-indexed
             else:
-                raise InvalidInputError(
-                    f"Page {n} out of range (1–{total})."
-                )
+                raise InvalidInputError(f"Page {n} out of range (1–{total}).")
         except ValueError:
             raise InvalidInputError(f"Invalid page number '{part}'.") from None
     if not result:
@@ -110,9 +108,7 @@ def execute(
     except PdfSiloError:
         raise
     except Exception as exc:
-        raise PdfProcessingError(
-            f"Could not reorder PDF '{path}': {exc}"
-        ) from exc
+        raise PdfProcessingError(f"Could not reorder PDF '{path}': {exc}") from exc
 
     return OperationResult(
         output_paths=[out_path],

@@ -1,11 +1,10 @@
 """tests/test_encrypt.py — Unit tests for pdfsilo.operations.encrypt"""
 
-import pytest
 from pathlib import Path
 
 import fitz
 
-from pdfsilo.operations.encrypt import run, cli_run
+from pdfsilo.operations.encrypt import cli_run, run
 
 
 class TestEncryptRun:
@@ -52,37 +51,44 @@ class TestEncryptRun:
 
     def test_restrictions_require_owner_password(self, tmp_pdf: Path, tmp_path: Path):
         out = tmp_path / "restricted.pdf"
-        assert run(
-            str(tmp_pdf),
-            "user",
-            output_path=str(out),
-            allow_copy=False,
-        ) is False
+        assert (
+            run(
+                str(tmp_pdf),
+                "user",
+                output_path=str(out),
+                allow_copy=False,
+            )
+            is False
+        )
         assert not out.exists()
 
-    def test_restricted_owner_password_must_differ(
-        self, tmp_pdf: Path, tmp_path: Path
-    ):
+    def test_restricted_owner_password_must_differ(self, tmp_pdf: Path, tmp_path: Path):
         out = tmp_path / "restricted.pdf"
-        assert run(
-            str(tmp_pdf),
-            "same",
-            owner_password="same",
-            output_path=str(out),
-            allow_copy=False,
-        ) is False
+        assert (
+            run(
+                str(tmp_pdf),
+                "same",
+                owner_password="same",
+                output_path=str(out),
+                allow_copy=False,
+            )
+            is False
+        )
 
     def test_user_authentication_observes_restrictions(
         self, tmp_pdf: Path, tmp_path: Path
     ):
         out = tmp_path / "restricted.pdf"
-        assert run(
-            str(tmp_pdf),
-            "user",
-            owner_password="owner",
-            output_path=str(out),
-            allow_copy=False,
-        ) is True
+        assert (
+            run(
+                str(tmp_pdf),
+                "user",
+                owner_password="owner",
+                output_path=str(out),
+                allow_copy=False,
+            )
+            is True
+        )
 
         with fitz.open(str(out)) as doc:
             assert doc.authenticate("user") != 0

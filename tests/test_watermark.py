@@ -1,11 +1,11 @@
 """tests/test_watermark.py — Unit tests for pdfsilo.operations.watermark"""
 
-import pytest
 from pathlib import Path
 
 import fitz
+import pytest
 
-from pdfsilo.operations.watermark import run, cli_run, parse_color
+from pdfsilo.operations.watermark import cli_run, parse_color, run
 
 
 class TestParseColor:
@@ -52,38 +52,56 @@ class TestWatermarkRun:
 
     def test_custom_opacity_and_angle(self, tmp_pdf: Path, tmp_path: Path):
         out = tmp_path / "wm.pdf"
-        assert run(str(tmp_pdf), "SAMPLE", output_path=str(out),
-                   opacity=0.5, angle=30, font_size=40) is True
+        assert (
+            run(
+                str(tmp_pdf),
+                "SAMPLE",
+                output_path=str(out),
+                opacity=0.5,
+                angle=30,
+                font_size=40,
+            )
+            is True
+        )
 
     @pytest.mark.parametrize("opacity", [-0.1, 1.1, float("nan")])
     def test_invalid_opacity_returns_false(
         self, tmp_pdf: Path, tmp_path: Path, opacity: float
     ):
-        assert run(
-            str(tmp_pdf),
-            "X",
-            output_path=str(tmp_path / "out.pdf"),
-            opacity=opacity,
-        ) is False
+        assert (
+            run(
+                str(tmp_pdf),
+                "X",
+                output_path=str(tmp_path / "out.pdf"),
+                opacity=opacity,
+            )
+            is False
+        )
 
     @pytest.mark.parametrize("font_size", [0, -1, float("inf")])
     def test_invalid_font_size_returns_false(
         self, tmp_pdf: Path, tmp_path: Path, font_size: float
     ):
-        assert run(
-            str(tmp_pdf),
-            "X",
-            output_path=str(tmp_path / "out.pdf"),
-            font_size=font_size,
-        ) is False
+        assert (
+            run(
+                str(tmp_pdf),
+                "X",
+                output_path=str(tmp_path / "out.pdf"),
+                font_size=font_size,
+            )
+            is False
+        )
 
     def test_non_finite_angle_returns_false(self, tmp_pdf: Path, tmp_path: Path):
-        assert run(
-            str(tmp_pdf),
-            "X",
-            output_path=str(tmp_path / "out.pdf"),
-            angle=float("nan"),
-        ) is False
+        assert (
+            run(
+                str(tmp_pdf),
+                "X",
+                output_path=str(tmp_path / "out.pdf"),
+                angle=float("nan"),
+            )
+            is False
+        )
 
 
 class TestWatermarkCliRun:

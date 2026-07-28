@@ -31,6 +31,7 @@ MANIFEST
 #   before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
+!pysidedeploy.spec
 
 # Installer logs
 pip-log.txt
@@ -153,6 +154,7 @@ activemq-data/
 .venv
 env/
 venv/
+venv-deploy/
 ENV/
 env.bak/
 venv.bak/
@@ -217,3 +219,8 @@ __marimo__/
 
 # pdfs
 *.pdf
+
+# Generated Windows deployment assets
+packaging/windows/pdfsilo.ico
+pdfsilo/ui/deployment/
+nuitka-crash-report.xml

@@ -65,8 +65,7 @@ def test_update_preferences_are_opt_in_and_allowlisted(
     assert checkbox is not None
     assert checkbox.isChecked() is False
     descriptions = [
-        label.text()
-        for label in checkbox.parentWidget().findChildren(QLabel)
+        label.text() for label in checkbox.parentWidget().findChildren(QLabel)
     ]
     assert any("GitHub" in text for text in descriptions)
 
@@ -90,10 +89,13 @@ def test_restore_defaults_removes_update_history(update_settings) -> None:
     defaults = UiPreferences()
     defaults.save(update_settings)
 
-    assert update_settings.value(
-        CHECK_UPDATES_AUTOMATICALLY_SETTING,
-        type=bool,
-    ) is False
+    assert (
+        update_settings.value(
+            CHECK_UPDATES_AUTOMATICALLY_SETTING,
+            type=bool,
+        )
+        is False
+    )
     assert not update_settings.contains(LAST_UPDATE_CHECK_SETTING)
     assert not update_settings.contains(SKIPPED_UPDATE_VERSION_SETTING)
 
@@ -127,9 +129,7 @@ def test_automatic_update_throttle(update_settings, qtbot) -> None:
 
     window._preferences = UiPreferences(
         check_updates_automatically=True,
-        last_update_check=(
-            datetime.now(UTC) - timedelta(hours=25)
-        ).isoformat(),
+        last_update_check=(datetime.now(UTC) - timedelta(hours=25)).isoformat(),
     )
     assert window._automatic_update_check_due() is True
 
@@ -186,7 +186,10 @@ def test_manual_available_update_uses_download_dialog(
     window._update_check_succeeded(_update_info())
     dialog = window.findChild(UpdateDialog, "updateDialog")
     assert dialog is not None
-    assert "SHA-256" in dialog.findChild(
-        type(dialog.status_label),
-        "updateDialogDescription",
-    ).text()
+    assert (
+        "SHA-256"
+        in dialog.findChild(
+            type(dialog.status_label),
+            "updateDialogDescription",
+        ).text()
+    )

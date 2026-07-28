@@ -1,11 +1,10 @@
 """tests/test_reorder.py — Unit tests for pdfsilo.operations.reorder"""
 
-import pytest
 from pathlib import Path
 
 import fitz
 
-from pdfsilo.operations.reorder import run, cli_run, parse_order
+from pdfsilo.operations.reorder import cli_run, parse_order, run
 
 
 class TestParseOrder:

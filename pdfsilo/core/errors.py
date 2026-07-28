@@ -23,4 +23,3 @@ class PdfProcessingError(PdfSiloError):
 
 class OperationCancelledError(PdfSiloError):
     """The caller cancelled an operation before it completed."""
-

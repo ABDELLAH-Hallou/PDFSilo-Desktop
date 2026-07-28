@@ -21,8 +21,7 @@ from pdfsilo.utils import IMAGE_EXTENSIONS
 
 PDF_FILTER = "PDF documents (*.pdf);;All files (*)"
 IMAGE_FILTER = (
-    "Images (*.png *.jpg *.jpeg *.bmp *.tif *.tiff *.gif *.webp);;"
-    "All files (*)"
+    "Images (*.png *.jpg *.jpeg *.bmp *.tif *.tiff *.gif *.webp);;All files (*)"
 )
 
 
@@ -67,9 +66,7 @@ class OrderedFilesPicker(PathPicker):
         self.file_list.setSelectionMode(
             QAbstractItemView.SelectionMode.ExtendedSelection
         )
-        self.file_list.setDragDropMode(
-            QAbstractItemView.DragDropMode.InternalMove
-        )
+        self.file_list.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.file_list.setDefaultDropAction(Qt.DropAction.MoveAction)
         self.file_list.setDropIndicatorShown(True)
 
@@ -82,9 +79,7 @@ class OrderedFilesPicker(PathPicker):
         self.add_button.setIcon(
             self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder)
         )
-        self.add_button.setAccessibleName(
-            f"Add {label.replace('&', '').lower()}"
-        )
+        self.add_button.setAccessibleName(f"Add {label.replace('&', '').lower()}")
 
         self.remove_button = QPushButton("&Remove", self)
         self.remove_button.setObjectName("removeFilesButton")
@@ -113,9 +108,7 @@ class OrderedFilesPicker(PathPicker):
         self.move_up_button.clicked.connect(lambda: self._move_selected(-1))
         self.move_down_button.clicked.connect(lambda: self._move_selected(1))
         self.clear_button.clicked.connect(self.clear)
-        self.file_list.itemSelectionChanged.connect(
-            self._update_action_states
-        )
+        self.file_list.itemSelectionChanged.connect(self._update_action_states)
         self.file_list.model().rowsMoved.connect(self._order_changed)
         self._update_action_states()
 
@@ -175,8 +168,7 @@ class OrderedFilesPicker(PathPicker):
     @Slot()
     def remove_selected(self) -> None:
         selected_rows = {
-            self.file_list.row(item)
-            for item in self.file_list.selectedItems()
+            self.file_list.row(item) for item in self.file_list.selectedItems()
         }
         if not selected_rows:
             return

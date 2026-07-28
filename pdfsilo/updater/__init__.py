@@ -4,8 +4,8 @@ from pdfsilo.updater.errors import (
     UpdateApplyError,
     UpdateCheckFailedError,
     UpdateDownloadError,
-    UpdateVerificationError,
     UpdaterError,
+    UpdateVerificationError,
 )
 from pdfsilo.updater.models import UpdateInfo
 from pdfsilo.updater.service import (

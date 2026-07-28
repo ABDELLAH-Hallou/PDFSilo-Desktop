@@ -1,7 +1,5 @@
 """Mocked UI-to-service contracts and keyboard/CLI integration coverage."""
 
-from pathlib import Path
-
 import pytest
 
 pytest.importorskip("PySide6")
@@ -32,10 +30,7 @@ from pdfsilo.ui.pages import (
     OperationPage,
 )
 
-DEFINITIONS = {
-    definition.key: definition
-    for definition in PAGE_DEFINITIONS
-}
+DEFINITIONS = {definition.key: definition for definition in PAGE_DEFINITIONS}
 
 OPERATION_MODULES = {
     "merge": concat,
@@ -319,11 +314,7 @@ def test_operation_page_sends_exact_parameters_through_worker(
             "cancelled": False,
         }
     ]
-    expected_state = (
-        "review"
-        if page._staged_result is not None
-        else "success"
-    )
+    expected_state = "review" if page._staged_result is not None else "success"
     assert page.panel.result.property("resultState") == expected_state
 
 

@@ -4,7 +4,24 @@ PDFSilo/
 |-- PYSIDE6_MIGRATION_PLAN.md
 |-- LICENSE
 |-- pyproject.toml
+|-- pysidedeploy.spec
 |-- requirements.txt
+|-- .github/
+|   `-- workflows/
+|       |-- ci.yml
+|       `-- release.yml
+|-- packaging/
+|   `-- windows/
+|       |-- PDFSilo.iss
+|       `-- README.md
+|-- scripts/
+|   |-- build_windows.ps1
+|   |-- build_windows_installer.ps1
+|   |-- create_release_manifest.py
+|   |-- generate_windows_icon.py
+|   |-- sign_windows_artifacts.ps1
+|   |-- test_windows_package.ps1
+|   `-- validate_release.py
 |-- Fixes/
 |   `-- Things.to.fix.md and supporting review images
 |-- New Features/
@@ -18,7 +35,9 @@ PDFSilo/
 |       |-- 0003-staged-and-atomic-output-publication.md
 |       |-- 0004-allowlisted-non-sensitive-settings.md
 |       |-- 0005-theme-system-and-png-identity.md
-|       `-- 0006-opt-in-update-checks-and-user-initiated-install.md
+|       |-- 0006-opt-in-update-checks-and-user-initiated-install.md
+|       |-- 0007-standalone-windows-build-and-per-user-installer.md
+|       `-- 0008-ci-matrix-and-tag-gated-signed-releases.md
 |-- pdfsilo/
 |   |-- __init__.py
 |   |-- __main__.py
@@ -53,6 +72,7 @@ PDFSilo/
 |       |-- main.py
 |       |-- main_window.py
 |       |-- metadata.py
+|       |-- package_self_test.py
 |       |-- preferences.py
 |       |-- theme.py
 |       |-- thumbnails.py
@@ -90,4 +110,4 @@ PDFSilo/
 |           `-- update_banner.py
 `-- tests/
     `-- core, CLI, operation, worker, widget, theme, settings, security,
-        updater, contract, and real-PDF integration tests
+        updater, packaging, CI/release, contract, and real-PDF integration tests

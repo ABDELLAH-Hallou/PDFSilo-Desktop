@@ -4,7 +4,7 @@ _Drafted: 27 July 2026_
 
 ## Implementation status
 
-_Updated: 27 July 2026_
+_Updated: 28 July 2026_
 
 The safe notification and verified-download boundary is implemented:
 
@@ -25,6 +25,12 @@ The safe notification and verified-download boundary is implemented:
 - [x] `pdfsilo update --check` exposes headless CLI parity.
 - [x] Network-free tests cover the updater, opt-in boundary, settings, workers,
       banner/dialog, checksum deletion, and CLI.
+- [x] Phase 13 now defines the standalone Windows artifact, per-user Inno
+      installer layout, SHA-256 sidecars, and a separate Authenticode
+      sign/verify release step in ADR 0007.
+- [x] Phase 14 provides a tag-only Windows release workflow that fails closed
+      without signing secrets, verifies Authenticode, and publishes SHA-256
+      plus signature metadata as defined in ADR 0008.
 - [ ] Signature verification awaits signed Phase 13 artifacts.
 - [ ] Platform **Install and restart** remains disabled until signature
       verification and installer arguments are defined per platform.

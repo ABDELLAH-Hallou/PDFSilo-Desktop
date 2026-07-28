@@ -29,8 +29,8 @@ from pdfsilo.core import (
     InvalidInputError,
     OperationResult,
     PdfProcessingError,
-    ProgressCallback,
     PdfSiloError,
+    ProgressCallback,
 )
 from pdfsilo.core.errors import OutputWriteError
 from pdfsilo.core.output import (
@@ -85,9 +85,7 @@ def execute(
     """Extract embedded images and return structured output information."""
     path = require_pdf(input_path)
     if fmt not in ("png", "jpeg"):
-        raise InvalidInputError(
-            f"Unsupported format '{fmt}'. Choose 'png' or 'jpeg'."
-        )
+        raise InvalidInputError(f"Unsupported format '{fmt}'. Choose 'png' or 'jpeg'.")
 
     out_dir = output_folder or path.parent / f"{path.stem}_images"
     warnings = []
@@ -133,9 +131,7 @@ def execute(
                             warnings,
                         )
                         ext = fmt
-                        out_name = (
-                            f"p{page_num:03d}_img{img_index:02d}.{ext}"
-                        )
+                        out_name = f"p{page_num:03d}_img{img_index:02d}.{ext}"
                         staged_path = staging_dir / out_name
                         write_bytes(staged_path, image_bytes)
                         staged_paths.append(staged_path)
@@ -143,9 +139,7 @@ def execute(
                         raise
                     except Exception as exc:
                         failed_images += 1
-                        warnings.append(
-                            f"Could not extract image xref {xref}: {exc}"
-                        )
+                        warnings.append(f"Could not extract image xref {xref}: {exc}")
 
                     report_progress(
                         progress,

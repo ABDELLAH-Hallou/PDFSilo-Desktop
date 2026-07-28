@@ -957,8 +957,7 @@ def _replace_theme_colors(
 ) -> str:
     pattern = re.compile(
         "|".join(
-            re.escape(color)
-            for color in sorted(replacements, key=len, reverse=True)
+            re.escape(color) for color in sorted(replacements, key=len, reverse=True)
         ),
         re.IGNORECASE,
     )
@@ -1105,8 +1104,7 @@ class ThemeManager(QObject):
             if requested_mode is not ThemeMode.SYSTEM
             else (
                 ThemeMode.DARK
-                if self.application.styleHints().colorScheme()
-                is Qt.ColorScheme.Dark
+                if self.application.styleHints().colorScheme() is Qt.ColorScheme.Dark
                 else ThemeMode.LIGHT
             )
         )
@@ -1137,9 +1135,7 @@ class ThemeManager(QObject):
         self._effective_mode = effective_mode
         self.application.setPalette(_application_palette(effective_mode))
         stylesheet = (
-            DARK_STYLESHEET
-            if effective_mode is ThemeMode.DARK
-            else LIGHT_STYLESHEET
+            DARK_STYLESHEET if effective_mode is ThemeMode.DARK else LIGHT_STYLESHEET
         )
         if self.application.styleSheet() != stylesheet:
             self.application.setStyleSheet(stylesheet)

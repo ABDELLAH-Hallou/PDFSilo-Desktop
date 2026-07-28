@@ -1,15 +1,15 @@
 """tests/test_images_to_pdf.py — Unit tests for pdfsilo.operations.images_to_pdf"""
 
-import pytest
 from pathlib import Path
 
 import fitz
+import pytest
 
 from pdfsilo.operations.images_to_pdf import cli_run, execute, run
-from pdfsilo.utils import get_sorted_image_files, IMAGE_EXTENSIONS
-
+from pdfsilo.utils import IMAGE_EXTENSIONS, get_sorted_image_files
 
 # ── get_sorted_image_files (utility) ─────────────────────────────────────────
+
 
 class TestGetSortedImageFiles:
     def test_returns_sorted_by_number(self, tmp_image_folder: Path):
@@ -44,13 +44,16 @@ class TestGetSortedImageFiles:
 
 # ── run — happy paths ─────────────────────────────────────────────────────────
 
+
 class TestImagesToPdfRun:
     def test_creates_output_file(self, tmp_image_folder: Path, tmp_path: Path):
         out = tmp_path / "result.pdf"
         assert run(str(tmp_image_folder), output_path=str(out)) is True
         assert out.exists()
 
-    def test_page_count_equals_image_count(self, tmp_image_folder: Path, tmp_path: Path):
+    def test_page_count_equals_image_count(
+        self, tmp_image_folder: Path, tmp_path: Path
+    ):
         """3 images → 3 pages in the output PDF."""
         out = tmp_path / "result.pdf"
         run(str(tmp_image_folder), output_path=str(out))
@@ -125,6 +128,7 @@ class TestImagesToPdfRun:
 
 # ── run — error / edge cases ──────────────────────────────────────────────────
 
+
 class TestImagesToPdfRunErrors:
     def test_nonexistent_folder_returns_false(self, tmp_path: Path):
         assert run(str(tmp_path / "ghost_folder")) is False
@@ -147,30 +151,40 @@ class TestImagesToPdfRunErrors:
 
     def test_invalid_page_size_raises(self, tmp_image_folder: Path, tmp_path: Path):
         with pytest.raises(ValueError, match="Unsupported page size"):
-            run(str(tmp_image_folder), output_path=str(tmp_path / "out.pdf"),
-                target_size="A3")
+            run(
+                str(tmp_image_folder),
+                output_path=str(tmp_path / "out.pdf"),
+                target_size="A3",
+            )
 
     @pytest.mark.parametrize("margin", [-1, float("nan"), float("inf")])
     def test_invalid_margin_returns_false(
         self, tmp_image_folder: Path, tmp_path: Path, margin: float
     ):
-        assert run(
-            str(tmp_image_folder),
-            output_path=str(tmp_path / "out.pdf"),
-            margin=margin,
-        ) is False
+        assert (
+            run(
+                str(tmp_image_folder),
+                output_path=str(tmp_path / "out.pdf"),
+                margin=margin,
+            )
+            is False
+        )
 
     def test_margin_must_leave_drawable_area(
         self, tmp_image_folder: Path, tmp_path: Path
     ):
-        assert run(
-            str(tmp_image_folder),
-            output_path=str(tmp_path / "out.pdf"),
-            margin=298,
-        ) is False
+        assert (
+            run(
+                str(tmp_image_folder),
+                output_path=str(tmp_path / "out.pdf"),
+                margin=298,
+            )
+            is False
+        )
 
 
 # ── cli_run ───────────────────────────────────────────────────────────────────
+
 
 class TestImagesToPdfCliRun:
     def test_cli_delegates_correctly(self, tmp_image_folder: Path, tmp_path: Path):

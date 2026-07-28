@@ -28,8 +28,8 @@ from pdfsilo.core import (
     InvalidInputError,
     OperationResult,
     PdfProcessingError,
-    ProgressCallback,
     PdfSiloError,
+    ProgressCallback,
 )
 from pdfsilo.core.output import save_document
 from pdfsilo.core.progress import check_cancelled, report_progress
@@ -101,8 +101,7 @@ def execute(
         processed_files=1,
         metadata={"start_page": start, "end_page": end},
         message=(
-            f"Extracted pages {start}–{end} to '{out_path}' "
-            f"({extracted_pages} pages)."
+            f"Extracted pages {start}–{end} to '{out_path}' ({extracted_pages} pages)."
         ),
     )
 

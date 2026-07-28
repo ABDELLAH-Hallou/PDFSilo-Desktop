@@ -41,15 +41,11 @@ class PasswordField(QWidget):
         self.setFocusProxy(self.line_edit)
 
         self.visibility_button = QToolButton(self)
-        self.visibility_button.setObjectName(
-            f"{line_edit_object_name}VisibilityButton"
-        )
+        self.visibility_button.setObjectName(f"{line_edit_object_name}VisibilityButton")
         self.visibility_button.setText("Show")
         self.visibility_button.setCheckable(True)
         self.visibility_button.setAccessibleName(f"Show {accessible_name}")
-        self.visibility_button.setToolTip(
-            "Show or hide this password on screen"
-        )
+        self.visibility_button.setToolTip("Show or hide this password on screen")
         self.visibility_button.toggled.connect(self.set_password_visible)
 
         layout.addWidget(self.line_edit, 1)
@@ -62,10 +58,7 @@ class PasswordField(QWidget):
         self.line_edit.setText(text)
 
     def is_password_visible(self) -> bool:
-        return (
-            self.line_edit.echoMode()
-            == QLineEdit.EchoMode.Normal
-        )
+        return self.line_edit.echoMode() == QLineEdit.EchoMode.Normal
 
     @Slot()
     def clear(self) -> None:
@@ -76,14 +69,11 @@ class PasswordField(QWidget):
     @Slot(bool)
     def set_password_visible(self, visible: bool) -> None:
         self.line_edit.setEchoMode(
-            QLineEdit.EchoMode.Normal
-            if visible
-            else QLineEdit.EchoMode.Password
+            QLineEdit.EchoMode.Normal if visible else QLineEdit.EchoMode.Password
         )
         self.visibility_button.setText("Hide" if visible else "Show")
         self.visibility_button.setAccessibleName(
-            ("Hide" if visible else "Show")
-            + f" {self.line_edit.accessibleName()}"
+            ("Hide" if visible else "Show") + f" {self.line_edit.accessibleName()}"
         )
         self.visibilityChanged.emit(visible)
 

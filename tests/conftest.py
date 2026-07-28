@@ -5,9 +5,10 @@ All fixtures create real in-memory PDFs using PyMuPDF so that every
 operation module can be exercised without needing external PDF files.
 """
 
-import pytest
-import fitz
 from pathlib import Path
+
+import fitz
+import pytest
 
 
 def _make_pdf(path: Path, num_pages: int = 1, text: str = "Test page") -> Path:
@@ -107,11 +108,14 @@ def tmp_image_folder(tmp_path: Path) -> Path:
     """A folder with three numbered PNG images (image_001.png … image_003.png)."""
     folder = tmp_path / "images"
     folder.mkdir()
-    colors = [(220, 20, 60), (34, 139, 34), (70, 130, 180)]  # crimson, forest-green, steel-blue
+    colors = [
+        (220, 20, 60),
+        (34, 139, 34),
+        (70, 130, 180),
+    ]  # crimson, forest-green, steel-blue
     for i, color in enumerate(colors, start=1):
         p = folder / f"image_{i:03d}.png"
         pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 64, 64))
         pix.set_rect(fitz.IRect(0, 0, 64, 64), color)
         pix.save(str(p))
     return folder
-

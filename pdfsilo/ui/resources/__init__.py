@@ -45,11 +45,7 @@ def brand_logo_pixmap(
 
 def sidebar_toggle_icon(sidebar_visible: bool) -> QIcon:
     """Return the action icon for hiding or showing the sidebar."""
-    path = (
-        SIDEBAR_HIDE_ICON_PATH
-        if sidebar_visible
-        else SIDEBAR_SHOW_ICON_PATH
-    )
+    path = SIDEBAR_HIDE_ICON_PATH if sidebar_visible else SIDEBAR_SHOW_ICON_PATH
     return QIcon(str(path))
 
 

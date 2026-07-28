@@ -65,8 +65,7 @@ class UpdateBanner(QFrame):
     def show_update(self, info: UpdateInfo) -> None:
         self._info = info
         self.message_label.setText(
-            f"PDFSilo {info.version} is available "
-            f"(you have {__version__})."
+            f"PDFSilo {info.version} is available (you have {__version__})."
         )
         self.show()
 

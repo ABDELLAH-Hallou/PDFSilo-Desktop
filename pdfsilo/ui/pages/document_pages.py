@@ -50,9 +50,7 @@ class MergePage(OperationPage):
         self.input_picker.pathChanged.connect(self._set_default_output)
         self.finish_setup()
         assert self.pdf_preview is not None
-        self.pdf_preview.set_target_page_size(
-            self.target_size_combo.currentText()
-        )
+        self.pdf_preview.set_target_page_size(self.target_size_combo.currentText())
         self.target_size_combo.currentTextChanged.connect(
             self.pdf_preview.set_target_page_size
         )
@@ -84,9 +82,7 @@ class SplitPage(OperationPage):
         )
         self.input_picker.pathChanged.connect(
             lambda source: (
-                self.output_picker.set_path(
-                    source.parent / f"{source.stem}_pages"
-                )
+                self.output_picker.set_path(source.parent / f"{source.stem}_pages")
                 if source is not None and self.output_picker.path() is None
                 else None
             )

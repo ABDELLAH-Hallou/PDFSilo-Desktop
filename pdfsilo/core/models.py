@@ -20,4 +20,3 @@ class OperationResult:
     resulting_size: int | None = None
     elapsed_seconds: float | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
-

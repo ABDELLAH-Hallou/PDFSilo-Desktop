@@ -23,8 +23,8 @@ from pdfsilo.core import (
     CancellationCheck,
     OperationResult,
     PdfProcessingError,
-    ProgressCallback,
     PdfSiloError,
+    ProgressCallback,
 )
 from pdfsilo.core.errors import OutputWriteError
 from pdfsilo.core.output import (
@@ -75,9 +75,7 @@ def execute(
                             from_page=page_num,
                             to_page=page_num,
                         )
-                        staged_path = (
-                            staging_dir / f"page_{page_num + 1:03d}.pdf"
-                        )
+                        staged_path = staging_dir / f"page_{page_num + 1:03d}.pdf"
                         save_document(out_doc, staged_path)
                         staged_paths.append(staged_path)
                     finally:
@@ -96,9 +94,7 @@ def execute(
     except PdfSiloError:
         raise
     except Exception as exc:
-        raise PdfProcessingError(
-            f"Could not split PDF '{path}': {exc}"
-        ) from exc
+        raise PdfProcessingError(f"Could not split PDF '{path}': {exc}") from exc
 
     return OperationResult(
         output_paths=output_paths,

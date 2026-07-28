@@ -12,6 +12,8 @@ rewriting the original rationale.
 | [0004](0004-allowlisted-non-sensitive-settings.md) | Accepted | Persist only allowlisted non-sensitive UI state |
 | [0005](0005-theme-system-and-png-identity.md) | Accepted | Support system/light/charcoal-dark themes and use the supplied PNG identity |
 | [0006](0006-opt-in-update-checks-and-user-initiated-install.md) | Accepted | Keep update checks opt-in and verify downloads before user-initiated installation |
+| [0007](0007-standalone-windows-build-and-per-user-installer.md) | Accepted | Ship an inspectable standalone Windows build before one-file packaging |
+| [0008](0008-ci-matrix-and-tag-gated-signed-releases.md) | Accepted | Test across supported runtimes and publish only signed, tag-gated native releases |
 
 The implementation overview lives in
 [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md).

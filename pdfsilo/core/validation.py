@@ -21,4 +21,3 @@ def require_directory(path: Path) -> Path:
     if not path.is_dir():
         raise InvalidInputError(f"'{path}' is not a directory.")
     return path
-

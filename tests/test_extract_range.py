@@ -1,11 +1,10 @@
 """tests/test_extract_range.py — Unit tests for pdfsilo.operations.extract_range"""
 
-import pytest
 from pathlib import Path
 
 import fitz
 
-from pdfsilo.operations.extract_range import run, cli_run
+from pdfsilo.operations.extract_range import cli_run, run
 
 
 class TestExtractRangeRun:

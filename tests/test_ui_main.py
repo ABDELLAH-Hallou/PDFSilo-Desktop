@@ -6,7 +6,7 @@ import pytest
 
 pytest.importorskip("PySide6")
 
-from PySide6.QtCore import QEventLoop, QSettings, QTimer, QSize
+from PySide6.QtCore import QEventLoop, QSettings, QSize, QTimer
 from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
@@ -39,8 +39,8 @@ from pdfsilo.ui.metadata import (
     ORGANIZATION_DOMAIN,
     ORGANIZATION_NAME,
 )
-from pdfsilo.ui.resources import APPLICATION_ICON_PATH, application_icon
 from pdfsilo.ui.pages import PAGE_DEFINITIONS
+from pdfsilo.ui.resources import APPLICATION_ICON_PATH, application_icon
 from pdfsilo.ui.theme import (
     APPLICATION_STYLESHEET,
     DARK_STYLESHEET,
@@ -150,8 +150,7 @@ def test_application_menus_shortcuts_and_header_actions(qtbot, ui_settings):
     qtbot.addWidget(window)
 
     menu_titles = {
-        menu.title().replace("&", "")
-        for menu in window.menuBar().findChildren(QMenu)
+        menu.title().replace("&", "") for menu in window.menuBar().findChildren(QMenu)
     }
     assert {"File", "Navigate", "Tools", "Help"} <= menu_titles
 
@@ -170,10 +169,7 @@ def test_application_menus_shortcuts_and_header_actions(qtbot, ui_settings):
         if action.objectName()
     }
     assert expected_actions <= actions.keys()
-    assert all(
-        not actions[name].shortcut().isEmpty()
-        for name in expected_actions
-    )
+    assert all(not actions[name].shortcut().isEmpty() for name in expected_actions)
     assert actions["homeAction"].shortcut() == QKeySequence("Ctrl+H")
     assert window.findChild(QToolButton, "settingsButton") is not None
     assert window.findChild(QToolButton, "helpButton") is not None
@@ -216,9 +212,7 @@ def test_window_settings_round_trip_is_allowlisted(qtbot, ui_settings):
     assert ui_settings.contains(STATE_SETTING)
     assert ui_settings.value(NAVIGATION_SETTING, type=int) == 4
     assert all("password" not in key.lower() for key in ui_settings.allKeys())
-    assert "private" not in Path(ui_settings.fileName()).read_text(
-        encoding="utf-8"
-    )
+    assert "private" not in Path(ui_settings.fileName()).read_text(encoding="utf-8")
 
     restored = MainWindow(ui_settings)
     qtbot.addWidget(restored)

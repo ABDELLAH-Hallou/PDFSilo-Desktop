@@ -39,4 +39,3 @@ class OperationPlaceholderPage(QWidget):
         layout.addWidget(title)
         layout.addWidget(description)
         layout.addWidget(availability)
-

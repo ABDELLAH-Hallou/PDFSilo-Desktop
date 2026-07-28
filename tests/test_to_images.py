@@ -1,9 +1,8 @@
 """tests/test_to_images.py — Unit tests for pdfsilo.operations.to_images"""
 
-import pytest
 from pathlib import Path
 
-from pdfsilo.operations.to_images import run, cli_run
+from pdfsilo.operations.to_images import cli_run, run
 
 
 class TestToImagesRun:

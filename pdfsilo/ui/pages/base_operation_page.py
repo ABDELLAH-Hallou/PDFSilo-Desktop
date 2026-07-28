@@ -11,8 +11,8 @@ from uuid import uuid4
 from PySide6.QtCore import QCoreApplication, Qt, Signal, Slot
 from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import (
-    QFrame,
     QFormLayout,
+    QFrame,
     QLabel,
     QMessageBox,
     QScrollArea,
@@ -23,13 +23,13 @@ from PySide6.QtWidgets import (
 
 from pdfsilo.core import OperationResult
 from pdfsilo.ui.pages.registry import PageDefinition
-from pdfsilo.ui.theme import SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XS
+from pdfsilo.ui.theme import SPACE_LG, SPACE_MD, SPACE_XS
 from pdfsilo.ui.widgets import (
+    MultiplePdfPicker,
     OperationPanel,
     OutputFilePicker,
     PathPicker,
     PdfPreview,
-    MultiplePdfPicker,
     SinglePdfPicker,
 )
 from pdfsilo.ui.workers import OperationCallable, OperationController
@@ -72,9 +72,7 @@ class OperationPage(QWidget):
         scroll.setObjectName("operationPageScrollArea")
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-        )
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         content = QWidget(scroll)
         content.setObjectName("operationPageContent")
@@ -133,9 +131,7 @@ class OperationPage(QWidget):
         self.form_layout.setFieldGrowthPolicy(
             QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow
         )
-        self.form_layout.setRowWrapPolicy(
-            QFormLayout.RowWrapPolicy.WrapLongRows
-        )
+        self.form_layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
         self.form_layout.setLabelAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
@@ -215,13 +211,9 @@ class OperationPage(QWidget):
         runner = self.controller.runner
         self.operation_panel.runRequested.connect(self._start_operation)
         self.operation_panel.saveRequested.connect(self._save_staged_output)
-        self.operation_panel.discardRequested.connect(
-            self._discard_staged_output
-        )
+        self.operation_panel.discardRequested.connect(self._discard_staged_output)
         runner.started.connect(
-            lambda: self.statusChanged.emit(
-                f"{self.definition.label} started."
-            )
+            lambda: self.statusChanged.emit(f"{self.definition.label} started.")
         )
         runner.progress.connect(self.progressChanged.emit)
         runner.progress.connect(
@@ -237,9 +229,7 @@ class OperationPage(QWidget):
         )
         runner.failed.connect(self._failed_or_cancelled)
         runner.cancelled.connect(
-            lambda: self.statusChanged.emit(
-                f"{self.definition.label} cancelled."
-            )
+            lambda: self.statusChanged.emit(f"{self.definition.label} cancelled.")
         )
         runner.cancelled.connect(self._failed_or_cancelled)
         runner.finished.connect(self.progressCleared.emit)
@@ -363,9 +353,7 @@ class OperationPage(QWidget):
         error = self.validation_error()
         self.validation_label.setText(error)
         self.validation_label.setVisible(bool(error))
-        self.operation_panel.set_can_run(
-            not error and not self.controller.is_running()
-        )
+        self.operation_panel.set_can_run(not error and not self.controller.is_running())
 
     @Slot()
     def _start_operation(self) -> None:
@@ -397,9 +385,7 @@ class OperationPage(QWidget):
             )
         if not self.controller.start(operation, *args, **kwargs):
             self._discard_staged_output()
-            self.statusChanged.emit(
-                f"{self.definition.label} is already running."
-            )
+            self.statusChanged.emit(f"{self.definition.label} is already running.")
 
     @Slot(object)
     def _operation_succeeded(self, result: OperationResult) -> None:
@@ -449,13 +435,11 @@ class OperationPage(QWidget):
             return replacement if value == source else value
         if isinstance(value, tuple):
             return tuple(
-                OperationPage._replace_path(item, source, replacement)
-                for item in value
+                OperationPage._replace_path(item, source, replacement) for item in value
             )
         if isinstance(value, list):
             return [
-                OperationPage._replace_path(item, source, replacement)
-                for item in value
+                OperationPage._replace_path(item, source, replacement) for item in value
             ]
         if isinstance(value, dict):
             return {
@@ -472,12 +456,8 @@ class OperationPage(QWidget):
             self.preview_card.show()
             self.operation_splitter.setSizes([620, 380])
         if not self.pdf_preview.property("stagedSaveSignalsConnected"):
-            self.pdf_preview.previewReady.connect(
-                self._staged_preview_finished
-            )
-            self.pdf_preview.previewFailed.connect(
-                self._staged_preview_finished
-            )
+            self.pdf_preview.previewReady.connect(self._staged_preview_finished)
+            self.pdf_preview.previewFailed.connect(self._staged_preview_finished)
             self.pdf_preview.setProperty("stagedSaveSignalsConnected", True)
         # PyMuPDF may briefly hold the staged file open on Windows. Saving is
         # enabled as soon as preview rendering closes the document.
@@ -510,10 +490,7 @@ class OperationPage(QWidget):
                     f"'{destination.name}' already exists.\n\n"
                     "Replace it with the reviewed result?"
                 ),
-                (
-                    QMessageBox.StandardButton.Yes
-                    | QMessageBox.StandardButton.Cancel
-                ),
+                (QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel),
                 QMessageBox.StandardButton.Cancel,
             )
             if choice is not QMessageBox.StandardButton.Yes:

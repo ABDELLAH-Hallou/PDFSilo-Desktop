@@ -6,7 +6,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Iterable
 
-from PySide6.QtCore import QMimeData, Qt, Signal
+from PySide6.QtCore import QMimeData, Signal
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -183,9 +183,7 @@ class PathPicker(QWidget):
     ) -> None:
         self._paths = paths
         if update_text:
-            self.line_edit.setText(
-                PATH_SEPARATOR.join(str(path) for path in paths)
-            )
+            self.line_edit.setText(PATH_SEPARATOR.join(str(path) for path in paths))
         valid, message = self._validate_paths(paths)
         self._set_validation_state("valid" if valid else "invalid", message)
         self.pathsChanged.emit(self.paths())
@@ -221,7 +219,10 @@ class PathPicker(QWidget):
             return False, "Choose exactly one path."
 
         for path in paths:
-            if self.allowed_suffixes and path.suffix.lower() not in self.allowed_suffixes:
+            if (
+                self.allowed_suffixes
+                and path.suffix.lower() not in self.allowed_suffixes
+            ):
                 allowed = ", ".join(sorted(self.allowed_suffixes))
                 return False, f"'{path.name}' must use one of: {allowed}."
 

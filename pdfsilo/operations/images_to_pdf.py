@@ -39,8 +39,8 @@ from pdfsilo.core import (
     InvalidInputError,
     OperationResult,
     PdfProcessingError,
-    ProgressCallback,
     PdfSiloError,
+    ProgressCallback,
 )
 from pdfsilo.core.output import save_document
 from pdfsilo.core.progress import check_cancelled, report_progress
@@ -100,20 +100,14 @@ def execute(
     folder_path: Path | None = None
     if image_paths is None:
         if folder is None:
-            raise InvalidInputError(
-                "Choose at least one image or an image folder."
-            )
+            raise InvalidInputError("Choose at least one image or an image folder.")
         folder_path = require_directory(folder)
-        image_files = [
-            Path(path) for path in get_sorted_image_files(folder_path)
-        ]
+        image_files = [Path(path) for path in get_sorted_image_files(folder_path)]
     else:
         image_files = [Path(path) for path in image_paths]
         for image_path in image_files:
             if not image_path.is_file():
-                raise InvalidInputError(
-                    f"Image file '{image_path}' was not found."
-                )
+                raise InvalidInputError(f"Image file '{image_path}' was not found.")
             if image_path.suffix.lower() not in IMAGE_EXTENSIONS:
                 raise InvalidInputError(
                     f"Unsupported image format: '{image_path.suffix}'."
@@ -176,7 +170,9 @@ def execute(
                 # Scale to fill the page minus margins, preserving aspect ratio
                 avail_w = pw - 2 * margin
                 avail_h = ph - 2 * margin
-                scale = min(avail_w / nat_w, avail_h / nat_h) if (nat_w and nat_h) else 1.0
+                scale = (
+                    min(avail_w / nat_w, avail_h / nat_h) if (nat_w and nat_h) else 1.0
+                )
                 draw_w = nat_w * scale
                 draw_h = nat_h * scale
             else:
@@ -209,9 +205,7 @@ def execute(
         raise
     except Exception as exc:
         source_description = (
-            f"'{folder_path}'"
-            if folder_path is not None
-            else "the selected images"
+            f"'{folder_path}'" if folder_path is not None else "the selected images"
         )
         raise PdfProcessingError(
             f"Could not create PDF from {source_description}: {exc}"

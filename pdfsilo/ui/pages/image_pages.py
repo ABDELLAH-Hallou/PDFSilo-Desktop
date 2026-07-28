@@ -102,9 +102,7 @@ class ToImagesPage(OperationPage):
         self.add_option("&Resolution", self.dpi_spin)
         self.input_picker.pathChanged.connect(
             lambda source: (
-                self.output_picker.set_path(
-                    source.parent / f"{source.stem}_rendered"
-                )
+                self.output_picker.set_path(source.parent / f"{source.stem}_rendered")
                 if source is not None and self.output_picker.path() is None
                 else None
             )
@@ -193,9 +191,7 @@ class ExtractImagesPage(OperationPage):
         self.add_option("Image &format", self.format_combo)
         self.input_picker.pathChanged.connect(
             lambda source: (
-                self.output_picker.set_path(
-                    source.parent / f"{source.stem}_images"
-                )
+                self.output_picker.set_path(source.parent / f"{source.stem}_images")
                 if source is not None and self.output_picker.path() is None
                 else None
             )

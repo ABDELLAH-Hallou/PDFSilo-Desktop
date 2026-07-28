@@ -22,7 +22,6 @@ from pdfsilo.operations.decrypt import execute as decrypt_pdf
 from pdfsilo.operations.rotate import execute as rotate_pdf
 from pdfsilo.operations.split import execute as split_pdf
 
-
 OPERATION_MODULES = [
     "add_images",
     "compress",

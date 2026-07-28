@@ -1,11 +1,10 @@
 """tests/test_compress.py — Unit tests for pdfsilo.operations.compress"""
 
-import pytest
 from pathlib import Path
 
 import fitz
 
-from pdfsilo.operations.compress import run, cli_run
+from pdfsilo.operations.compress import cli_run, run
 
 
 class TestCompressRun:
@@ -53,11 +52,14 @@ class TestCompressRun:
 
         monkeypatch.setattr(fitz.Document, "rewrite_images", rewrite_images)
 
-        assert run(
-            str(tmp_pdf),
-            str(tmp_path / "quality.pdf"),
-            quality=37,
-        ) is True
+        assert (
+            run(
+                str(tmp_pdf),
+                str(tmp_path / "quality.pdf"),
+                quality=37,
+            )
+            is True
+        )
         assert observed == [37]
 
 
@@ -67,4 +69,5 @@ class TestCompressCliRun:
             input = str(tmp_pdf)
             output = str(tmp_path / "cli_out.pdf")
             quality = 70
+
         assert cli_run(Args()) is True

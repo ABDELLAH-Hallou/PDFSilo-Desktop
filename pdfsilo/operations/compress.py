@@ -28,8 +28,8 @@ from pdfsilo.core import (
     InvalidInputError,
     OperationResult,
     PdfProcessingError,
-    ProgressCallback,
     PdfSiloError,
+    ProgressCallback,
 )
 from pdfsilo.core.output import save_document
 from pdfsilo.core.progress import check_cancelled, report_progress
@@ -50,9 +50,7 @@ def execute(
     """Compress a PDF and return size metrics."""
     path = require_pdf(input_path)
     if not 1 <= quality <= 100:
-        raise InvalidInputError(
-            f"Quality must be between 1 and 100, got {quality}."
-        )
+        raise InvalidInputError(f"Quality must be between 1 and 100, got {quality}.")
 
     out_path = output_path or path.parent / f"{path.stem}_compressed.pdf"
     original_size = path.stat().st_size
@@ -85,9 +83,7 @@ def execute(
     except PdfSiloError:
         raise
     except Exception as exc:
-        raise PdfProcessingError(
-            f"Could not compress PDF '{path}': {exc}"
-        ) from exc
+        raise PdfProcessingError(f"Could not compress PDF '{path}': {exc}") from exc
 
     return OperationResult(
         output_paths=[out_path],

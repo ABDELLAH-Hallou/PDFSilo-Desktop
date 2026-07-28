@@ -1,14 +1,18 @@
 """tests/test_add_images.py — Unit tests for pdfsilo.operations.add_images"""
 
-import pytest
 from pathlib import Path
 
 import fitz
+import pytest
 
-from pdfsilo.operations.add_images import run, cli_run, _parse_position, SUPPORTED_EXTENSIONS
-
+from pdfsilo.operations.add_images import (
+    _parse_position,
+    cli_run,
+    run,
+)
 
 # ── _parse_position ───────────────────────────────────────────────────────────
+
 
 class TestParsePosition:
     def test_valid_position(self):
@@ -36,8 +40,11 @@ class TestParsePosition:
 
 # ── run — happy paths ─────────────────────────────────────────────────────────
 
+
 class TestAddImagesRun:
-    def test_creates_output_file(self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path):
+    def test_creates_output_file(
+        self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path
+    ):
         out = tmp_path / "result.pdf"
         assert run(str(tmp_pdf), [str(tmp_png_image)], output_path=str(out)) is True
         assert out.exists()
@@ -72,37 +79,53 @@ class TestAddImagesRun:
     ):
         """Specifying --page should succeed without raising."""
         out = tmp_path / "result.pdf"
-        assert run(
-            str(tmp_multi_pdf), [str(tmp_png_image)], output_path=str(out), page=2
-        ) is True
+        assert (
+            run(str(tmp_multi_pdf), [str(tmp_png_image)], output_path=str(out), page=2)
+            is True
+        )
 
     def test_custom_position(self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path):
         out = tmp_path / "result.pdf"
-        assert run(
-            str(tmp_pdf), [str(tmp_png_image)],
-            output_path=str(out), position="100,200"
-        ) is True
+        assert (
+            run(
+                str(tmp_pdf),
+                [str(tmp_png_image)],
+                output_path=str(out),
+                position="100,200",
+            )
+            is True
+        )
 
     def test_custom_width(self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path):
         out = tmp_path / "result.pdf"
-        assert run(
-            str(tmp_pdf), [str(tmp_png_image)],
-            output_path=str(out), width=150.0
-        ) is True
+        assert (
+            run(str(tmp_pdf), [str(tmp_png_image)], output_path=str(out), width=150.0)
+            is True
+        )
 
-    def test_custom_width_and_height(self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path):
+    def test_custom_width_and_height(
+        self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path
+    ):
         out = tmp_path / "result.pdf"
-        assert run(
-            str(tmp_pdf), [str(tmp_png_image)],
-            output_path=str(out), width=100.0, height=80.0
-        ) is True
+        assert (
+            run(
+                str(tmp_pdf),
+                [str(tmp_png_image)],
+                output_path=str(out),
+                width=100.0,
+                height=80.0,
+            )
+            is True
+        )
 
-    def test_only_height_specified(self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path):
+    def test_only_height_specified(
+        self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path
+    ):
         out = tmp_path / "result.pdf"
-        assert run(
-            str(tmp_pdf), [str(tmp_png_image)],
-            output_path=str(out), height=120.0
-        ) is True
+        assert (
+            run(str(tmp_pdf), [str(tmp_png_image)], output_path=str(out), height=120.0)
+            is True
+        )
 
     def test_multiple_images_sequential(
         self, tmp_multi_pdf: Path, tmp_two_png_images: list, tmp_path: Path
@@ -116,6 +139,7 @@ class TestAddImagesRun:
 
 
 # ── run — error / edge cases ──────────────────────────────────────────────────
+
 
 class TestAddImagesRunErrors:
     def test_nonexistent_pdf_returns_false(self, tmp_path: Path, tmp_png_image: Path):
@@ -138,68 +162,89 @@ class TestAddImagesRunErrors:
         self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path
     ):
         out = tmp_path / "result.pdf"
-        assert run(str(tmp_pdf), [str(tmp_png_image)],
-                   output_path=str(out), position="bad") is False
+        assert (
+            run(
+                str(tmp_pdf), [str(tmp_png_image)], output_path=str(out), position="bad"
+            )
+            is False
+        )
 
     def test_page_out_of_range_returns_false(
         self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path
     ):
         """Requesting page 99 on a 1-page PDF must return False."""
         out = tmp_path / "result.pdf"
-        assert run(str(tmp_pdf), [str(tmp_png_image)],
-                   output_path=str(out), page=99) is False
+        assert (
+            run(str(tmp_pdf), [str(tmp_png_image)], output_path=str(out), page=99)
+            is False
+        )
 
     def test_page_zero_returns_false(
         self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path
     ):
         out = tmp_path / "result.pdf"
-        assert run(str(tmp_pdf), [str(tmp_png_image)],
-                   output_path=str(out), page=0) is False
+        assert (
+            run(str(tmp_pdf), [str(tmp_png_image)], output_path=str(out), page=0)
+            is False
+        )
 
     @pytest.mark.parametrize("width", [0, -1, float("nan"), float("inf")])
     def test_invalid_width_returns_false(
         self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path, width: float
     ):
-        assert run(
-            str(tmp_pdf),
-            [str(tmp_png_image)],
-            output_path=str(tmp_path / "result.pdf"),
-            width=width,
-        ) is False
+        assert (
+            run(
+                str(tmp_pdf),
+                [str(tmp_png_image)],
+                output_path=str(tmp_path / "result.pdf"),
+                width=width,
+            )
+            is False
+        )
 
     @pytest.mark.parametrize("height", [0, -1, float("nan"), float("inf")])
     def test_invalid_height_returns_false(
         self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path, height: float
     ):
-        assert run(
-            str(tmp_pdf),
-            [str(tmp_png_image)],
-            output_path=str(tmp_path / "result.pdf"),
-            height=height,
-        ) is False
+        assert (
+            run(
+                str(tmp_pdf),
+                [str(tmp_png_image)],
+                output_path=str(tmp_path / "result.pdf"),
+                height=height,
+            )
+            is False
+        )
 
     def test_position_outside_page_returns_false(
         self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path
     ):
-        assert run(
-            str(tmp_pdf),
-            [str(tmp_png_image)],
-            output_path=str(tmp_path / "result.pdf"),
-            position="600,10",
-        ) is False
+        assert (
+            run(
+                str(tmp_pdf),
+                [str(tmp_png_image)],
+                output_path=str(tmp_path / "result.pdf"),
+                position="600,10",
+            )
+            is False
+        )
 
     def test_rectangle_outside_page_returns_false(
         self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path
     ):
-        assert run(
-            str(tmp_pdf),
-            [str(tmp_png_image)],
-            output_path=str(tmp_path / "result.pdf"),
-            width=600,
-        ) is False
+        assert (
+            run(
+                str(tmp_pdf),
+                [str(tmp_png_image)],
+                output_path=str(tmp_path / "result.pdf"),
+                width=600,
+            )
+            is False
+        )
 
 
 # ── cli_run ───────────────────────────────────────────────────────────────────
+
 
 class TestAddImagesCliRun:
     def test_cli_delegates_correctly(
@@ -217,9 +262,7 @@ class TestAddImagesCliRun:
 
         assert cli_run(Args()) is True
 
-    def test_cli_append_flag(
-        self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path
-    ):
+    def test_cli_append_flag(self, tmp_pdf: Path, tmp_png_image: Path, tmp_path: Path):
         out = tmp_path / "cli_append.pdf"
 
         class Args:

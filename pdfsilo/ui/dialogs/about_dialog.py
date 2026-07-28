@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import platform
-import sys
 
 import pymupdf
 from PySide6 import __version__ as PYSIDE_VERSION
@@ -155,6 +154,15 @@ class AboutDialog(QDialog):
         privacy_layout.addWidget(privacy_title)
         privacy_layout.addWidget(privacy_text)
 
+        runtime_details = QLabel(
+            f"PyMuPDF {pymupdf.__version__}  |  "
+            f"PySide6 {PYSIDE_VERSION}  |  "
+            f"Python {platform.python_version()} on {platform.system()}",
+            self,
+        )
+        runtime_details.setObjectName("aboutRuntimeDetails")
+        runtime_details.setWordWrap(True)
+
         footer = QHBoxLayout()
         footer.setContentsMargins(0, 0, 0, 0)
         footer.setSpacing(SPACE_SM)
@@ -188,6 +196,7 @@ class AboutDialog(QDialog):
         layout.addWidget(hero)
         layout.addLayout(features)
         layout.addWidget(privacy)
+        layout.addWidget(runtime_details)
         layout.addStretch(1)
         layout.addLayout(footer)
         self.set_dark_mode(False)

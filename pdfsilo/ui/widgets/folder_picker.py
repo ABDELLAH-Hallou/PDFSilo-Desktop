@@ -23,4 +23,3 @@ class FolderPicker(PathPicker):
             object_name="folderPicker",
             parent=parent,
         )
-

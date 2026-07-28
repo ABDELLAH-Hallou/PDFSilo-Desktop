@@ -1,6 +1,6 @@
 # PDFSilo Architecture
 
-_Updated: 27 July 2026_
+_Updated: 28 July 2026_
 
 ## Overview
 
@@ -38,6 +38,7 @@ clients.
 | `pdfsilo.ui.theme` | System/light/dark theme management, semantic colors, spacing, and typography |
 | `pdfsilo.ui.preferences` | The allowlisted non-sensitive settings contract |
 | `pdfsilo.ui.resources` | Packaged PNG identity artwork and functional SVG control icons |
+| `pdfsilo.ui.package_self_test` | Frozen-build validation for GUI startup and representative PDF workflows |
 
 ## Operation contract
 
@@ -135,6 +136,72 @@ framework-independent capability governed by
 7. Downloaded programs are not executed until signed native installers and
    platform-specific signature verification are implemented.
 
+## Native packaging boundary
+
+The initial Windows distribution follows
+[ADR 0007](adr/0007-standalone-windows-build-and-per-user-installer.md):
+
+```text
+source + packaged resources
+          |
+          v
+root pysidedeploy.spec -> pyside6-deploy -> Nuitka standalone directory
+                                              |
+                            packaged smoke/workflow validation
+                                              |
+                                  Inno Setup per-user installer
+                                              |
+                            Authenticode sign + verify (release gate)
+```
+
+`scripts/build_windows.ps1` generates the ICO from the active PNG identity and
+produces the standalone directory. `scripts/test_windows_package.ps1` runs a
+short GUI startup and real rotate, compression, restricted-encryption, and
+decryption workflows through the frozen executable. The workflow uses Unicode,
+deeply nested paths and a 120-page PDF.
+
+The Inno Setup definition and signing helper are checked in, but installer
+compilation, a clean Windows VM run, and trusted-certificate signing remain
+external release gates. SHA-256 verifies downloaded bytes; it does not replace
+Authenticode publisher verification.
+
+The 28 July 2026 local MinGW validation attempt did not produce an executable:
+the compiler exhausted available memory on PyMuPDF's generated MuPDF wrapper
+even in single-job, low-memory, no-LTO mode. This is a build-host/toolchain
+constraint rather than a passed packaging acceptance test. Native validation
+must be repeated on a higher-memory Windows host or with MSVC before the
+standalone artifact is promoted.
+
+## Continuous integration and release boundary
+
+[ADR 0008](adr/0008-ci-matrix-and-tag-gated-signed-releases.md) separates
+ordinary verification from privileged releases:
+
+```text
+branch push / pull request
+          |
+          +--> Ruff + wheel/sdist
+          +--> core: Python 3.10-3.14 on Ubuntu
+          +--> UI: Ubuntu + Windows + macOS (offscreen)
+
+stable vMAJOR.MINOR.PATCH tag
+          |
+          v
+version agreement -> full tests -> Windows standalone + frozen self-test
+          |
+          v
+Authenticode sign/verify -> Inno installer -> sign/verify
+          |
+          v
+Actions artifact + GitHub Release + SHA-256/signature manifest
+```
+
+Ordinary CI has read-only repository permission. Only the tag-gated Windows
+publication job receives `contents: write`; it runs in the `release`
+environment and fails if either required signing secret is absent. Windows x64
+is the only current native release target. Linux and macOS remain test targets
+until their package and signing designs are implemented and validated.
+
 ## Theme and identity
 
 The application supports System default, Light, and Dark modes. System mode
@@ -173,4 +240,4 @@ Current validation details are recorded in
 
 See the [ADR index](adr/README.md) for the accepted architecture decisions that
 define the core/UI boundary, worker model, output publication, settings
-contract, and visual identity.
+contract, visual identity, update boundary, and native Windows packaging.

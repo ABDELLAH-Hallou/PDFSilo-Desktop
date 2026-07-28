@@ -26,8 +26,8 @@ from pdfsilo.core import (
     InvalidInputError,
     OperationResult,
     PdfProcessingError,
-    ProgressCallback,
     PdfSiloError,
+    ProgressCallback,
 )
 from pdfsilo.core.output import save_document
 from pdfsilo.core.progress import check_cancelled, report_progress
@@ -49,8 +49,7 @@ def execute(
     """Merge PDFs into normalized pages and return structured details."""
     if target_size not in PAGE_SIZES:
         raise InvalidInputError(
-            f"Unsupported page size '{target_size}'. "
-            f"Choose from: {list(PAGE_SIZES)}."
+            f"Unsupported page size '{target_size}'. Choose from: {list(PAGE_SIZES)}."
         )
     if not input_files:
         raise InvalidInputError("No PDF files were provided.")
@@ -93,8 +92,12 @@ def execute(
 
                         new_page = output_doc.new_page(width=tw, height=th)
                         new_page.show_pdf_page(
-                            fitz.Rect(x_offset, y_offset,
-                                      x_offset + scaled_w, y_offset + scaled_h),
+                            fitz.Rect(
+                                x_offset,
+                                y_offset,
+                                x_offset + scaled_w,
+                                y_offset + scaled_h,
+                            ),
                             src_doc,
                             page.number,
                         )

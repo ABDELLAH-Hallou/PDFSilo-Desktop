@@ -29,13 +29,23 @@ import sys
 from collections.abc import Callable
 
 from pdfsilo import __version__
-from pdfsilo.updater import UpdaterError, check_for_update
-from pdfsilo.utils import setup_logging, PAGE_SIZES
 from pdfsilo.operations import (
-    concat, split, rotate, extract_range,
-    compress, encrypt, decrypt, watermark,
-    extract_images, to_images, reorder, add_images, images_to_pdf,
+    add_images,
+    compress,
+    concat,
+    decrypt,
+    encrypt,
+    extract_images,
+    extract_range,
+    images_to_pdf,
+    reorder,
+    rotate,
+    split,
+    to_images,
+    watermark,
 )
+from pdfsilo.updater import UpdaterError, check_for_update
+from pdfsilo.utils import PAGE_SIZES, setup_logging
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -58,8 +68,13 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("concat", help="Merge a folder of PDFs into one normalized PDF")
     p.add_argument("folder", help="Folder containing PDF files")
     p.add_argument("-o", "--output", default=None, help="Output file path")
-    p.add_argument("-s", "--size", choices=list(PAGE_SIZES), default="A4",
-                   help="Target page size (default: A4)")
+    p.add_argument(
+        "-s",
+        "--size",
+        choices=list(PAGE_SIZES),
+        default="A4",
+        help="Target page size (default: A4)",
+    )
 
     # ── split ─────────────────────────────────────────────────────────────────
     p = sub.add_parser("split", help="Split a PDF into one file per page")
@@ -69,25 +84,44 @@ def build_parser() -> argparse.ArgumentParser:
     # ── rotate ────────────────────────────────────────────────────────────────
     p = sub.add_parser("rotate", help="Rotate pages in a PDF")
     p.add_argument("input", help="Input PDF file")
-    p.add_argument("-a", "--angle", type=int, choices=[90, 180, 270], required=True,
-                   help="Rotation angle in degrees")
-    p.add_argument("-p", "--pages", default=None,
-                   help="Comma-separated page numbers to rotate (default: all)")
+    p.add_argument(
+        "-a",
+        "--angle",
+        type=int,
+        choices=[90, 180, 270],
+        required=True,
+        help="Rotation angle in degrees",
+    )
+    p.add_argument(
+        "-p",
+        "--pages",
+        default=None,
+        help="Comma-separated page numbers to rotate (default: all)",
+    )
     p.add_argument("-o", "--output", default=None, help="Output file path")
 
     # ── extract-range ─────────────────────────────────────────────────────────
     p = sub.add_parser("extract-range", help="Extract a page range into a new PDF")
     p.add_argument("input", help="Input PDF file")
-    p.add_argument("-s", "--start", type=int, required=True, help="First page (1-indexed)")
-    p.add_argument("-e", "--end", type=int, required=True, help="Last page (1-indexed, inclusive)")
+    p.add_argument(
+        "-s", "--start", type=int, required=True, help="First page (1-indexed)"
+    )
+    p.add_argument(
+        "-e", "--end", type=int, required=True, help="Last page (1-indexed, inclusive)"
+    )
     p.add_argument("-o", "--output", default=None, help="Output file path")
 
     # ── compress ──────────────────────────────────────────────────────────────
     p = sub.add_parser("compress", help="Reduce PDF file size")
     p.add_argument("input", help="Input PDF file")
     p.add_argument("-o", "--output", default=None, help="Output file path")
-    p.add_argument("-q", "--quality", type=int, default=60,
-                   help="Image quality 1–100 (default: 60)")
+    p.add_argument(
+        "-q",
+        "--quality",
+        type=int,
+        default=60,
+        help="Image quality 1–100 (default: 60)",
+    )
 
     # ── encrypt ───────────────────────────────────────────────────────────────
     p = sub.add_parser("encrypt", help="Password-protect a PDF (AES-256)")
@@ -133,64 +167,128 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("input", help="Input PDF file")
     p.add_argument("-t", "--text", required=True, help="Watermark text")
     p.add_argument("-o", "--output", default=None, help="Output file path")
-    p.add_argument("--opacity", type=float, default=0.15, help="Opacity 0.0–1.0 (default: 0.15)")
-    p.add_argument("--angle", type=float, default=45, help="Rotation angle (default: 45)")
-    p.add_argument("--size", type=float, default=60, help="Font size in points (default: 60)")
-    p.add_argument("--color", default="0.5,0.5,0.5",
-                   help="Text color as R,G,B floats (default: 0.5,0.5,0.5)")
+    p.add_argument(
+        "--opacity", type=float, default=0.15, help="Opacity 0.0–1.0 (default: 0.15)"
+    )
+    p.add_argument(
+        "--angle", type=float, default=45, help="Rotation angle (default: 45)"
+    )
+    p.add_argument(
+        "--size", type=float, default=60, help="Font size in points (default: 60)"
+    )
+    p.add_argument(
+        "--color",
+        default="0.5,0.5,0.5",
+        help="Text color as R,G,B floats (default: 0.5,0.5,0.5)",
+    )
 
     # ── extract-images ────────────────────────────────────────────────────────
     p = sub.add_parser("extract-images", help="Extract all embedded images from a PDF")
     p.add_argument("input", help="Input PDF file")
     p.add_argument("-o", "--output", default=None, help="Output folder")
-    p.add_argument("--format", choices=["png", "jpeg"], default="png",
-                   help="Image format (default: png)")
+    p.add_argument(
+        "--format",
+        choices=["png", "jpeg"],
+        default="png",
+        help="Image format (default: png)",
+    )
 
     # ── to-images ─────────────────────────────────────────────────────────────
     p = sub.add_parser("to-images", help="Render each page as a PNG or JPEG")
     p.add_argument("input", help="Input PDF file")
     p.add_argument("-o", "--output", default=None, help="Output folder")
-    p.add_argument("--format", choices=["png", "jpeg"], default="png",
-                   help="Image format (default: png)")
-    p.add_argument("--dpi", type=int, default=150, help="Render resolution (default: 150)")
+    p.add_argument(
+        "--format",
+        choices=["png", "jpeg"],
+        default="png",
+        help="Image format (default: png)",
+    )
+    p.add_argument(
+        "--dpi", type=int, default=150, help="Render resolution (default: 150)"
+    )
 
     # ── reorder ───────────────────────────────────────────────────────────────
     p = sub.add_parser("reorder", help="Rearrange pages in a custom order")
     p.add_argument("input", help="Input PDF file")
-    p.add_argument("-r", "--order", required=True,
-                   help="Comma-separated new page order, e.g. '3,1,2,4'")
+    p.add_argument(
+        "-r",
+        "--order",
+        required=True,
+        help="Comma-separated new page order, e.g. '3,1,2,4'",
+    )
     p.add_argument("-o", "--output", default=None, help="Output file path")
 
     # ── add-images ────────────────────────────────────────────────────────────
     p = sub.add_parser("add-images", help="Insert images into a PDF")
     p.add_argument("input", help="Input PDF file")
-    p.add_argument("-i", "--images", nargs="+", required=True,
-                   help="Image file(s) to insert (PNG, JPEG, BMP, TIFF, WebP, GIF)")
+    p.add_argument(
+        "-i",
+        "--images",
+        nargs="+",
+        required=True,
+        help="Image file(s) to insert (PNG, JPEG, BMP, TIFF, WebP, GIF)",
+    )
     p.add_argument("-o", "--output", default=None, help="Output file path")
-    p.add_argument("--page", type=int, default=None,
-                   help="1-indexed page to stamp every image on (default: sequential)")
-    p.add_argument("--position", default="72,72",
-                   help="Top-left corner as 'X,Y' in points (default: 72,72)")
-    p.add_argument("--width", type=float, default=None,
-                   help="Target width in points (default: auto-fit)")
-    p.add_argument("--height", type=float, default=None,
-                   help="Target height in points (default: preserve aspect ratio)")
-    p.add_argument("--append", action="store_true",
-                   help="Append a new blank page for each image instead of stamping")
+    p.add_argument(
+        "--page",
+        type=int,
+        default=None,
+        help="1-indexed page to stamp every image on (default: sequential)",
+    )
+    p.add_argument(
+        "--position",
+        default="72,72",
+        help="Top-left corner as 'X,Y' in points (default: 72,72)",
+    )
+    p.add_argument(
+        "--width",
+        type=float,
+        default=None,
+        help="Target width in points (default: auto-fit)",
+    )
+    p.add_argument(
+        "--height",
+        type=float,
+        default=None,
+        help="Target height in points (default: preserve aspect ratio)",
+    )
+    p.add_argument(
+        "--append",
+        action="store_true",
+        help="Append a new blank page for each image instead of stamping",
+    )
 
     # ── images-to-pdf ─────────────────────────────────────────────────────────
-    p = sub.add_parser("images-to-pdf",
-                       help="Merge a folder of images into a single PDF")
+    p = sub.add_parser(
+        "images-to-pdf", help="Merge a folder of images into a single PDF"
+    )
     p.add_argument("folder", help="Folder containing image files")
     p.add_argument("-o", "--output", default=None, help="Output PDF file path")
-    p.add_argument("-s", "--size", choices=list(PAGE_SIZES), default="A4",
-                   help="Target page size (default: A4)")
-    p.add_argument("--fit", action="store_true", default=True,
-                   help="Scale images to fill the page (default: True)")
-    p.add_argument("--no-fit", dest="fit", action="store_false",
-                   help="Embed images at natural size, centred")
-    p.add_argument("--margin", type=float, default=36.0,
-                   help="Margin in points around the image (default: 36)")
+    p.add_argument(
+        "-s",
+        "--size",
+        choices=list(PAGE_SIZES),
+        default="A4",
+        help="Target page size (default: A4)",
+    )
+    p.add_argument(
+        "--fit",
+        action="store_true",
+        default=True,
+        help="Scale images to fill the page (default: True)",
+    )
+    p.add_argument(
+        "--no-fit",
+        dest="fit",
+        action="store_false",
+        help="Embed images at natural size, centred",
+    )
+    p.add_argument(
+        "--margin",
+        type=float,
+        default=36.0,
+        help="Margin in points around the image (default: 36)",
+    )
 
     # ── update ────────────────────────────────────────────────────────────────
     p = sub.add_parser(
@@ -216,29 +314,26 @@ def _check_for_cli_update(_args: argparse.Namespace) -> bool:
     if info is None:
         print(f"PDFSilo {__version__} is up to date.")
         return True
-    print(
-        f"PDFSilo {info.version} is available "
-        f"(current: {__version__})."
-    )
+    print(f"PDFSilo {info.version} is available (current: {__version__}).")
     print(f"Release notes: {info.release_notes_url}")
     return True
 
 
 COMMAND_MAP = {
-    "concat":         concat.cli_run,
-    "split":          split.cli_run,
-    "rotate":         rotate.cli_run,
-    "extract-range":  extract_range.cli_run,
-    "compress":       compress.cli_run,
-    "encrypt":        encrypt.cli_run,
-    "decrypt":        decrypt.cli_run,
-    "watermark":      watermark.cli_run,
+    "concat": concat.cli_run,
+    "split": split.cli_run,
+    "rotate": rotate.cli_run,
+    "extract-range": extract_range.cli_run,
+    "compress": compress.cli_run,
+    "encrypt": encrypt.cli_run,
+    "decrypt": decrypt.cli_run,
+    "watermark": watermark.cli_run,
     "extract-images": extract_images.cli_run,
-    "to-images":      to_images.cli_run,
-    "reorder":        reorder.cli_run,
-    "add-images":     add_images.cli_run,
-    "images-to-pdf":  images_to_pdf.cli_run,
-    "update":          _check_for_cli_update,
+    "to-images": to_images.cli_run,
+    "reorder": reorder.cli_run,
+    "add-images": add_images.cli_run,
+    "images-to-pdf": images_to_pdf.cli_run,
+    "update": _check_for_cli_update,
 }
 
 
@@ -272,9 +367,7 @@ def resolve_interactive_passwords(
                 label="User password",
             )
 
-        restrictions_requested = (
-            args.no_print or args.no_copy or args.no_edit
-        )
+        restrictions_requested = args.no_print or args.no_copy or args.no_edit
         if restrictions_requested and args.owner_password is None:
             args.owner_password = _prompt_confirmed_password(
                 password_prompt,

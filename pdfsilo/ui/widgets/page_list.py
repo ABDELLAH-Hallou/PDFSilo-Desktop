@@ -140,9 +140,8 @@ class PdfPageListModel(QAbstractListModel):
     ) -> bool:
         if action == Qt.DropAction.IgnoreAction:
             return True
-        if (
-            action != Qt.DropAction.MoveAction
-            or not data.hasFormat(PAGE_ROWS_MIME_TYPE)
+        if action != Qt.DropAction.MoveAction or not data.hasFormat(
+            PAGE_ROWS_MIME_TYPE
         ):
             return False
         try:
@@ -160,22 +159,14 @@ class PdfPageListModel(QAbstractListModel):
             return False
 
         destination = (
-            row
-            if row >= 0
-            else parent.row()
-            if parent.isValid()
-            else len(self._items)
+            row if row >= 0 else parent.row() if parent.isValid() else len(self._items)
         )
         destination = min(max(0, destination), len(self._items))
         moved = [self._items[value] for value in rows]
         remaining = [
-            item
-            for index, item in enumerate(self._items)
-            if index not in set(rows)
+            item for index, item in enumerate(self._items) if index not in set(rows)
         ]
-        adjusted_destination = destination - sum(
-            value < destination for value in rows
-        )
+        adjusted_destination = destination - sum(value < destination for value in rows)
         adjusted_destination = min(
             max(0, adjusted_destination),
             len(remaining),
@@ -183,9 +174,7 @@ class PdfPageListModel(QAbstractListModel):
 
         self.beginResetModel()
         self._items = (
-            remaining[:adjusted_destination]
-            + moved
-            + remaining[adjusted_destination:]
+            remaining[:adjusted_destination] + moved + remaining[adjusted_destination:]
         )
         self.endResetModel()
         self.orderChanged.emit(self.original_indexes())
@@ -213,14 +202,11 @@ class PdfPageListModel(QAbstractListModel):
 
     def order_string(self) -> str:
         return ",".join(
-            str(original_index + 1)
-            for original_index in self.original_indexes()
+            str(original_index + 1) for original_index in self.original_indexes()
         )
 
     def duplicate_rows(self, rows: list[int]) -> None:
-        selected = {
-            row for row in rows if 0 <= row < len(self._items)
-        }
+        selected = {row for row in rows if 0 <= row < len(self._items)}
         if not selected:
             return
         new_items: list[PageListItem] = []
@@ -230,25 +216,17 @@ class PdfPageListModel(QAbstractListModel):
                 new_items.append(
                     PageListItem(
                         item.original_index,
-                        item.thumbnail.copy()
-                        if item.thumbnail is not None
-                        else None,
+                        item.thumbnail.copy() if item.thumbnail is not None else None,
                     )
                 )
         self._replace_items(new_items)
 
     def remove_rows(self, rows: list[int]) -> None:
-        selected = {
-            row for row in rows if 0 <= row < len(self._items)
-        }
+        selected = {row for row in rows if 0 <= row < len(self._items)}
         if not selected:
             return
         self._replace_items(
-            [
-                item
-                for row, item in enumerate(self._items)
-                if row not in selected
-            ]
+            [item for row, item in enumerate(self._items) if row not in selected]
         )
 
     def reverse(self) -> None:
@@ -376,22 +354,16 @@ class PageReorderEditor(QWidget):
         self.view = QListView(self)
         self.view.setObjectName("pageListView")
         self.view.setAccessibleName("PDF pages")
-        self.view.setModel(
-            PdfPageListModel(self.view, service=service)
-        )
+        self.view.setModel(PdfPageListModel(self.view, service=service))
         self.view.setViewMode(QListView.ViewMode.IconMode)
         self.view.setResizeMode(QListView.ResizeMode.Adjust)
         self.view.setMovement(QListView.Movement.Snap)
         self.view.setWrapping(True)
-        self.view.setSelectionMode(
-            QAbstractItemView.SelectionMode.ExtendedSelection
-        )
+        self.view.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.view.setDragEnabled(True)
         self.view.setAcceptDrops(True)
         self.view.setDropIndicatorShown(True)
-        self.view.setDragDropMode(
-            QAbstractItemView.DragDropMode.InternalMove
-        )
+        self.view.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.view.setDefaultDropAction(Qt.DropAction.MoveAction)
         self.view.setMinimumHeight(240)
 
@@ -450,10 +422,7 @@ class PageReorderEditor(QWidget):
 
     def selected_rows(self) -> list[int]:
         return sorted(
-            {
-                index.row()
-                for index in self.view.selectionModel().selectedIndexes()
-            }
+            {index.row() for index in self.view.selectionModel().selectedIndexes()}
         )
 
     @Slot()

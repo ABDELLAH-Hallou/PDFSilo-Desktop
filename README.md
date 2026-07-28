@@ -45,6 +45,64 @@ python -m pytest
 The UI tests use mocked operation contracts for precise parameter assertions
 and a separate real-PDF integration layer for end-to-end validation.
 
+### Build the Windows desktop application
+
+Install the deployment tooling, then create and validate the initial
+directory-based build:
+
+```powershell
+python -m pip install -e ".[dev,deploy]"
+.\scripts\build_windows.ps1
+.\scripts\test_windows_package.ps1
+```
+
+The application directory is written under `dist/windows`. Keep the directory
+together; the executable depends on the bundled Qt, Python, PDF, and resource
+files beside it. Installer creation and release signing are separate gates:
+
+```powershell
+.\scripts\build_windows_installer.ps1 -Version 0.1.0
+.\scripts\sign_windows_artifacts.ps1 `
+  -CertificateThumbprint "YOUR_CERTIFICATE_THUMBPRINT" `
+  -ArtifactPath @(
+    ".\dist\windows\PDFSilo.dist\PDFSilo.exe",
+    ".\dist\installer\PDFSilo-Setup-0.1.0-x64.exe"
+  )
+```
+
+See [Windows packaging](packaging/windows/README.md) for prerequisites,
+clean-machine validation, signing, and release requirements.
+
+### Continuous integration and signed releases
+
+The regular CI workflow installs PDFSilo from `pyproject.toml`, runs Ruff,
+builds the Python package, tests the core on Python 3.10-3.14, and runs the
+headless UI tests on Ubuntu, Windows, and Intel macOS.
+
+Run the same quality gates locally with:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m ruff check pdfsilo tests scripts
+python -m ruff format --check pdfsilo tests scripts
+python -m pytest
+```
+
+Native release builds are deliberately tag-only. Before pushing a tag:
+
+1. Make the version agree in `pyproject.toml`, `pdfsilo/__init__.py`, and
+   `pysidedeploy.spec`.
+2. Configure a protected GitHub environment named `release`.
+3. Add `WINDOWS_SIGNING_CERTIFICATE_BASE64` and
+   `WINDOWS_SIGNING_CERTIFICATE_PASSWORD` to that environment.
+4. Push a stable tag such as `v0.1.0`.
+
+The release fails instead of publishing unsigned output if its signing
+material is unavailable or either Authenticode verification fails. Windows
+x64 is currently the only native release target; Linux and macOS are CI test
+targets until their packaging and signing work is complete. See
+[ADR 0008](docs/adr/0008-ci-matrix-and-tag-gated-signed-releases.md).
+
 ---
 
 ## Documentation

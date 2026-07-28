@@ -1,8 +1,9 @@
 """tests/test_utils.py — Unit tests for pdfsilo.utils"""
 
 import logging
-import pytest
 from pathlib import Path
+
+import pytest
 
 from pdfsilo.utils import (
     PAGE_SIZES,

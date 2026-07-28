@@ -25,9 +25,7 @@ from pdfsilo.updater.errors import (
 )
 from pdfsilo.updater.models import UpdateInfo
 
-RELEASE_API_URL = (
-    "https://api.github.com/repos/ABDELLAH-Hallou/PDFSilo/releases/latest"
-)
+RELEASE_API_URL = "https://api.github.com/repos/ABDELLAH-Hallou/PDFSilo/releases/latest"
 ALLOWED_METADATA_HOST = "api.github.com"
 ALLOWED_DOWNLOAD_HOSTS = frozenset(
     {
@@ -162,11 +160,7 @@ def _companion_url(
     for asset in assets:
         name = asset.get("name")
         url = asset.get("browser_download_url")
-        if (
-            isinstance(name, str)
-            and name.lower() == expected
-            and isinstance(url, str)
-        ):
+        if isinstance(name, str) and name.lower() == expected and isinstance(url, str):
             return url
     return None
 
@@ -218,9 +212,7 @@ def check_for_update(
         assets = payload.get("assets")
         if not isinstance(assets, list):
             raise ValueError("Release metadata has no assets.")
-        asset_records = [
-            item for item in assets if isinstance(item, dict)
-        ]
+        asset_records = [item for item in assets if isinstance(item, dict)]
         asset = _select_asset(asset_records)
         if asset is None:
             raise ValueError("No update asset is available for this platform.")
@@ -264,7 +256,14 @@ def check_for_update(
             asset_name=asset_name,
             checksum_url=checksum_url,
         )
-    except (HTTPError, URLError, OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
+    except (
+        HTTPError,
+        URLError,
+        OSError,
+        UnicodeError,
+        ValueError,
+        json.JSONDecodeError,
+    ) as exc:
         raise UpdateCheckFailedError(
             f"Could not check for PDFSilo updates: {exc}"
         ) from exc
@@ -317,9 +316,7 @@ def _expected_checksum(
             f"Could not retrieve the update checksum: {exc}"
         ) from exc
     if match is None:
-        raise UpdateVerificationError(
-            "The published checksum file is invalid."
-        )
+        raise UpdateVerificationError("The published checksum file is invalid.")
     return match.group(1).lower()
 
 

@@ -38,8 +38,8 @@ from pdfsilo.core import (
     InvalidInputError,
     OperationResult,
     PdfProcessingError,
-    ProgressCallback,
     PdfSiloError,
+    ProgressCallback,
 )
 from pdfsilo.core.output import save_document
 from pdfsilo.core.progress import check_cancelled, report_progress
@@ -49,7 +49,16 @@ from pdfsilo.presentation import present_operation
 log = logging.getLogger(__name__)
 
 # Supported image extensions (fitz can handle all of these natively)
-SUPPORTED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".tif", ".gif", ".webp"}
+SUPPORTED_EXTENSIONS = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".bmp",
+    ".tiff",
+    ".tif",
+    ".gif",
+    ".webp",
+}
 
 
 def _parse_position(pos_str: str) -> tuple[float, float]:
@@ -167,9 +176,7 @@ def execute(
 
     for label, value in (("Width", width), ("Height", height)):
         if value is not None and (not math.isfinite(value) or value <= 0):
-            raise InvalidInputError(
-                f"{label} must be a positive finite number."
-            )
+            raise InvalidInputError(f"{label} must be a positive finite number.")
 
     try:
         x, y = _parse_position(position)
@@ -222,9 +229,7 @@ def execute(
                         height,
                     )
                 except ValueError as exc:
-                    raise InvalidInputError(
-                        f"Invalid image geometry: {exc}"
-                    ) from exc
+                    raise InvalidInputError(f"Invalid image geometry: {exc}") from exc
                 target_page.insert_image(rect, filename=str(img_path))
                 report_progress(
                     progress,
@@ -261,9 +266,7 @@ def execute(
             "width": width,
             "height": height,
         },
-        message=(
-            f"Added {len(image_paths_checked)} image(s) and saved '{out_path}'."
-        ),
+        message=(f"Added {len(image_paths_checked)} image(s) and saved '{out_path}'."),
     )
 
 

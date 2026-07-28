@@ -49,4 +49,3 @@ class OutputDirectoryPicker(PathPicker):
             object_name="outputDirectoryPicker",
             parent=parent,
         )
-

@@ -30,8 +30,8 @@ from pdfsilo.core import (
     InvalidInputError,
     OperationResult,
     PdfProcessingError,
-    ProgressCallback,
     PdfSiloError,
+    ProgressCallback,
 )
 from pdfsilo.core.errors import OutputWriteError
 from pdfsilo.core.output import (
@@ -58,9 +58,7 @@ def execute(
     """Render PDF pages to images and return structured output details."""
     path = require_pdf(input_path)
     if fmt not in ("png", "jpeg"):
-        raise InvalidInputError(
-            f"Unsupported format '{fmt}'. Choose 'png' or 'jpeg'."
-        )
+        raise InvalidInputError(f"Unsupported format '{fmt}'. Choose 'png' or 'jpeg'.")
 
     if dpi < 72 or dpi > 600:
         raise InvalidInputError(f"DPI must be between 72 and 600, got {dpi}.")
@@ -88,9 +86,7 @@ def execute(
                 for page_num, page in enumerate(doc, start=1):
                     check_cancelled(is_cancelled)
                     pix = page.get_pixmap(matrix=mat, alpha=False)
-                    staged_path = (
-                        staging_dir / f"page_{page_num:03d}.{fmt}"
-                    )
+                    staged_path = staging_dir / f"page_{page_num:03d}.{fmt}"
 
                     if fmt == "png":
                         save_pixmap(pix, staged_path, output="png")
@@ -115,9 +111,7 @@ def execute(
     except PdfSiloError:
         raise
     except Exception as exc:
-        raise PdfProcessingError(
-            f"Could not render PDF '{path}': {exc}"
-        ) from exc
+        raise PdfProcessingError(f"Could not render PDF '{path}': {exc}") from exc
 
     return OperationResult(
         output_paths=output_paths,

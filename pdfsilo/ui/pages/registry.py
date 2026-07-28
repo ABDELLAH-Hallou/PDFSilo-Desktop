@@ -20,9 +20,13 @@ PAGE_DEFINITIONS = (
         "Welcome to PDFSilo",
         "Choose an operation from the sidebar to work with a PDF locally.",
     ),
-    PageDefinition("merge", "Merge", "Merge PDFs", "Combine PDF files into one document."),
+    PageDefinition(
+        "merge", "Merge", "Merge PDFs", "Combine PDF files into one document."
+    ),
     PageDefinition("split", "Split", "Split PDF", "Save each page as a separate PDF."),
-    PageDefinition("rotate", "Rotate", "Rotate Pages", "Rotate all or selected PDF pages."),
+    PageDefinition(
+        "rotate", "Rotate", "Rotate Pages", "Rotate all or selected PDF pages."
+    ),
     PageDefinition(
         "extract_pages",
         "Extract Pages",
@@ -86,7 +90,5 @@ PAGE_DEFINITIONS = (
 )
 
 PAGE_INDEX_BY_KEY = {
-    definition.key: index
-    for index, definition in enumerate(PAGE_DEFINITIONS)
+    definition.key: index for index, definition in enumerate(PAGE_DEFINITIONS)
 }
-

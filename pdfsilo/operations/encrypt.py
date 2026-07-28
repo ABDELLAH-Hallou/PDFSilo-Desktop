@@ -34,8 +34,8 @@ from pdfsilo.core import (
     OperationResult,
     PdfPasswordError,
     PdfProcessingError,
-    ProgressCallback,
     PdfSiloError,
+    ProgressCallback,
 )
 from pdfsilo.core.output import save_document
 from pdfsilo.core.progress import check_cancelled, report_progress
@@ -105,9 +105,7 @@ def execute(
     except PdfSiloError:
         raise
     except Exception as exc:
-        raise PdfProcessingError(
-            f"Could not encrypt PDF '{path}': {exc}"
-        ) from exc
+        raise PdfProcessingError(f"Could not encrypt PDF '{path}': {exc}") from exc
 
     return OperationResult(
         output_paths=[out_path],

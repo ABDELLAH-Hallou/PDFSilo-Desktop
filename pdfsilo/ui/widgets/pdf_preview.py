@@ -161,9 +161,7 @@ class PdfPreview(QWidget):
 
         self._watcher = QFileSystemWatcher(self)
         self._watcher.fileChanged.connect(self._source_changed)
-        self.document_combo.currentIndexChanged.connect(
-            self._select_document
-        )
+        self.document_combo.currentIndexChanged.connect(self._select_document)
         self.service.thumbnailReady.connect(self._thumbnail_ready)
         self.service.thumbnailFailed.connect(self._thumbnail_failed)
         self._show_placeholder("Select a PDF to display a preview.")
@@ -269,9 +267,7 @@ class PdfPreview(QWidget):
     @Slot()
     def zoom_out(self) -> None:
         current = self._zoom_factor if not self._fit_to_window else 1.0
-        previous = [
-            level for level in ZOOM_LEVELS if level < current
-        ]
+        previous = [level for level in ZOOM_LEVELS if level < current]
         self._set_zoom(previous[-1] if previous else ZOOM_LEVELS[0])
 
     @Slot()
@@ -356,13 +352,9 @@ class PdfPreview(QWidget):
         self._page_count = data.page_count
         self._image = data.image.copy()
         self.status_label.clear()
-        self.page_label.setText(
-            f"Page {self._page_index + 1} of {self._page_count}"
-        )
+        self.page_label.setText(f"Page {self._page_index + 1} of {self._page_count}")
         self.previous_button.setEnabled(self._page_index > 0)
-        self.next_button.setEnabled(
-            self._page_index + 1 < self._page_count
-        )
+        self.next_button.setEnabled(self._page_index + 1 < self._page_count)
         self._update_pixmap()
         self.previewReady.emit(self._source_path, self._page_index)
 

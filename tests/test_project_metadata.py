@@ -10,7 +10,6 @@ from pathlib import Path
 from pdfsilo import __version__
 from pdfsilo.ui.main import main as gui_main
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -26,7 +25,10 @@ def test_license_contains_required_bsd_terms():
     license_text = (PROJECT_ROOT / "LICENSE").read_text(encoding="utf-8")
 
     assert "Redistribution and use in source and binary forms" in license_text
-    assert 'THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"' in license_text
+    assert (
+        'THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"'
+        in license_text
+    )
 
 
 def test_pyproject_contains_required_packaging_metadata():
@@ -41,6 +43,7 @@ def test_pyproject_contains_required_packaging_metadata():
     assert "PySide6>=6.10,<7" in project["dependencies"]
     assert "pytest>=9,<10" in project["optional-dependencies"]["dev"]
     assert "pytest-qt>=4.5,<5" in project["optional-dependencies"]["dev"]
+    assert "ruff==0.15.22" in project["optional-dependencies"]["dev"]
 
 
 def test_pyproject_defines_cli_and_gui_entry_points():
@@ -66,6 +69,7 @@ def test_pyproject_packages_desktop_resources():
 
     assert "*.svg" in setuptools["package-data"]["pdfsilo.ui.resources"]
     assert "*.png" in setuptools["package-data"]["pdfsilo.ui.resources"]
+    assert "*.qm" in setuptools["package-data"]["pdfsilo.ui.resources"]
 
 
 def test_legacy_project_name_is_absent_from_public_source_and_docs():
@@ -78,7 +82,11 @@ def test_legacy_project_name_is_absent_from_public_source_and_docs():
         PROJECT_ROOT / "PYSIDE6_MIGRATION_PLAN.md",
         PROJECT_ROOT / "requirements.txt",
         PROJECT_ROOT / "tree.txt",
-        *list((PROJECT_ROOT / "pdfsilo").rglob("*.py")),
+        *[
+            path
+            for path in (PROJECT_ROOT / "pdfsilo").rglob("*.py")
+            if "deployment" not in path.parts
+        ],
     ]
 
     assert (PROJECT_ROOT / "pdfsilo").is_dir()

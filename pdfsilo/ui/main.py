@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QSettings, QTimer
 from PySide6.QtWidgets import QApplication
 
 from pdfsilo.ui.main_window import MainWindow
@@ -17,6 +18,7 @@ from pdfsilo.ui.metadata import (
     ORGANIZATION_DOMAIN,
     ORGANIZATION_NAME,
 )
+from pdfsilo.ui.package_self_test import run_package_self_test
 from pdfsilo.ui.resources import application_icon
 from pdfsilo.ui.theme import ThemeMode, apply_theme
 
@@ -53,9 +55,17 @@ def create_main_window(settings: QSettings | None = None) -> MainWindow:
 
 def main() -> int:
     """Start the PDFSilo PySide6 desktop application."""
+    if "--package-self-test" in sys.argv:
+        index = sys.argv.index("--package-self-test")
+        if index + 1 >= len(sys.argv):
+            return 2
+        return run_package_self_test(Path(sys.argv[index + 1]))
+
     app = create_application()
     window = create_main_window()
     window.show()
+    if "--smoke-test" in sys.argv:
+        QTimer.singleShot(250, app.quit)
     return app.exec()
 
 
