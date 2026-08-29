@@ -21,6 +21,8 @@ PACKAGE_VERSION_PATTERN = re.compile(
     r'^__version__\s*=\s*"(?P<version>[^"]+)"\s*$',
     re.MULTILINE,
 )
+CANONICAL_REPOSITORY_URL = "https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop"
+PORTABLE_WINDOWS_PYTHON_PATH = "venv/Scripts/python.exe"
 
 
 def validate_release(root: Path, tag: str) -> str:
@@ -31,7 +33,8 @@ def validate_release(root: Path, tag: str) -> str:
     version = match.group("version")
 
     with (root / "pyproject.toml").open("rb") as file:
-        project_version = tomllib.load(file)["project"]["version"]
+        project = tomllib.load(file)["project"]
+    project_version = project["version"]
     package_source = (root / "pdfsilo" / "__init__.py").read_text(encoding="utf-8")
     package_match = PACKAGE_VERSION_PATTERN.search(package_source)
     if package_match is None:
@@ -41,7 +44,14 @@ def validate_release(root: Path, tag: str) -> str:
     deployment = configparser.ConfigParser()
     deployment.read(root / "pysidedeploy.spec", encoding="utf-8")
     deployment_arguments = deployment["nuitka"]["extra_args"]
+    deployment_python = deployment["python"]["python_path"].replace("\\", "/")
     windows_version = f"{version}.0"
+    updater_source = (root / "pdfsilo" / "updater" / "service.py").read_text(
+        encoding="utf-8"
+    )
+    installer_source = (root / "packaging" / "windows" / "PDFSilo.iss").read_text(
+        encoding="utf-8"
+    )
 
     mismatches: list[str] = []
     if project_version != version:
@@ -52,6 +62,17 @@ def validate_release(root: Path, tag: str) -> str:
         mismatches.append("pysidedeploy.spec file version")
     if f"--product-version={windows_version}" not in deployment_arguments:
         mismatches.append("pysidedeploy.spec product version")
+    if deployment_python != PORTABLE_WINDOWS_PYTHON_PATH:
+        mismatches.append("pysidedeploy.spec portable python_path")
+    if project["urls"].get("Repository") != CANONICAL_REPOSITORY_URL:
+        mismatches.append("pyproject.toml repository URL")
+    expected_api = (
+        "https://api.github.com/repos/ABDELLAH-Hallou/PDFSilo-Desktop/releases/latest"
+    )
+    if expected_api not in updater_source:
+        mismatches.append("updater release API URL")
+    if f'#define MyAppURL "{CANONICAL_REPOSITORY_URL}"' not in installer_source:
+        mismatches.append("installer project URL")
     if mismatches:
         details = ", ".join(mismatches)
         raise ValueError(f"Tag {tag} does not match: {details}.")

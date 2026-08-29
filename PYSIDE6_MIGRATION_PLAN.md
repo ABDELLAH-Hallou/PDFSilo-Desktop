@@ -790,33 +790,29 @@ Official documentation:
 
 ### Initial Windows release
 
-- [ ] Create a directory-based build before attempting a single-file build.
-- [ ] Include icons, translations, and other resources.
+- [x] Create a directory-based build before attempting a single-file build.
+- [x] Include icons, translations, and other resources.
 - [ ] Test the executable on a clean Windows virtual machine.
-- [ ] Verify operation with Unicode and long file paths.
-- [ ] Test large and encrypted PDFs.
-- [ ] Add application name, version, company, and copyright metadata.
-- [ ] Create an installer using Inno Setup, WiX, or MSIX.
+- [x] Verify operation with Unicode and long file paths.
+- [x] Test large and encrypted PDFs.
+- [x] Add application name, version, company, and copyright metadata.
+- [x] Create an installer using Inno Setup, WiX, or MSIX.
 - [ ] Code-sign the executable and installer before public distribution.
 
-Phase 13 implementation status on 28 July 2026:
+Phase 13 implementation status on 29 August 2026:
 
 - The root `pysidedeploy.spec`, deterministic PNG-to-ICO generator, standalone
   build/test scripts, Inno Setup definition, Authenticode signing helper, and
   frozen-workflow self-test are implemented.
-- The checked-in contract tests and full project suite pass (382 tests).
-- A local standalone build was attempted with Python 3.12, Nuitka 4.1.3,
-  PySide6 6.11.1, and PyMuPDF 1.27.2.2. Nuitka completed analysis and most C
-  compilation, but MinGW exhausted the available memory while compiling
-  PyMuPDF's very large generated `module.pymupdf.mupdf.c`, even with one
-  compiler job, low-memory mode, and LTO disabled. No executable or installer
-  was produced by that attempt.
-- The unchecked items above remain acceptance gates. Retry the standalone
-  build on a machine with more memory or with MSVC Build Tools, then run
-  `scripts/test_windows_package.ps1` before checking the resource, path,
-  large/encrypted-PDF, and embedded-metadata items.
-- Inno Setup compilation, a clean Windows VM run, and trusted Authenticode
-  signing require the corresponding external tools and release environment.
+- The checked-in contract tests and full project suite pass.
+- A local Python 3.14/Nuitka 4.1.3 standalone build completed successfully.
+  The versioned executable passed GUI startup and a 120-page frozen test with
+  Unicode/deep paths, compression, rotation, encryption, and decryption.
+- Inno Setup 6.7.3 produced the versioned x64 installer. Its checksum matched,
+  and silent install, installed-app self-test, and uninstall passed.
+- A clean Windows VM or fresh CI runner and trusted Authenticode signing remain
+  external release gates. The release workflow implements both gates but still
+  requires its first signed candidate run.
 
 ### Update notification and assisted delivery
 
@@ -850,7 +846,8 @@ Create CI workflows that:
 - [x] Check formatting and static analysis.
 - [x] Build application artifacts for supported platforms.
 - [x] Preserve installers or build directories as CI artifacts.
-- [x] Run release builds only from tagged versions.
+- [x] Publish public releases only from tagged versions; allow manual,
+      non-publishing candidate builds.
 - [x] Publish platform assets plus checksum/signature metadata to GitHub
       Releases.
 
@@ -859,14 +856,15 @@ Phase 14 implementation was added on 28 July 2026:
 - `.github/workflows/ci.yml` runs Ruff, builds the Python distributions, tests
   the core on Python 3.10 through 3.14, and runs the headless UI suite on
   Ubuntu, Windows, and Intel macOS.
-- `.github/workflows/release.yml` has no manual or branch trigger. It accepts
-  stable `vMAJOR.MINOR.PATCH` tags only after checking that all checked-in
-  versions agree.
+- `.github/workflows/release.yml` accepts manual, non-publishing candidate
+  requests and stable `vMAJOR.MINOR.PATCH` tags after checking that all
+  checked-in versions agree.
 - Windows x64 is the only native release platform currently supported by
   Phase 13. The release workflow builds and frozen-tests the standalone
   directory, requires Authenticode secrets, signs and verifies the executable
-  and installer, retains the build, and publishes the installer/ZIP with
-  SHA-256 and signature metadata.
+  and installer, retains the build, and sends it through a fresh-runner
+  install/test/uninstall job. Only a stable tag publishes the installer/ZIP
+  with SHA-256 and signature metadata.
 - Missing signing secrets fail closed. Configure the protected GitHub
   `release` environment before creating a version tag.
 - Linux and macOS are CI test platforms, not native release targets yet.
@@ -880,70 +878,95 @@ The policy and trust boundaries are recorded in
 
 ### Milestone 1: Foundation
 
+**Status: Complete**
+
 Deliverables:
 
-- Backend defects corrected
-- `pyproject.toml`
-- Typed results and exceptions
-- Progress and cancellation protocols
-- CLI adapted to the new service layer
-- Existing test suite passing
+- [x] Backend defects corrected
+- [x] `pyproject.toml`
+- [x] Typed results and exceptions
+- [x] Progress and cancellation protocols
+- [x] CLI adapted to the new service layer
+- [x] Existing test suite passing
 
 Exit criteria:
 
-- The CLI retains feature parity.
-- Core operations have no PySide6 dependency.
-- Operation failures provide structured error information.
+- [x] The CLI retains feature parity.
+- [x] Core operations have no PySide6 dependency.
+- [x] Operation failures provide structured error information.
+
+The core/operation boundary is now protected by an AST-based regression test
+that rejects direct PySide6 imports.
 
 ### Milestone 2: Usable desktop MVP
 
+**Status: Complete**
+
 Deliverables:
 
-- Main window and navigation
-- Shared path-selection widgets
-- Background operation worker
-- Merge, split, rotate, and extract-range screens
-- Progress and cancellation
-- Initial Windows executable
+- [x] Main window and navigation
+- [x] Shared path-selection widgets
+- [x] Background operation worker
+- [x] Merge, split, rotate, and extract-range screens
+- [x] Progress and cancellation
+- [x] Initial Windows executable
 
 Exit criteria:
 
-- A nontechnical user can complete the four primary workflows without using a
-  terminal.
-- The interface remains responsive during processing.
+- [x] A nontechnical user can complete the four primary workflows without
+      using a terminal.
+- [x] The interface remains responsive during processing.
+
+All four workflows run through tested graphical screens. The standalone
+application and per-user installer passed local package and install/uninstall
+validation without invoking a source Python interpreter. Public distribution
+still depends on the separate Milestone 4 signing and clean-runner gates.
 
 ### Milestone 3: Full feature parity
 
+**Status: Complete**
+
 Deliverables:
 
-- UI screens for all existing CLI commands
-- Secure password dialogs
-- Privacy-safe appearance, workflow, and startup settings
-- PDF preview and thumbnails
-- UI and integration tests
+- [x] UI screens for all existing CLI commands
+- [x] Secure password dialogs
+- [x] Privacy-safe appearance, workflow, and startup settings
+- [x] PDF preview and thumbnails
+- [x] UI and integration tests
 
 Exit criteria:
 
-- Every CLI operation has an equivalent desktop workflow.
-- Passwords are not persisted or exposed in logs.
-- Core and UI test suites pass.
+- [x] Every CLI operation has an equivalent desktop workflow.
+- [x] Passwords are not persisted or exposed in logs.
+- [x] Core and UI test suites pass.
 
 ### Milestone 4: Polished PDF application
 
+**Status: In progress**
+
 Deliverables:
 
-- Visual drag-and-drop page reordering
-- Thumbnail selection and batch actions
-- Before-and-after previews
-- Batch processing
-- Installer and code signing
-- Release and update strategy
+- [x] Visual drag-and-drop page reordering
+- [x] Thumbnail selection and batch page actions
+- [ ] Dedicated before-and-after comparison previews
+- [ ] General multi-document batch-processing queue
+- [ ] Published installer and verified code signing
+- [x] Release and update strategy
 
 Exit criteria:
 
-- The application is suitable for distribution to users without Python
-  installed.
-- Installation, processing, and uninstallation are verified on clean systems.
+- [ ] The application is suitable for distribution to users without Python
+      installed.
+- [ ] Installation, processing, and uninstallation are verified on clean
+      systems.
+
+The reorder editor already supports multi-selection, drag/drop, duplication,
+deletion, reversal, and reset. PDF-producing screens also provide staged output
+review. Those capabilities do not yet constitute a dedicated before/after
+comparison or a reusable batch-processing queue, so they remain separate open
+deliverables. Installer definitions, signing automation, CI release gates, and
+the update-notification strategy exist, but completion requires a real signed
+artifact and clean-machine evidence.
 
 ## Definition of done
 

@@ -54,6 +54,13 @@ PowerShell. Python 3.12 or 3.13 is recommended over the experimental Python
 3.14 deployment path. Do not publish an artifact from a build that ended with
 a Nuitka crash report.
 
+On 29 August 2026, the pinned deployment stack completed locally with Python
+3.14 and Zig after a long, paging-heavy compile. The resulting executable
+passed the 120-page frozen self-test, and Inno Setup 6.7.3 produced an installer
+that passed a silent install/test/uninstall cycle. Python 3.12 with MSVC remains
+the release-workflow baseline because it avoids Nuitka's experimental Python
+3.14 support and provides more predictable CI resources.
+
 ## Installer
 
 After installing Inno Setup:

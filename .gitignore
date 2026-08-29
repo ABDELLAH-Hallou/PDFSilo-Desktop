@@ -50,6 +50,8 @@ coverage.xml
 *.py.cover
 .hypothesis/
 .pytest_cache/
+pytest-cache-files-*/
+test-temp-*/
 cover/
 
 # Translations
@@ -155,6 +157,7 @@ activemq-data/
 env/
 venv/
 venv-deploy/
+install-test/
 ENV/
 env.bak/
 venv.bak/

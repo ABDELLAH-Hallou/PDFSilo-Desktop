@@ -17,6 +17,9 @@ def test_deployment_spec_describes_standalone_versioned_application() -> None:
     assert config["app"]["title"] == "PDFSilo"
     assert config["app"]["input_file"].replace("\\", "/") == ("pdfsilo/ui/main.py")
     assert config["nuitka"]["mode"] == "standalone"
+    assert config["python"]["python_path"].replace("\\", "/") == (
+        "venv/Scripts/python.exe"
+    )
 
     arguments = config["nuitka"]["extra_args"]
     assert "--low-memory" in arguments
@@ -52,6 +55,7 @@ def test_inno_installer_uses_standalone_directory_and_product_metadata() -> None
     assert "DefaultDirName={localappdata}\\Programs\\PDFSilo" in definition
     assert "VersionInfoProductName={#MyAppName}" in definition
     assert "SetupIconFile=pdfsilo.ico" in definition
+    assert "MinVersion=10.0.17763" in definition
 
 
 def test_build_script_preserves_the_complete_standalone_directory() -> None:
@@ -61,3 +65,6 @@ def test_build_script_preserves_the_complete_standalone_directory() -> None:
     assert "-LiteralPath $candidateDirectory.FullName" in script
     assert "-Destination $outputDirectory" in script
     assert "-LiteralPath $candidate.FullName -Destination" not in script
+    assert '".pysidedeploy.build.spec"' in script
+    assert "-LiteralPath $configPath -Destination $buildConfigPath" in script
+    assert "-LiteralPath $buildConfigPath" in script

@@ -25,8 +25,8 @@ python -m pip install .
 ## Installation
 
 ```bash
-git clone https://github.com/ABDELLAH-Hallou/PDFSilo
-cd PDFSilo
+git clone https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop
+cd PDFSilo-Desktop
 python -m pip install .
 ```
 

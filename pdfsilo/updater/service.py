@@ -25,7 +25,9 @@ from pdfsilo.updater.errors import (
 )
 from pdfsilo.updater.models import UpdateInfo
 
-RELEASE_API_URL = "https://api.github.com/repos/ABDELLAH-Hallou/PDFSilo/releases/latest"
+RELEASE_API_URL = (
+    "https://api.github.com/repos/ABDELLAH-Hallou/PDFSilo-Desktop/releases/latest"
+)
 ALLOWED_METADATA_HOST = "api.github.com"
 ALLOWED_DOWNLOAD_HOSTS = frozenset(
     {

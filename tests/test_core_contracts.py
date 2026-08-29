@@ -1,5 +1,6 @@
 """Regression tests for the Phase 3 structured core-operation contracts."""
 
+import ast
 import importlib
 import logging
 from pathlib import Path
@@ -37,6 +38,31 @@ OPERATION_MODULES = [
     "to_images",
     "watermark",
 ]
+
+
+def test_core_and_operation_layers_do_not_import_qt() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    source_roots = [
+        project_root / "pdfsilo" / "core",
+        project_root / "pdfsilo" / "operations",
+    ]
+
+    for source_root in source_roots:
+        for source_path in source_root.glob("*.py"):
+            tree = ast.parse(
+                source_path.read_text(encoding="utf-8"),
+                filename=str(source_path),
+            )
+            imported_modules = []
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imported_modules.extend(alias.name for alias in node.names)
+                elif isinstance(node, ast.ImportFrom) and node.module:
+                    imported_modules.append(node.module)
+            assert not any(
+                module == "PySide6" or module.startswith("PySide6.")
+                for module in imported_modules
+            ), f"{source_path} imports Qt"
 
 
 def test_operation_result_defaults():

@@ -317,18 +317,17 @@ The Phase 13 Windows packaging layer was added on 28 July 2026:
   and installer contracts.
 
 The Inno Setup definition and Authenticode helper are release infrastructure,
-not proof of a signed release. Installer compilation, a clean Windows VM run,
-and signing with a trusted certificate remain external release gates.
+not proof of a signed release. A clean Windows runner and signing with a
+trusted certificate remain external release gates.
 
-A local native build was also attempted on 28 July 2026 with Python 3.12,
-Nuitka 4.1.3, PySide6 6.11.1, and PyMuPDF 1.27.2.2. Nuitka completed dependency
-analysis and compiled 81 generated objects, including the main `pymupdf`
-module. MinGW then exhausted the machine's available memory while compiling
-PyMuPDF's much larger generated `module.pymupdf.mupdf.c`. The same unit failed
-with one compiler job, Nuitka low-memory mode, and LTO disabled after reaching
-approximately 2.8 GiB of resident memory. Consequently, no native executable
-was produced or claimed as validated in this environment. The next native
-validation should use a higher-memory Windows builder or MSVC Build Tools.
+On 29 August 2026, a local Python 3.14/Nuitka 4.1.3 standalone build completed
+successfully, including PyMuPDF's large generated wrapper. The versioned
+executable passed GUI startup and a 120-page frozen workflow test covering
+rotation, compression, encryption, decryption, Unicode names, and a deeply
+nested 216-character path. Inno Setup 6.7.3 produced the x64 per-user installer;
+its checksum matched, and silent install, installed-app self-test, and
+uninstall succeeded. These results prove the local native path, but do not
+replace signed candidate and fresh-runner evidence.
 
 ## Continuous integration and release automation status
 
@@ -340,13 +339,17 @@ Phase 14 was implemented on 28 July 2026:
 - Qt-free core and CLI tests run on Python 3.10 through 3.14 on Ubuntu.
   Headless UI tests run with Qt's offscreen platform on Ubuntu, Windows, and
   Intel macOS.
-- `.github/workflows/release.yml` is triggered only by version tags. A reusable
-  validator rejects non-stable tags and version disagreement before native
-  compilation.
+- `.github/workflows/release.yml` supports manual, non-publishing signed
+  candidates and stable version tags. A reusable validator rejects non-stable
+  versions, non-portable deployment paths, stale repository identity, and
+  version disagreement before native compilation.
 - The Windows release job uses Visual C++ Build Tools, runs the frozen
   self-test, requires protected signing secrets, signs and verifies both the
   executable and installer, and generates final SHA-256 and Authenticode
   metadata.
+- A separate fresh Windows job downloads the signed installer, reverifies its
+  checksum and Authenticode signature, installs it, runs the packaged workflow
+  test, and uninstalls it before tag-triggered publication can start.
 - Signed build directories are retained as Actions artifacts. The standalone
   ZIP, installer, checksums, signature report, and aggregate manifest are
   uploaded through the GitHub CLI with job-scoped `contents: write`.
@@ -359,6 +362,29 @@ build or signed GitHub Release is claimed yet. The protected `release`
 environment and its certificate secrets must be configured before the first
 tag is pushed.
 
+## Delivery milestone status
+
+- **Milestone 1 — Foundation: complete.** Backend corrections, structured
+  results/errors, progress/cancellation, CLI adaptation, packaging metadata,
+  and regression coverage are present. An AST-based test now enforces that
+  `pdfsilo.core` and `pdfsilo.operations` do not import PySide6.
+- **Milestone 2 — Desktop MVP: complete.** The main window, shared widgets,
+  worker, four primary workflows, progress, cancellation, responsiveness,
+  standalone executable, and per-user installer are implemented and tested.
+- **Milestone 3 — Full feature parity: complete.** All 13 PDF operations have
+  desktop screens; password, settings, previews, thumbnails, and UI/integration
+  coverage are in place.
+- **Milestone 4 — Polished distribution: in progress.** Visual page
+  reordering and batch page-selection actions are complete, and the
+  release/update strategy is defined. A dedicated before/after comparison,
+  general multi-document batch queue, published signed installer, and
+  clean-system install/process/uninstall evidence remain open.
+
+Feature milestones can be completed out of delivery order: Milestone 3 has
+feature parity even though Milestone 2's native executable gate is still open.
+No milestone status treats checked-in packaging/signing automation as proof
+that a signed artifact exists.
+
 ## Repository profile
 
 | Area | Result |
@@ -366,11 +392,11 @@ tag is pushed.
 | Python source files | 64 |
 | Application source lines | Approximately 11,840 |
 | Test files | 32 |
-| Test lines | Approximately 5,490 |
+| Test lines | Approximately 5,510 |
 | CLI commands | 14 |
 | Runtime dependencies | PyMuPDF and PySide6 |
-| Test result | 386 passed |
-| Test runtime | 73.56 seconds |
+| Test result | 389 passed |
+| Test runtime | 102.16 seconds |
 | Python version used for validation | 3.14.2 |
 
 A local virtual environment of approximately 85 MiB and generated bytecode
@@ -379,9 +405,9 @@ The repository is tracked with Git.
 
 ### Current validation
 
-The full suite was run on 28 July 2026 with Python 3.14.2, PySide6/Qt 6.11.1,
-pytest 9.0.3, and pytest-qt 4.5.0. All 386 collected tests passed in
-73.56 seconds. This includes the original PDF operations, CLI and UI coverage,
+The full suite was run on 29 August 2026 with Python 3.14.2, PySide6/Qt 6.11.1,
+pytest 9.0.3, and pytest-qt 4.5.0. All 389 collected tests passed in
+102.16 seconds. This includes the original PDF operations, CLI and UI coverage,
 the restored About runtime contract, the network-free updater tests, and the
 Windows packaging contracts, frozen-workflow harness, and CI/release security
 contracts.

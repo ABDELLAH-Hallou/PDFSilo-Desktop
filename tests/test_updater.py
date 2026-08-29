@@ -48,7 +48,7 @@ def _release_payload(
         {
             "name": name,
             "browser_download_url": (
-                f"https://github.com/ABDELLAH-Hallou/PDFSilo/"
+                f"https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop/"
                 f"releases/download/v{version}/{name}"
             ),
             "digest": f"sha256:{digest}" if digest else None,
@@ -59,7 +59,7 @@ def _release_payload(
             {
                 "name": f"{name}.sha256",
                 "browser_download_url": (
-                    f"https://github.com/ABDELLAH-Hallou/PDFSilo/"
+                    f"https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop/"
                     f"releases/download/v{version}/{name}.sha256"
                 ),
             }
@@ -67,7 +67,8 @@ def _release_payload(
     return {
         "tag_name": f"v{version}",
         "html_url": (
-            f"https://github.com/ABDELLAH-Hallou/PDFSilo/releases/tag/v{version}"
+            "https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop/"
+            f"releases/tag/v{version}"
         ),
         "published_at": "2026-07-27T12:00:00Z",
         "assets": assets,

@@ -3,7 +3,7 @@
   #define MyAppVersion "0.1.0"
 #endif
 #define MyAppPublisher "Abdellah HALLOU"
-#define MyAppURL "https://github.com/ABDELLAH-Hallou/PDFSilo"
+#define MyAppURL "https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop"
 #define MyAppExeName "PDFSilo.exe"
 
 [Setup]
@@ -26,6 +26,7 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=lowest
+MinVersion=10.0.17763
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayIcon={app}\{#MyAppExeName}

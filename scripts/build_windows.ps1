@@ -15,6 +15,7 @@ $deployScript = Join-Path `
     $environmentRoot `
     "Lib\site-packages\PySide6\scripts\deploy.py"
 $configPath = Join-Path $projectRoot "pysidedeploy.spec"
+$buildConfigPath = Join-Path $projectRoot ".pysidedeploy.build.spec"
 $iconScript = Join-Path $projectRoot "scripts\generate_windows_icon.py"
 $outputDirectory = Join-Path $projectRoot "dist\windows\PDFSilo.dist"
 $expectedExecutable = Join-Path $outputDirectory "PDFSilo.exe"
@@ -50,11 +51,35 @@ try {
         throw "Windows icon generation failed with exit code $LASTEXITCODE."
     }
 
+    Copy-Item -LiteralPath $configPath -Destination $buildConfigPath -Force
+
+    $ignoreDirectories = @(
+        ".agents",
+        ".codex",
+        ".git",
+        "venv",
+        "venv-deploy",
+        "install-test",
+        "tests",
+        "Skills",
+        "Fixes",
+        "docs",
+        "build",
+        "dist"
+    )
+    $ignoreDirectories += @(
+        Get-ChildItem `
+            -LiteralPath $projectRoot `
+            -Directory `
+            -Filter "pytest-cache-files-*" `
+            -ErrorAction SilentlyContinue |
+            ForEach-Object { $_.Name }
+    )
     $arguments = @(
         "-c",
-        $configPath,
+        $buildConfigPath,
         "--force",
-        "--extra-ignore-dirs=venv,tests,Skills,Fixes,docs,build,dist"
+        "--extra-ignore-dirs=$($ignoreDirectories -join ',')"
     )
     if ($KeepDeploymentFiles) {
         $arguments += "--keep-deployment-files"
@@ -64,6 +89,10 @@ try {
         throw "pyside6-deploy failed with exit code $LASTEXITCODE."
     }
 } finally {
+    Remove-Item `
+        -LiteralPath $buildConfigPath `
+        -Force `
+        -ErrorAction SilentlyContinue
     Pop-Location
 }
 

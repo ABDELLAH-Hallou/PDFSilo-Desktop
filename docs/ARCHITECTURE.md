@@ -1,6 +1,6 @@
 # PDFSilo Architecture
 
-_Updated: 28 July 2026_
+_Updated: 29 August 2026_
 
 ## Overview
 
@@ -160,17 +160,12 @@ short GUI startup and real rotate, compression, restricted-encryption, and
 decryption workflows through the frozen executable. The workflow uses Unicode,
 deeply nested paths and a 120-page PDF.
 
-The Inno Setup definition and signing helper are checked in, but installer
-compilation, a clean Windows VM run, and trusted-certificate signing remain
-external release gates. SHA-256 verifies downloaded bytes; it does not replace
-Authenticode publisher verification.
-
-The 28 July 2026 local MinGW validation attempt did not produce an executable:
-the compiler exhausted available memory on PyMuPDF's generated MuPDF wrapper
-even in single-job, low-memory, no-LTO mode. This is a build-host/toolchain
-constraint rather than a passed packaging acceptance test. Native validation
-must be repeated on a higher-memory Windows host or with MSVC before the
-standalone artifact is promoted.
+The Inno Setup definition and signing helper are checked in. On 29 August 2026,
+a local standalone build completed and its frozen 120-page workflow test
+passed. Inno Setup then produced the versioned per-user installer, which passed
+a silent install/test/uninstall cycle. A signed candidate and fresh-runner
+validation remain external release gates. SHA-256 verifies downloaded bytes;
+it does not replace Authenticode publisher verification.
 
 ## Continuous integration and release boundary
 
@@ -184,7 +179,7 @@ branch push / pull request
           +--> core: Python 3.10-3.14 on Ubuntu
           +--> UI: Ubuntu + Windows + macOS (offscreen)
 
-stable vMAJOR.MINOR.PATCH tag
+manual candidate or stable vMAJOR.MINOR.PATCH tag
           |
           v
 version agreement -> full tests -> Windows standalone + frozen self-test
@@ -193,14 +188,19 @@ version agreement -> full tests -> Windows standalone + frozen self-test
 Authenticode sign/verify -> Inno installer -> sign/verify
           |
           v
-Actions artifact + GitHub Release + SHA-256/signature manifest
+fresh Windows install -> packaged test -> uninstall
+          |
+          +--> manual: Actions artifact only
+          |
+          +--> stable tag: GitHub Release + SHA-256/signature manifest
 ```
 
-Ordinary CI has read-only repository permission. Only the tag-gated Windows
-publication job receives `contents: write`; it runs in the `release`
-environment and fails if either required signing secret is absent. Windows x64
-is the only current native release target. Linux and macOS remain test targets
-until their package and signing designs are implemented and validated.
+Ordinary CI and candidate packaging have read-only repository permission. Only
+the tag-gated publication job receives `contents: write`. The signed package
+job runs in the `release` environment and fails if either required signing
+secret is absent. Windows x64 is the only current native release target. Linux
+and macOS remain test targets until their package and signing designs are
+implemented and validated.
 
 ## Theme and identity
 

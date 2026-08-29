@@ -26,10 +26,11 @@ have not yet passed Phase 13 acceptance.
 5. Use pinned Ruff 0.15.22 for both static analysis and formatting checks.
 6. Build the wheel and source distribution and retain them as workflow
    artifacts.
-7. Run `.github/workflows/release.yml` only for tags matching `v*.*.*`, then
-   strictly validate the stable `vMAJOR.MINOR.PATCH` form and require the tag
-   to match `pyproject.toml`, `pdfsilo.__version__`, and Windows executable
-   metadata.
+7. Allow `.github/workflows/release.yml` to run manually for a signed,
+   non-publishing release candidate or from tags matching `v*.*.*`. In both
+   cases, strictly validate the stable `vMAJOR.MINOR.PATCH` form and require
+   the requested version to match `pyproject.toml`, `pdfsilo.__version__`, and
+   Windows executable metadata.
 8. Give `contents: write` only to the tag-gated publication job.
 9. Require the protected `release` environment to provide
    `WINDOWS_SIGNING_CERTIFICATE_BASE64` and
@@ -38,7 +39,10 @@ have not yet passed Phase 13 acceptance.
 10. Build and test the standalone Windows directory, Authenticode-sign its
     executable, build and sign the Inno Setup installer, and verify both
     signatures before publication.
-11. Preserve the signed standalone directory and release assets as Actions
+11. Download the signed installer onto a fresh Windows runner, reverify its
+    checksum and Authenticode signature, install it, run the packaged workflow
+    test from the installed application, and uninstall it.
+12. Preserve the signed standalone directory and release assets as Actions
     artifacts. Publish the installer, standalone ZIP, SHA-256 companions,
     Authenticode metadata, and an aggregate release manifest through GitHub's
     authenticated CLI.
@@ -47,12 +51,14 @@ have not yet passed Phase 13 acceptance.
 
 - Ordinary CI and pull requests cannot publish releases or read signing
   secrets.
+- Maintainers can exercise the complete signed packaging and clean-install
+  path without creating a public GitHub Release.
 - A version tag with inconsistent metadata fails before native compilation.
 - Release publication depends on a trusted code-signing certificate, timestamp
   service, Visual C++ Build Tools, Inno Setup, and enough memory for Nuitka.
-- GitHub-hosted Windows runners currently provide 16 GiB, which is materially
-  more than the local host that failed Phase 13 compilation, but the first
-  remote release build still needs to prove the complete native path.
+- A local standalone build, frozen self-test, installer build, per-user
+  install, and uninstall succeeded on 29 August 2026. The first signed remote
+  candidate still needs to prove the complete GitHub-hosted path.
 - Linux and macOS remain headless test targets. Add their release jobs only
   after platform-specific package, signing, and clean-machine validation exist.
 - SHA-256 proves byte integrity, while the recorded and verified Authenticode

@@ -13,6 +13,20 @@ from scripts.validate_release import validate_release
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _copy_release_inputs(destination: Path) -> None:
+    for relative in (
+        "pyproject.toml",
+        "pysidedeploy.spec",
+        "pdfsilo/__init__.py",
+        "pdfsilo/updater/service.py",
+        "packaging/windows/PDFSilo.iss",
+    ):
+        source = ROOT / relative
+        target = destination / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(source.read_bytes())
+
+
 def test_ci_installs_project_runs_quality_and_separates_test_layers() -> None:
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 
@@ -28,13 +42,14 @@ def test_ci_installs_project_runs_quality_and_separates_test_layers() -> None:
     assert "pull_request_target" not in workflow
 
 
-def test_release_is_tag_gated_signed_and_publishes_metadata() -> None:
+def test_release_supports_non_publishing_candidates_and_tag_publication() -> None:
     workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
         encoding="utf-8"
     )
 
     assert '      - "v*.*.*"' in workflow
-    assert "workflow_dispatch" not in workflow
+    assert "workflow_dispatch" in workflow
+    assert "Version to build without publishing" in workflow
     assert "contents: write" in workflow
     assert "scripts/validate_release.py" in workflow
     assert "scripts\\build_windows.ps1" in workflow
@@ -45,6 +60,10 @@ def test_release_is_tag_gated_signed_and_publishes_metadata() -> None:
     assert "release-manifest.json" in workflow
     assert "gh release upload" in workflow
     assert "actions/upload-artifact@v4" in workflow
+    assert "actions/download-artifact@v4" in workflow
+    assert "Install, test, and uninstall on a fresh Windows runner" in workflow
+    assert "Get-AuthenticodeSignature" in workflow
+    assert "if: github.event_name == 'push'" in workflow
     assert "pull_request_target" not in workflow
 
 
@@ -55,6 +74,22 @@ def test_release_tag_must_match_every_version_source() -> None:
         validate_release(ROOT, "release-0.1.0")
     with pytest.raises(ValueError, match="does not match"):
         validate_release(ROOT, "v0.1.1")
+
+
+def test_release_rejects_a_machine_specific_deployment_python(
+    tmp_path: Path,
+) -> None:
+    release_root = tmp_path / "release-source"
+    _copy_release_inputs(release_root)
+    spec = release_root / "pysidedeploy.spec"
+    content = spec.read_text(encoding="utf-8").replace(
+        r"python_path = venv\Scripts\python.exe",
+        r"python_path = C:\Users\developer\venv\Scripts\python.exe",
+    )
+    spec.write_text(content, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="portable python_path"):
+        validate_release(release_root, "v0.1.0")
 
 
 def test_release_manifest_hashes_final_assets(tmp_path: Path) -> None:

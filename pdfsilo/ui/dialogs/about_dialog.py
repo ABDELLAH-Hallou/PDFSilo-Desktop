@@ -24,7 +24,7 @@ from pdfsilo.ui.metadata import APPLICATION_VERSION
 from pdfsilo.ui.resources import application_icon
 from pdfsilo.ui.theme import SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XL
 
-HOMEPAGE_URL = "https://github.com/ABDELLAH-Hallou/PDFSilo"
+HOMEPAGE_URL = "https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop"
 ISSUES_URL = f"{HOMEPAGE_URL}/issues"
 
 

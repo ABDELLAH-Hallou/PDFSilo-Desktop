@@ -11,6 +11,7 @@ from pdfsilo import __version__
 from pdfsilo.ui.main import main as gui_main
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+CANONICAL_REPOSITORY_URL = "https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop"
 
 
 def test_license_file_and_readme_agree():
@@ -61,6 +62,20 @@ def test_pyproject_defines_setuptools_build_backend():
 
     assert build_system["build-backend"] == "setuptools.build_meta"
     assert "setuptools>=77" in build_system["requires"]
+
+
+def test_public_project_urls_use_the_canonical_repository():
+    with (PROJECT_ROOT / "pyproject.toml").open("rb") as file:
+        urls = tomllib.load(file)["project"]["urls"]
+
+    assert urls["Homepage"] == CANONICAL_REPOSITORY_URL
+    assert urls["Repository"] == CANONICAL_REPOSITORY_URL
+    assert urls["Issues"] == f"{CANONICAL_REPOSITORY_URL}/issues"
+
+    readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
+    about = PROJECT_ROOT / "pdfsilo" / "ui" / "dialogs" / "about_dialog.py"
+    assert CANONICAL_REPOSITORY_URL in readme
+    assert CANONICAL_REPOSITORY_URL in about.read_text(encoding="utf-8")
 
 
 def test_pyproject_packages_desktop_resources():

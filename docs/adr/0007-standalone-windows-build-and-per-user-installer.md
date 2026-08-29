@@ -55,11 +55,18 @@ directory-based standalone output and one-file output.
 
 ## Validation status
 
-The packaging inputs and Python-level contracts passed as part of the
-382-test suite on 28 July 2026. A local Python 3.12/Nuitka 4.1.3 standalone
-attempt completed analysis and most generated-object compilation, but MinGW
-exhausted available memory on PyMuPDF's generated `module.pymupdf.mupdf.c`
-with low-memory mode enabled, LTO disabled, and one compiler job. Therefore
-this ADR records the selected release design, not a completed native release.
-A successful higher-memory or MSVC build, frozen self-test, clean-VM run,
-installer compilation, and signature verification remain acceptance gates.
+The packaging inputs and Python-level contracts pass as part of the current
+test suite. On 29 August 2026, a local Python 3.14/Nuitka 4.1.3 standalone
+build completed successfully after compiling PyMuPDF's large generated
+`module.pymupdf.mupdf.c` unit. The resulting versioned `PDFSilo.exe` passed the
+GUI startup smoke test and the 120-page frozen workflow test covering rotation,
+compression, encryption, decryption, Unicode names, and a 216-character path.
+
+Inno Setup 6.7.3 then produced `PDFSilo-Setup-0.1.0-x64.exe`. Its SHA-256
+sidecar matched, and a silent per-user install, installed-application self-test,
+and silent uninstall completed successfully. The checked-in release workflow
+also prevents `pyside6-deploy` from rewriting the portable interpreter path.
+
+This local build is unsigned and the machine contains development tools. A
+signed release-candidate run, Authenticode verification, and the workflow's
+fresh-runner install/test/uninstall job remain public-release acceptance gates.
