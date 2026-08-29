@@ -812,6 +812,10 @@ Phase 13 implementation status on 30 August 2026:
   Unicode/deep paths, compression, rotation, encryption, and decryption.
 - Inno Setup 6.7.3 produced the versioned x64 installer. Its checksum matched,
   and silent install, installed-app self-test, and uninstall passed.
+- The first remote candidate proved the unsigned policy and complete Linux
+  verification job, then MSVC failed with `C1002` on PyMuPDF's large generated
+  wrapper. The checked-in deployment now selects Nuitka's Windows x64 Zig
+  backend, which previously completed the same local standalone build.
 - The release workflow repeats checksum, install, packaged-app, and uninstall
   validation on a fresh Windows runner. It records signing state explicitly.
   Exact version `v0.1.0` may publish unsigned with prominent warnings; all

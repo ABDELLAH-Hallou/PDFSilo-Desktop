@@ -22,6 +22,7 @@ def test_deployment_spec_describes_standalone_versioned_application() -> None:
     )
 
     arguments = config["nuitka"]["extra_args"]
+    assert "--zig" in arguments
     assert "--low-memory" in arguments
     assert "--lto=no" in arguments
     assert "--output-filename=PDFSilo.exe" in arguments

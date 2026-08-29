@@ -10,7 +10,9 @@ release is an inspectable directory build.
 - A CPython 3.12 or 3.13 virtual environment with PDFSilo development and
   deployment dependencies. Python 3.14 is supported by PDFSilo itself, but
   remains experimental in the pinned Nuitka version.
-- A supported C compiler for Nuitka
+- Nuitka's supported Zig compiler backend for Windows x64. The checked-in
+  deployment specification selects `--zig` because MSVC exhausts its compiler
+  heap on PyMuPDF's generated wrapper on the standard GitHub-hosted runner.
 - Inno Setup 6 for installer creation
 - Windows SDK `signtool.exe` and a trusted code-signing certificate for public
   releases
@@ -45,8 +47,8 @@ dist/windows/package-validation/pdfsilo-package-self-test.json
 
 ### Build troubleshooting
 
-PyMuPDF contains a very large generated wrapper. Both Zig/LLVM and MinGW can
-exhaust memory while compiling it: the 28 July 2026 local MinGW attempt failed
+PyMuPDF contains a very large generated wrapper. C compilers can exhaust memory
+while compiling it: the 28 July 2026 local MinGW attempt failed
 on `module.pymupdf.mupdf.c` after the single compiler process reached about
 2.8 GiB, despite Nuitka low-memory mode and disabled LTO. Use a higher-memory
 Windows builder or install MSVC Build Tools and build from a Developer
@@ -57,9 +59,9 @@ a Nuitka crash report.
 On 29 August 2026, the pinned deployment stack completed locally with Python
 3.14 and Zig after a long, paging-heavy compile. The resulting executable
 passed the 120-page frozen self-test, and Inno Setup 6.7.3 produced an installer
-that passed a silent install/test/uninstall cycle. Python 3.12 with MSVC remains
-the release-workflow baseline because it avoids Nuitka's experimental Python
-3.14 support and provides more predictable CI resources.
+that passed a silent install/test/uninstall cycle. The first remote Python 3.12
+candidate then proved that MSVC also fails on the wrapper with `C1002`. Python
+3.12 with Nuitka's Zig backend is now the release-workflow baseline.
 
 ## Installer
 

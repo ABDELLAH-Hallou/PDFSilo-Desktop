@@ -163,6 +163,11 @@ short GUI startup and real rotate, compression, restricted-encryption, and
 decryption workflows through the frozen executable. The workflow uses Unicode,
 deeply nested paths and a 120-page PDF.
 
+The deployment specification selects Nuitka's Windows x64 Zig backend and
+low-memory mode. A GitHub-hosted MSVC candidate exhausted the compiler heap on
+PyMuPDF's generated wrapper; Zig had already completed that translation unit
+in the local release build.
+
 The Inno Setup definition and signing helper are checked in. On 29 August 2026,
 a local standalone build completed and its frozen 120-page workflow test
 passed. Inno Setup then produced the versioned per-user installer, which passed

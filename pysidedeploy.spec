@@ -30,7 +30,7 @@ plugins =
 [nuitka]
 macos.permissions = 
 mode = standalone
-extra_args = --quiet --assume-yes-for-downloads --low-memory --lto=no --windows-console-mode=disable --output-filename=PDFSilo.exe --include-package-data=pdfsilo.ui.resources --company-name="Abdellah HALLOU" --product-name=PDFSilo --file-description="Privacy-first local PDF toolkit" --file-version=0.1.0.0 --product-version=0.1.0.0 --copyright="Copyright (c) 2026-present Abdellah HALLOU"
+extra_args = --quiet --assume-yes-for-downloads --zig --low-memory --lto=no --windows-console-mode=disable --output-filename=PDFSilo.exe --include-package-data=pdfsilo.ui.resources --company-name="Abdellah HALLOU" --product-name=PDFSilo --file-description="Privacy-first local PDF toolkit" --file-version=0.1.0.0 --product-version=0.1.0.0 --copyright="Copyright (c) 2026-present Abdellah HALLOU"
 
 [buildozer]
 mode = debug
