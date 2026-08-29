@@ -4,7 +4,7 @@ _Drafted: 27 July 2026_
 
 ## Implementation status
 
-_Updated: 28 July 2026_
+_Updated: 30 August 2026_
 
 The safe notification and verified-download boundary is implemented:
 
@@ -28,17 +28,19 @@ The safe notification and verified-download boundary is implemented:
 - [x] Phase 13 now defines the standalone Windows artifact, per-user Inno
       installer layout, SHA-256 sidecars, and a separate Authenticode
       sign/verify release step in ADR 0007.
-- [x] Phase 14 provides a tag-only Windows release workflow that fails closed
-      without signing secrets, verifies Authenticode, and publishes SHA-256
-      plus signature metadata as defined in ADR 0008.
+- [x] Phase 14 provides a tag-only Windows release workflow that publishes
+      SHA-256 plus signing-status metadata. ADR 0009 permits exact version
+      `v0.1.0` to publish unsigned with explicit warnings; all later versions
+      fail closed without signing credentials.
 - [ ] Signature verification awaits signed Phase 13 artifacts.
 - [ ] Platform **Install and restart** remains disabled until signature
       verification and installer arguments are defined per platform.
 - [ ] Fully unattended Stage B updates remain future work.
 
-The implementation deliberately does not execute downloaded code. A checksum
-proves integrity, not publisher authenticity; enabling installation before
-code-signature verification would violate the security requirements below.
+The implementation deliberately does not execute downloaded code. This is
+especially important for unsigned `v0.1.0`: a checksum proves integrity, not
+publisher authenticity. Enabling installation before code-signature
+verification would violate the security requirements below.
 
 ## 0. Why this needs care before it needs code
 

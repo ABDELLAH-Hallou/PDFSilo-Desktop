@@ -133,7 +133,10 @@ framework-independent capability governed by
 5. A non-blocking banner announces non-skipped releases.
 6. Downloads are staged in a per-user cache and must match a published SHA-256
    digest.
-7. Downloaded programs are not executed until signed native installers and
+7. Downloaded programs are not executed automatically. The unsigned `v0.1.0`
+   bootstrap exception can be downloaded and revealed in its containing
+   folder, but installation remains an explicit user action. Automatic
+   installation remains blocked until signed native installers and
    platform-specific signature verification are implemented.
 
 ## Native packaging boundary
@@ -151,7 +154,7 @@ root pysidedeploy.spec -> pyside6-deploy -> Nuitka standalone directory
                                               |
                                   Inno Setup per-user installer
                                               |
-                            Authenticode sign + verify (release gate)
+                     signing policy + signature/status verification
 ```
 
 `scripts/build_windows.ps1` generates the ICO from the active PNG identity and
@@ -163,14 +166,16 @@ deeply nested paths and a 120-page PDF.
 The Inno Setup definition and signing helper are checked in. On 29 August 2026,
 a local standalone build completed and its frozen 120-page workflow test
 passed. Inno Setup then produced the versioned per-user installer, which passed
-a silent install/test/uninstall cycle. A signed candidate and fresh-runner
-validation remain external release gates. SHA-256 verifies downloaded bytes;
-it does not replace Authenticode publisher verification.
+a silent install/test/uninstall cycle. The release workflow repeats this on a
+fresh runner. ADR 0009 permits `v0.1.0` alone to publish unsigned with explicit
+metadata and warnings; every later release still requires Authenticode.
+SHA-256 verifies downloaded bytes; it does not establish publisher identity.
 
 ## Continuous integration and release boundary
 
 [ADR 0008](adr/0008-ci-matrix-and-tag-gated-signed-releases.md) separates
-ordinary verification from privileged releases:
+ordinary verification from privileged releases. ADR 0009 adds one narrow
+unsigned bootstrap exception:
 
 ```text
 branch push / pull request
@@ -185,21 +190,23 @@ manual candidate or stable vMAJOR.MINOR.PATCH tag
 version agreement -> full tests -> Windows standalone + frozen self-test
           |
           v
-Authenticode sign/verify -> Inno installer -> sign/verify
+sign when credentials exist -> Inno installer -> verify signing policy
           |
           v
 fresh Windows install -> packaged test -> uninstall
           |
           +--> manual: Actions artifact only
           |
-          +--> stable tag: GitHub Release + SHA-256/signature manifest
+          +--> stable tag: GitHub Release + SHA-256/signing manifest
 ```
 
 Ordinary CI and candidate packaging have read-only repository permission. Only
-the tag-gated publication job receives `contents: write`. The signed package
-job runs in the `release` environment and fails if either required signing
-secret is absent. Windows x64 is the only current native release target. Linux
-and macOS remain test targets until their package and signing designs are
+the tag-gated publication job receives `contents: write`. The Windows package
+job runs in the `release` environment. Exact tag `v0.1.0` may proceed without
+signing secrets and must report `NotSigned`; every other version fails closed
+without both credentials. Signed artifacts must validate and include a
+timestamp. Windows x64 is the only current native release target. Linux and
+macOS remain test targets until their package and signing designs are
 implemented and validated.
 
 ## Theme and identity

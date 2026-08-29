@@ -1,4 +1,4 @@
-"""Create checksum and signature metadata for release artifacts."""
+"""Create checksum and signing-status metadata for release artifacts."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ def create_manifest(
     assets: list[Path],
     signature_metadata: Path,
 ) -> dict[str, Any]:
-    """Build a release manifest from final, already-signed artifacts."""
+    """Build a release manifest from final, policy-validated artifacts."""
     signatures = json.loads(signature_metadata.read_text(encoding="utf-8"))
     if not isinstance(signatures, dict):
         raise ValueError("Signature metadata must be a JSON object.")

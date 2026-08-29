@@ -1,4 +1,4 @@
-name: Signed Windows release
+name: Windows release
 
 on:
   push:
@@ -22,6 +22,7 @@ env:
   PDFSILO_RELEASE_TAG: >-
     ${{ github.event_name == 'workflow_dispatch' &&
         format('v{0}', inputs.version) || github.ref_name }}
+  PDFSILO_UNSIGNED_RELEASE_TAG: "v0.1.0"
 
 jobs:
   verify:
@@ -58,12 +59,13 @@ jobs:
         run: python -m pytest
 
   windows-package:
-    name: Build and sign Windows x64
+    name: Build Windows x64
     needs: verify
     runs-on: windows-2022
     environment: release
     outputs:
       version: ${{ steps.version.outputs.version }}
+      signing_mode: ${{ steps.signing-policy.outputs.mode }}
     env:
       PDFSILO_SIGNING_CERTIFICATE_BASE64: >-
         ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_BASE64 }}
@@ -91,20 +93,37 @@ jobs:
           }
           "version=$version" >> $env:GITHUB_OUTPUT
 
-      - name: Require release-signing secrets
+      - name: Select the release signing policy
+        id: signing-policy
         shell: pwsh
         run: |
-          if (
-              [string]::IsNullOrWhiteSpace(
-                  $env:PDFSILO_SIGNING_CERTIFICATE_BASE64
-              ) -or
-              [string]::IsNullOrWhiteSpace(
-                  $env:PDFSILO_SIGNING_CERTIFICATE_PASSWORD
-              )
-          ) {
+          $hasCertificate = -not [string]::IsNullOrWhiteSpace(
+              $env:PDFSILO_SIGNING_CERTIFICATE_BASE64
+          )
+          $hasPassword = -not [string]::IsNullOrWhiteSpace(
+              $env:PDFSILO_SIGNING_CERTIFICATE_PASSWORD
+          )
+          if ($hasCertificate -xor $hasPassword) {
               throw (
-                  "The release environment must provide both Windows " +
-                  "code-signing certificate secrets."
+                  "Configure both Windows signing secrets or neither of " +
+                  "them. Partial signing configuration is not permitted."
+              )
+          }
+          if ($hasCertificate) {
+              "mode=authenticode" >> $env:GITHUB_OUTPUT
+          } elseif (
+              $env:PDFSILO_RELEASE_TAG -eq $env:PDFSILO_UNSIGNED_RELEASE_TAG
+          ) {
+              Write-Warning (
+                  "Publishing the documented unsigned v0.1.0 bootstrap " +
+                  "release. Windows will identify its publisher as unknown."
+              )
+              "mode=unsigned-exception" >> $env:GITHUB_OUTPUT
+          } else {
+              throw (
+                  "Unsigned publication is permitted only for v0.1.0. " +
+                  "Configure both release signing secrets for every later " +
+                  "version."
               )
           }
 
@@ -149,6 +168,7 @@ jobs:
           }
 
       - name: Import the release certificate
+        if: steps.signing-policy.outputs.mode == 'authenticode'
         id: certificate
         shell: pwsh
         run: |
@@ -181,6 +201,7 @@ jobs:
           }
 
       - name: Locate signtool
+        if: steps.signing-policy.outputs.mode == 'authenticode'
         id: signtool
         shell: pwsh
         run: |
@@ -199,6 +220,7 @@ jobs:
           "path=$($tool.FullName)" >> $env:GITHUB_OUTPUT
 
       - name: Sign the standalone executable
+        if: steps.signing-policy.outputs.mode == 'authenticode'
         shell: pwsh
         run: |
           .\scripts\sign_windows_artifacts.ps1 `
@@ -206,7 +228,7 @@ jobs:
               -SignToolPath "${{ steps.signtool.outputs.path }}" `
               -ArtifactPath ".\dist\windows\PDFSilo.dist\PDFSilo.exe"
 
-      - name: Build and sign the installer
+      - name: Build the installer
         shell: pwsh
         run: |
           $iscc = Get-Command iscc.exe -ErrorAction SilentlyContinue
@@ -219,6 +241,11 @@ jobs:
           .\scripts\build_windows_installer.ps1 `
               -Version "${{ steps.version.outputs.version }}" `
               -IsccPath $isccPath
+
+      - name: Sign the installer
+        if: steps.signing-policy.outputs.mode == 'authenticode'
+        shell: pwsh
+        run: |
           $installer = (
               ".\dist\installer\PDFSilo-Setup-" +
               "${{ steps.version.outputs.version }}-x64.exe"
@@ -228,7 +255,7 @@ jobs:
               -SignToolPath "${{ steps.signtool.outputs.path }}" `
               -ArtifactPath $installer
 
-      - name: Prepare checksums and signature metadata
+      - name: Prepare checksums and signing metadata
         shell: pwsh
         run: |
           $version = "${{ steps.version.outputs.version }}"
@@ -250,11 +277,22 @@ jobs:
           Compress-Archive -Path "$standalone\*" -DestinationPath $archive
           $installer = "dist\installer\PDFSilo-Setup-$version-x64.exe"
 
-          $signedFiles = @($standaloneExe, $installer)
-          $signatureRecords = foreach ($path in $signedFiles) {
+          $signingMode = "${{ steps.signing-policy.outputs.mode }}"
+          $releaseFiles = @($standaloneExe, $installer)
+          $signatureRecords = foreach ($path in $releaseFiles) {
               $signature = Get-AuthenticodeSignature -LiteralPath $path
-              if ($signature.Status -ne "Valid") {
-                  throw "Invalid Authenticode signature for $path."
+              if ($signingMode -eq "authenticode") {
+                  if ($signature.Status -ne "Valid") {
+                      throw "Invalid Authenticode signature for $path."
+                  }
+                  if ($null -eq $signature.TimeStamperCertificate) {
+                      throw "Authenticode timestamp is missing for $path."
+                  }
+              } elseif ($signature.Status -ne "NotSigned") {
+                  throw (
+                      "The v0.1.0 unsigned exception expected NotSigned for " +
+                      "$path but found $($signature.Status)."
+                  )
               }
               [ordered]@{
                   name = [IO.Path]::GetFileName($path)
@@ -270,9 +308,19 @@ jobs:
           }
           $signaturePath = Join-Path `
               $releaseDirectory `
-              "windows-authenticode.json"
+              "windows-signing.json"
           [ordered]@{
-              scheme = "Authenticode"
+              scheme = if ($signingMode -eq "authenticode") {
+                  "Authenticode"
+              } else {
+                  "none"
+              }
+              mode = $signingMode
+              warning = if ($signingMode -eq "unsigned-exception") {
+                  "PDFSilo v0.1.0 is unsigned; Windows shows Unknown publisher."
+              } else {
+                  $null
+              }
               artifacts = @($signatureRecords)
           } |
               ConvertTo-Json -Depth 5 |
@@ -306,7 +354,7 @@ jobs:
               -LiteralPath $installer, "$installer.sha256" `
               -Destination $releaseDirectory
 
-      - name: Preserve signed build outputs
+      - name: Preserve verified build outputs
         uses: actions/upload-artifact@v4
         with:
           name: PDFSilo-${{ steps.version.outputs.version }}-windows-x64
@@ -324,7 +372,7 @@ jobs:
       - name: Check out validation scripts
         uses: actions/checkout@v6
 
-      - name: Download the signed release candidate
+      - name: Download the release candidate
         uses: actions/download-artifact@v4
         with:
           name: PDFSilo-${{ needs.windows-package.outputs.version }}-windows-x64
@@ -356,14 +404,22 @@ jobs:
               "candidate\release\PDFSilo-Setup-$version-x64.exe"
           )
           $standaloneExe = "candidate\windows\PDFSilo.dist\PDFSilo.exe"
+          $signingMode = "${{ needs.windows-package.outputs.signing_mode }}"
           foreach ($path in @($installer, $standaloneExe)) {
               if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
-                  throw "Signed candidate file was not found: $path"
+                  throw "Candidate file was not found: $path"
               }
               Assert-Sha256 -Path $path
               $signature = Get-AuthenticodeSignature -LiteralPath $path
-              if ($signature.Status -ne "Valid") {
-                  throw "Authenticode verification failed for $path."
+              if ($signingMode -eq "authenticode") {
+                  if ($signature.Status -ne "Valid") {
+                      throw "Authenticode verification failed for $path."
+                  }
+                  if ($null -eq $signature.TimeStamperCertificate) {
+                      throw "Authenticode timestamp is missing for $path."
+                  }
+              } elseif ($signature.Status -ne "NotSigned") {
+                  throw "Expected an unsigned v0.1.0 artifact at $path."
               }
           }
 
@@ -398,6 +454,18 @@ jobs:
                       "Installed version $productVersion does not match " +
                       "$version."
                   )
+              }
+              $installedSignature = Get-AuthenticodeSignature `
+                  -LiteralPath $installedExe
+              if ($signingMode -eq "authenticode") {
+                  if ($installedSignature.Status -ne "Valid") {
+                      throw "The installed executable signature is invalid."
+                  }
+                  if ($null -eq $installedSignature.TimeStamperCertificate) {
+                      throw "The installed executable timestamp is missing."
+                  }
+              } elseif ($installedSignature.Status -ne "NotSigned") {
+                  throw "The installed v0.1.0 executable should be unsigned."
               }
               .\scripts\test_windows_package.ps1 `
                   -ExecutablePath $installedExe `
@@ -450,11 +518,36 @@ jobs:
           $tag = "$env:PDFSILO_RELEASE_TAG"
           gh release view $tag 2>$null
           if ($LASTEXITCODE -ne 0) {
-              gh release create `
-                  $tag `
-                  --verify-tag `
-                  --generate-notes `
-                  --title "PDFSilo ${{ needs.windows-package.outputs.version }}"
+              if (
+                  "${{ needs.windows-package.outputs.signing_mode }}" -eq
+                  "unsigned-exception"
+              ) {
+                  $notes = @(
+                      "> [!WARNING]"
+                      "> PDFSilo 0.1.0 is an unsigned bootstrap release."
+                      "> Windows will show **Unknown publisher**, and Microsoft"
+                      "> Defender SmartScreen may require **More info -> Run"
+                      "> anyway**. Download only from this GitHub repository or"
+                      "> pdfsilo.com and verify the published SHA-256 checksum."
+                      "> PDFSilo does not automatically execute downloaded updates."
+                      ""
+                      "This one-version exception is recorded in ADR 0009."
+                      "Every later Windows release must be Authenticode-signed"
+                      "and timestamped before publication."
+                  ) -join [Environment]::NewLine
+                  gh release create `
+                      $tag `
+                      --verify-tag `
+                      --generate-notes `
+                      --notes $notes `
+                      --title "PDFSilo ${{ needs.windows-package.outputs.version }}"
+              } else {
+                  gh release create `
+                      $tag `
+                      --verify-tag `
+                      --generate-notes `
+                      --title "PDFSilo ${{ needs.windows-package.outputs.version }}"
+              }
           }
           $assets = Get-ChildItem -LiteralPath "dist\release" -File |
               ForEach-Object { $_.FullName }

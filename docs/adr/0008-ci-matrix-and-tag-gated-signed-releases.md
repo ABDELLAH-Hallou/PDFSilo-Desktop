@@ -1,6 +1,6 @@
 # ADR 0008: CI Matrix and Tag-Gated Signed Releases
 
-- Status: Accepted
+- Status: Accepted; unsigned-publication rule amended for `v0.1.0` by ADR 0009
 - Date: 28 July 2026
 
 ## Context

@@ -798,8 +798,10 @@ Official documentation:
 - [x] Add application name, version, company, and copyright metadata.
 - [x] Create an installer using Inno Setup, WiX, or MSIX.
 - [ ] Code-sign the executable and installer before public distribution.
+      `v0.1.0` is the sole owner-approved unsigned bootstrap exception under
+      ADR 0009; this task remains open for every later release.
 
-Phase 13 implementation status on 29 August 2026:
+Phase 13 implementation status on 30 August 2026:
 
 - The root `pysidedeploy.spec`, deterministic PNG-to-ICO generator, standalone
   build/test scripts, Inno Setup definition, Authenticode signing helper, and
@@ -810,9 +812,10 @@ Phase 13 implementation status on 29 August 2026:
   Unicode/deep paths, compression, rotation, encryption, and decryption.
 - Inno Setup 6.7.3 produced the versioned x64 installer. Its checksum matched,
   and silent install, installed-app self-test, and uninstall passed.
-- A clean Windows VM or fresh CI runner and trusted Authenticode signing remain
-  external release gates. The release workflow implements both gates but still
-  requires its first signed candidate run.
+- The release workflow repeats checksum, install, packaged-app, and uninstall
+  validation on a fresh Windows runner. It records signing state explicitly.
+  Exact version `v0.1.0` may publish unsigned with prominent warnings; all
+  later releases remain blocked on valid timestamped Authenticode signatures.
 
 ### Update notification and assisted delivery
 
@@ -824,7 +827,8 @@ Phase 13 implementation status on 29 August 2026:
       and a verified-download dialog.
 - [x] Download to a per-user cache and delete SHA-256 mismatches.
 - [x] Add `pdfsilo update --check` CLI parity.
-- [ ] Publish signed native installer artifacts with each release.
+- [ ] Publish signed native installer artifacts with each release after the
+      one-version `v0.1.0` bootstrap exception.
 - [ ] Verify the platform code signature in addition to SHA-256.
 - [ ] Enable **Install and restart** only after both integrity and authenticity
       verification succeed.
@@ -848,7 +852,7 @@ Create CI workflows that:
 - [x] Preserve installers or build directories as CI artifacts.
 - [x] Publish public releases only from tagged versions; allow manual,
       non-publishing candidate builds.
-- [x] Publish platform assets plus checksum/signature metadata to GitHub
+- [x] Publish platform assets plus checksum/signing metadata to GitHub
       Releases.
 
 Phase 14 implementation was added on 28 July 2026:
@@ -861,18 +865,21 @@ Phase 14 implementation was added on 28 July 2026:
   checked-in versions agree.
 - Windows x64 is the only native release platform currently supported by
   Phase 13. The release workflow builds and frozen-tests the standalone
-  directory, requires Authenticode secrets, signs and verifies the executable
-  and installer, retains the build, and sends it through a fresh-runner
+  directory, signs when credentials exist, verifies the selected signing
+  policy, retains the build, and sends it through a fresh-runner
   install/test/uninstall job. Only a stable tag publishes the installer/ZIP
-  with SHA-256 and signature metadata.
-- Missing signing secrets fail closed. Configure the protected GitHub
-  `release` environment before creating a version tag.
+  with SHA-256 and signing metadata.
+- Missing signing secrets are accepted only for exact tag `v0.1.0` under ADR
+  0009. Any other tag fails closed. Configure the protected GitHub `release`
+  environment and signing provider before publishing the next version.
 - Linux and macOS are CI test platforms, not native release targets yet.
   Their artifact jobs remain pending on platform-specific Phase 13 packaging
   and signing decisions.
 
 The policy and trust boundaries are recorded in
-[`ADR 0008`](docs/adr/0008-ci-matrix-and-tag-gated-signed-releases.md).
+[`ADR 0008`](docs/adr/0008-ci-matrix-and-tag-gated-signed-releases.md) and the
+one-version exception in
+[`ADR 0009`](docs/adr/0009-unsigned-v0-1-0-bootstrap-release.md).
 
 ## Delivery milestones
 

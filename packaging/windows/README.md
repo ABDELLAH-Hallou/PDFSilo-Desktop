@@ -86,8 +86,12 @@ certificate:
   )
 ```
 
-Never publish an installer until `signtool verify /pa /all` succeeds. Generate
-the final checksum after signing because signing changes the file bytes.
+Normally, never publish an installer until `signtool verify /pa /all`
+succeeds. Generate the final checksum after signing because signing changes
+the file bytes. ADR 0009 permits one explicit exception: `v0.1.0` may be
+published unsigned with unknown-publisher warnings, signing-status metadata,
+SHA-256 sidecars, and all other release gates. No later version may use that
+exception.
 
 ## Clean-machine release gate
 

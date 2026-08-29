@@ -58,6 +58,12 @@ def test_release_supports_non_publishing_candidates_and_tag_publication() -> Non
     assert "scripts\\build_windows_installer.ps1" in workflow
     assert "scripts\\sign_windows_artifacts.ps1" in workflow
     assert "Get-AuthenticodeSignature" in workflow
+    assert 'PDFSILO_UNSIGNED_RELEASE_TAG: "v0.1.0"' in workflow
+    assert "unsigned-exception" in workflow
+    assert "Unsigned publication is permitted only for v0.1.0" in workflow
+    assert "Authenticode timestamp is missing" in workflow
+    assert "windows-signing.json" in workflow
+    assert "Unknown publisher" in workflow
     assert "release-manifest.json" in workflow
     assert "gh release upload" in workflow
     assert "actions/upload-artifact@v4" in workflow
@@ -98,7 +104,7 @@ def test_release_manifest_hashes_final_assets(tmp_path: Path) -> None:
     installer = tmp_path / "PDFSilo-Setup-0.1.0-x64.exe"
     archive.write_bytes(b"standalone")
     installer.write_bytes(b"installer")
-    signatures = tmp_path / "windows-authenticode.json"
+    signatures = tmp_path / "windows-signing.json"
     signatures.write_text(
         json.dumps(
             {
@@ -122,3 +128,36 @@ def test_release_manifest_hashes_final_assets(tmp_path: Path) -> None:
     records = {record["name"]: record for record in manifest["artifacts"]}
     assert records[archive.name]["sha256"] == sha256(archive)
     assert records[installer.name]["size"] == len(b"installer")
+
+
+def test_release_manifest_records_unsigned_bootstrap_exception(
+    tmp_path: Path,
+) -> None:
+    archive = tmp_path / "PDFSilo-0.1.0-windows-x64.zip"
+    installer = tmp_path / "PDFSilo-Setup-0.1.0-x64.exe"
+    archive.write_bytes(b"standalone")
+    installer.write_bytes(b"installer")
+    signing = tmp_path / "windows-signing.json"
+    signing.write_text(
+        json.dumps(
+            {
+                "scheme": "none",
+                "mode": "unsigned-exception",
+                "warning": "PDFSilo v0.1.0 is unsigned.",
+                "artifacts": [{"name": installer.name, "status": "NotSigned"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    manifest = create_manifest(
+        version="0.1.0",
+        tag="v0.1.0",
+        commit="b" * 40,
+        assets=[installer, archive],
+        signature_metadata=signing,
+    )
+
+    assert manifest["signatures"]["scheme"] == "none"
+    assert manifest["signatures"]["mode"] == "unsigned-exception"
+    assert manifest["signatures"]["artifacts"][0]["status"] == "NotSigned"
