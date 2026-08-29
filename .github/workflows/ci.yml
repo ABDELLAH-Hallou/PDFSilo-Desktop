@@ -82,7 +82,7 @@ jobs:
 
       - name: Run Qt-free core and CLI tests
         run: >-
-          python -m pytest tests
+          python -m pytest -p no:pytest-qt tests
           --ignore=tests/test_package_self_test.py
           --ignore=tests/test_password_security.py
           --ignore=tests/test_project_metadata.py

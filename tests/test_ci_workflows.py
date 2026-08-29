@@ -34,6 +34,7 @@ def test_ci_installs_project_runs_quality_and_separates_test_layers() -> None:
     assert "python -m ruff check pdfsilo tests scripts" in workflow
     assert "python -m ruff format --check pdfsilo tests scripts" in workflow
     assert "Run Qt-free core and CLI tests" in workflow
+    assert "-p no:pytest-qt" in workflow
     assert "Run headless-compatible UI tests" in workflow
     assert "ubuntu-24.04" in workflow
     assert "windows-2022" in workflow

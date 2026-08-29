@@ -102,6 +102,15 @@ PERSISTED_SETTING_KEYS = frozenset(
 )
 
 
+def _standard_shortcut(
+    standard_key: QKeySequence.StandardKey,
+    fallback: str,
+) -> QKeySequence:
+    """Return a usable shortcut even under a headless Qt platform plug-in."""
+    bindings = QKeySequence.keyBindings(standard_key)
+    return bindings[0] if bindings else QKeySequence(fallback)
+
+
 class MainWindow(QMainWindow):
     """Application shell shared by all PDFSilo operation screens."""
 
@@ -154,13 +163,17 @@ class MainWindow(QMainWindow):
     def _create_actions(self) -> None:
         self.open_action = QAction("Open PDF…", self)
         self.open_action.setObjectName("openAction")
-        self.open_action.setShortcut(QKeySequence.StandardKey.Open)
+        self.open_action.setShortcut(
+            _standard_shortcut(QKeySequence.StandardKey.Open, "Ctrl+O")
+        )
         self.open_action.setStatusTip("Choose a PDF file")
         self.open_action.triggered.connect(self.choose_input_file)
 
         self.exit_action = QAction("Exit", self)
         self.exit_action.setObjectName("exitAction")
-        self.exit_action.setShortcut(QKeySequence.StandardKey.Quit)
+        self.exit_action.setShortcut(
+            _standard_shortcut(QKeySequence.StandardKey.Quit, "Ctrl+Q")
+        )
         self.exit_action.setStatusTip("Close PDFSilo")
         self.exit_action.triggered.connect(self.close)
 
@@ -216,7 +229,9 @@ class MainWindow(QMainWindow):
 
         self.about_action = QAction("About PDFSilo", self)
         self.about_action.setObjectName("aboutAction")
-        self.about_action.setShortcut(QKeySequence.StandardKey.HelpContents)
+        self.about_action.setShortcut(
+            _standard_shortcut(QKeySequence.StandardKey.HelpContents, "F1")
+        )
         self.about_action.setStatusTip("About PDFSilo")
         self.about_action.triggered.connect(self.show_about_dialog)
 
