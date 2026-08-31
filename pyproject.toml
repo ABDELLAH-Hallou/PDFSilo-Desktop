@@ -60,9 +60,9 @@ pdfsilo = "pdfsilo.cli:main"
 pdfsilo-gui = "pdfsilo.ui.main:main"
 
 [project.urls]
-Homepage = "https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop"
-Repository = "https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop"
-Issues = "https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop/issues"
+Homepage = "https://pdfsilo.com/"
+Documentation = "https://pdfsilo.com/faq/"
+Download = "https://github.com/ABDELLAH-Hallou/PDFSilo/releases"
 
 [tool.setuptools.packages.find]
 include = ["pdfsilo*"]

@@ -24,9 +24,9 @@ python -m pip install .
 
 ## Installation
 
+From an authorized checkout of the private development repository:
+
 ```bash
-git clone https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop
-cd PDFSilo-Desktop
 python -m pip install .
 ```
 
@@ -93,9 +93,11 @@ Native release builds are deliberately tag-only. Before pushing a tag:
 1. Make the version agree in `pyproject.toml`, `pdfsilo/__init__.py`, and
    `pysidedeploy.spec`.
 2. Configure a protected GitHub environment named `release`.
-3. For a signed release, add `WINDOWS_SIGNING_CERTIFICATE_BASE64` and
+3. Add a fine-grained `PDFSILO_RELEASE_REPOSITORY_TOKEN` environment secret
+   with Contents write access to the public release-only `PDFSilo` repository.
+4. For a signed release, add `WINDOWS_SIGNING_CERTIFICATE_BASE64` and
    `WINDOWS_SIGNING_CERTIFICATE_PASSWORD` to that environment.
-4. Push a stable tag such as `v0.1.0`.
+5. Push a stable tag such as `v0.1.0`.
 
 `v0.1.0` is a documented unsigned bootstrap exception. Windows displays
 **Unknown publisher**, and SmartScreen can require **More info -> Run anyway**.
@@ -104,8 +106,11 @@ Windows install/test/uninstall pass. Every other version fails instead of
 publishing unsigned output. See [ADR 0008](docs/adr/0008-ci-matrix-and-tag-gated-signed-releases.md)
 and [ADR 0009](docs/adr/0009-unsigned-v0-1-0-bootstrap-release.md).
 
-Download release files only from the official GitHub repository or a link on
-`pdfsilo.com`, and compare the downloaded file with its `.sha256` companion.
+Download release files only from the
+[public release channel](https://github.com/ABDELLAH-Hallou/PDFSilo/releases)
+or a link on `pdfsilo.com`, and compare the downloaded file with its `.sha256`
+companion. The public repository contains release downloads and a short README,
+not the private application source or build infrastructure.
 SHA-256 detects changed bytes but does not establish who published the file.
 Windows x64 is currently the only native release target; Linux and macOS are
 CI test targets until their packaging and signing work is complete.

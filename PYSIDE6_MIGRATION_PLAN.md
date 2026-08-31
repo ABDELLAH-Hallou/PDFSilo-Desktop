@@ -820,6 +820,10 @@ Phase 13 implementation status on 30 August 2026:
   validation on a fresh Windows runner. It records signing state explicitly.
   Exact version `v0.1.0` may publish unsigned with prominent warnings; all
   later releases remain blocked on valid timestamped Authenticode signatures.
+- Verified downloads are staged as a draft in the separate public,
+  README-only `ABDELLAH-Hallou/PDFSilo` repository. The workflow checks the
+  exact remote asset set before publishing an immutable release; source and
+  build infrastructure remain private under ADR 0010.
 
 ### Update notification and assisted delivery
 
@@ -872,7 +876,9 @@ Phase 14 implementation was added on 28 July 2026:
   directory, signs when credentials exist, verifies the selected signing
   policy, retains the build, and sends it through a fresh-runner
   install/test/uninstall job. Only a stable tag publishes the installer/ZIP
-  with SHA-256 and signing metadata.
+  with SHA-256 and signing metadata. Publication uses a repository-scoped
+  protected secret to stage, verify, and publish an immutable release in the
+  separate public release-only repository.
 - Missing signing secrets are accepted only for exact tag `v0.1.0` under ADR
   0009. Any other tag fails closed. Configure the protected GitHub `release`
   environment and signing provider before publishing the next version.
@@ -883,7 +889,9 @@ Phase 14 implementation was added on 28 July 2026:
 The policy and trust boundaries are recorded in
 [`ADR 0008`](docs/adr/0008-ci-matrix-and-tag-gated-signed-releases.md) and the
 one-version exception in
-[`ADR 0009`](docs/adr/0009-unsigned-v0-1-0-bootstrap-release.md).
+[`ADR 0009`](docs/adr/0009-unsigned-v0-1-0-bootstrap-release.md). The public
+download boundary is recorded in
+[`ADR 0010`](docs/adr/0010-separate-public-release-channel.md).
 
 ## Delivery milestones
 

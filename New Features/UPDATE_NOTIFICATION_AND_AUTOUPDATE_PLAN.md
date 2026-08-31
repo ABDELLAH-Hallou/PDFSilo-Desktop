@@ -32,6 +32,9 @@ The safe notification and verified-download boundary is implemented:
       SHA-256 plus signing-status metadata. ADR 0009 permits exact version
       `v0.1.0` to publish unsigned with explicit warnings; all later versions
       fail closed without signing credentials.
+- [x] ADR 0010 separates the private development repository from the public,
+      README-only release channel. The updater reads only that fixed public
+      repository's latest-release endpoint.
 - [ ] Signature verification awaits signed Phase 13 artifacts.
 - [ ] Platform **Install and restart** remains disabled until signature
       verification and installer arguments are defined per platform.

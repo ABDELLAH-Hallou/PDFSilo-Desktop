@@ -21,7 +21,13 @@ PACKAGE_VERSION_PATTERN = re.compile(
     r'^__version__\s*=\s*"(?P<version>[^"]+)"\s*$',
     re.MULTILINE,
 )
-CANONICAL_REPOSITORY_URL = "https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop"
+PRODUCT_HOMEPAGE_URL = "https://pdfsilo.com/"
+PRODUCT_DOCUMENTATION_URL = "https://pdfsilo.com/faq/"
+PUBLIC_RELEASE_REPOSITORY_URL = "https://github.com/ABDELLAH-Hallou/PDFSilo"
+PUBLIC_RELEASE_DOWNLOAD_URL = f"{PUBLIC_RELEASE_REPOSITORY_URL}/releases"
+PUBLIC_RELEASE_API_URL = (
+    "https://api.github.com/repos/ABDELLAH-Hallou/PDFSilo/releases/latest"
+)
 PORTABLE_WINDOWS_PYTHON_PATH = "venv/Scripts/python.exe"
 
 
@@ -64,15 +70,22 @@ def validate_release(root: Path, tag: str) -> str:
         mismatches.append("pysidedeploy.spec product version")
     if deployment_python != PORTABLE_WINDOWS_PYTHON_PATH:
         mismatches.append("pysidedeploy.spec portable python_path")
-    if project["urls"].get("Repository") != CANONICAL_REPOSITORY_URL:
-        mismatches.append("pyproject.toml repository URL")
-    expected_api = (
-        "https://api.github.com/repos/ABDELLAH-Hallou/PDFSilo-Desktop/releases/latest"
-    )
-    if expected_api not in updater_source:
+    expected_urls = {
+        "Homepage": PRODUCT_HOMEPAGE_URL,
+        "Documentation": PRODUCT_DOCUMENTATION_URL,
+        "Download": PUBLIC_RELEASE_DOWNLOAD_URL,
+    }
+    if project["urls"] != expected_urls:
+        mismatches.append("pyproject.toml public URLs")
+    if PUBLIC_RELEASE_API_URL not in updater_source:
         mismatches.append("updater release API URL")
-    if f'#define MyAppURL "{CANONICAL_REPOSITORY_URL}"' not in installer_source:
-        mismatches.append("installer project URL")
+    expected_installer_urls = (
+        f'#define MyAppURL "{PRODUCT_HOMEPAGE_URL}"',
+        f'#define MyAppSupportURL "{PRODUCT_DOCUMENTATION_URL}"',
+        f'#define MyAppUpdatesURL "{PUBLIC_RELEASE_DOWNLOAD_URL}"',
+    )
+    if any(url not in installer_source for url in expected_installer_urls):
+        mismatches.append("installer public URLs")
     if mismatches:
         details = ", ".join(mismatches)
         raise ValueError(f"Tag {tag} does not match: {details}.")

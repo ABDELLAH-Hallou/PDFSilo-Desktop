@@ -51,7 +51,7 @@ def test_release_supports_non_publishing_candidates_and_tag_publication() -> Non
     assert '      - "v*.*.*"' in workflow
     assert "workflow_dispatch" in workflow
     assert "Version to build without publishing" in workflow
-    assert "contents: write" in workflow
+    assert 'PDFSILO_PUBLIC_RELEASE_REPOSITORY: "ABDELLAH-Hallou/PDFSilo"' in workflow
     assert "scripts/validate_release.py" in workflow
     assert "scripts\\build_windows.ps1" in workflow
     assert "scripts\\test_windows_package.ps1" in workflow
@@ -66,6 +66,18 @@ def test_release_supports_non_publishing_candidates_and_tag_publication() -> Non
     assert "Unknown publisher" in workflow
     assert "release-manifest.json" in workflow
     assert "gh release upload" in workflow
+    assert "PDFSILO_RELEASE_REPOSITORY_TOKEN" in workflow
+    assert "--target main" in workflow
+    assert "--draft" in workflow
+    assert "--draft=false" in workflow
+    assert "candidate contains a missing or disallowed public" in workflow
+    assert '"release asset."' in workflow
+    assert '"release-manifest.json.sha256"' in workflow
+    assert '"windows-signing.json"' in workflow
+    assert "Compare-Object" in workflow
+    assert "github.token" not in workflow
+    assert "--verify-tag" not in workflow
+    assert "--generate-notes" not in workflow
     assert "actions/upload-artifact@v4" in workflow
     assert "actions/download-artifact@v4" in workflow
     assert "Install, test, and uninstall on a fresh Windows runner" in workflow

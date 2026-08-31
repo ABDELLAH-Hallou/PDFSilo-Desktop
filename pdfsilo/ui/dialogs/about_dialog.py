@@ -24,8 +24,8 @@ from pdfsilo.ui.metadata import APPLICATION_VERSION
 from pdfsilo.ui.resources import application_icon
 from pdfsilo.ui.theme import SPACE_LG, SPACE_MD, SPACE_SM, SPACE_XL
 
-HOMEPAGE_URL = "https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop"
-ISSUES_URL = f"{HOMEPAGE_URL}/issues"
+HOMEPAGE_URL = "https://pdfsilo.com/"
+SUPPORT_URL = "https://pdfsilo.com/faq/"
 
 
 def _feature_card(
@@ -167,15 +167,15 @@ class AboutDialog(QDialog):
         footer.setContentsMargins(0, 0, 0, 0)
         footer.setSpacing(SPACE_SM)
 
-        homepage_button = QPushButton("Project homepage", self)
+        homepage_button = QPushButton("Website", self)
         homepage_button.setObjectName("aboutHomepageButton")
         homepage_button.clicked.connect(
             lambda: QDesktopServices.openUrl(QUrl(HOMEPAGE_URL))
         )
-        issues_button = QPushButton("Report an issue", self)
+        issues_button = QPushButton("Help & FAQ", self)
         issues_button.setObjectName("aboutIssuesButton")
         issues_button.clicked.connect(
-            lambda: QDesktopServices.openUrl(QUrl(ISSUES_URL))
+            lambda: QDesktopServices.openUrl(QUrl(SUPPORT_URL))
         )
         license_label = QLabel("BSD 2-Clause license", self)
         license_label.setObjectName("aboutLicenseLabel")
@@ -208,4 +208,4 @@ class AboutDialog(QDialog):
         self.icon_label.setPixmap(icon.pixmap(64, 64))
 
 
-__all__ = ["AboutDialog", "HOMEPAGE_URL", "ISSUES_URL"]
+__all__ = ["AboutDialog", "HOMEPAGE_URL", "SUPPORT_URL"]

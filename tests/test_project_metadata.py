@@ -11,7 +11,10 @@ from pdfsilo import __version__
 from pdfsilo.ui.main import main as gui_main
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-CANONICAL_REPOSITORY_URL = "https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop"
+PRODUCT_HOMEPAGE_URL = "https://pdfsilo.com/"
+PRODUCT_DOCUMENTATION_URL = "https://pdfsilo.com/faq/"
+PUBLIC_RELEASE_URL = "https://github.com/ABDELLAH-Hallou/PDFSilo/releases"
+PRIVATE_SOURCE_URL = "https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop"
 
 
 def test_license_file_and_readme_agree():
@@ -64,18 +67,23 @@ def test_pyproject_defines_setuptools_build_backend():
     assert "setuptools>=77" in build_system["requires"]
 
 
-def test_public_project_urls_use_the_canonical_repository():
+def test_public_project_urls_do_not_expose_the_private_source_repository():
     with (PROJECT_ROOT / "pyproject.toml").open("rb") as file:
         urls = tomllib.load(file)["project"]["urls"]
 
-    assert urls["Homepage"] == CANONICAL_REPOSITORY_URL
-    assert urls["Repository"] == CANONICAL_REPOSITORY_URL
-    assert urls["Issues"] == f"{CANONICAL_REPOSITORY_URL}/issues"
+    assert urls == {
+        "Homepage": PRODUCT_HOMEPAGE_URL,
+        "Documentation": PRODUCT_DOCUMENTATION_URL,
+        "Download": PUBLIC_RELEASE_URL,
+    }
 
     readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
     about = PROJECT_ROOT / "pdfsilo" / "ui" / "dialogs" / "about_dialog.py"
-    assert CANONICAL_REPOSITORY_URL in readme
-    assert CANONICAL_REPOSITORY_URL in about.read_text(encoding="utf-8")
+    about_content = about.read_text(encoding="utf-8")
+    assert PUBLIC_RELEASE_URL in readme
+    assert PRODUCT_HOMEPAGE_URL in about_content
+    assert PRODUCT_DOCUMENTATION_URL in about_content
+    assert PRIVATE_SOURCE_URL not in about_content
 
 
 def test_pyproject_packages_desktop_resources():

@@ -202,12 +202,16 @@ fresh Windows install -> packaged test -> uninstall
           |
           +--> manual: Actions artifact only
           |
-          +--> stable tag: GitHub Release + SHA-256/signing manifest
+          +--> stable tag: public draft -> exact asset check -> immutable release
 ```
 
 Ordinary CI and candidate packaging have read-only repository permission. Only
-the tag-gated publication job receives `contents: write`. The Windows package
-job runs in the `release` environment. Exact tag `v0.1.0` may proceed without
+the tag-gated publication step receives the protected, repository-scoped
+`PDFSILO_RELEASE_REPOSITORY_TOKEN`. The private development repository retains
+source, workflows, logs, and candidate artifacts. The separate public
+`ABDELLAH-Hallou/PDFSilo` repository contains only its README and immutable
+verified releases, as recorded in ADR 0010. The Windows package and publication
+jobs run in the `release` environment. Exact tag `v0.1.0` may proceed without
 signing secrets and must report `NotSigned`; every other version fails closed
 without both credentials. Signed artifacts must validate and include a
 timestamp. Windows x64 is the only current native release target. Linux and

@@ -95,6 +95,21 @@ published unsigned with unknown-publisher warnings, signing-status metadata,
 SHA-256 sidecars, and all other release gates. No later version may use that
 exception.
 
+## Public release channel
+
+The private development repository builds and validates each candidate. A
+tag-triggered job then uses the protected
+`PDFSILO_RELEASE_REPOSITORY_TOKEN` secret to create a draft in the public
+release-only `ABDELLAH-Hallou/PDFSilo` repository. It uploads the seven
+installer/archive/checksum/manifest assets, compares the remote asset names
+with the verified candidate, and publishes the draft only after they match.
+
+The token must be fine-grained, limited to that one public repository, and
+granted only Contents read/write. Never add it to the public repository,
+workflow files, release notes, build artifacts, or website environment. The
+public repository has immutable releases enabled, so a published release is
+never replaced; corrections require a new version.
+
 ## Clean-machine release gate
 
 Copy the installer to a Windows VM without Python or developer tools and verify:

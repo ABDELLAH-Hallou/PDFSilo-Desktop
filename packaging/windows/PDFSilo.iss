@@ -3,7 +3,9 @@
   #define MyAppVersion "0.1.0"
 #endif
 #define MyAppPublisher "Abdellah HALLOU"
-#define MyAppURL "https://github.com/ABDELLAH-Hallou/PDFSilo-Desktop"
+#define MyAppURL "https://pdfsilo.com/"
+#define MyAppSupportURL "https://pdfsilo.com/faq/"
+#define MyAppUpdatesURL "https://github.com/ABDELLAH-Hallou/PDFSilo/releases"
 #define MyAppExeName "PDFSilo.exe"
 
 [Setup]
@@ -13,8 +15,8 @@ AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
-AppSupportURL={#MyAppURL}/issues
-AppUpdatesURL={#MyAppURL}/releases
+AppSupportURL={#MyAppSupportURL}
+AppUpdatesURL={#MyAppUpdatesURL}
 DefaultDirName={localappdata}\Programs\PDFSilo
 DefaultGroupName=PDFSilo
 AllowNoIcons=yes

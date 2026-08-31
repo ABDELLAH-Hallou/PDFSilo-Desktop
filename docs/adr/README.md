@@ -15,6 +15,7 @@ rewriting the original rationale.
 | [0007](0007-standalone-windows-build-and-per-user-installer.md) | Accepted | Ship an inspectable standalone Windows build before one-file packaging |
 | [0008](0008-ci-matrix-and-tag-gated-signed-releases.md) | Accepted; amended by 0009 | Test across supported runtimes and require signed, tag-gated native releases |
 | [0009](0009-unsigned-v0-1-0-bootstrap-release.md) | Accepted | Permit one clearly disclosed unsigned bootstrap release for v0.1.0 only |
+| [0010](0010-separate-public-release-channel.md) | Accepted | Publish verified downloads through a separate README-only public repository |
 
 The implementation overview lives in
 [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md).
